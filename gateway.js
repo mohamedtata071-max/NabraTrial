@@ -719,7 +719,7 @@ app.get("/app", async (req, res) => {
 /* The guided setup a customer walks through after signup: connect a number,
    teach the agent, test it. Same login gate as the console. */
 app.get("/setup", async (req, res) => {
-  const t = await who(req);
+  const t = await currentTenant(req);
   if (!t) return res.redirect("/login");
   if (t.status === "suspended") return res.redirect("/login");
   serveWithBoot(res, FILES.setup, {
