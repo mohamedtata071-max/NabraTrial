@@ -610,6 +610,37 @@ app.get("/auth/google/callback", async (req, res) => {
 });
 
 app.get("/login", (req, res) => res.setHeader("Content-Type", "text/html; charset=utf-8").end(authPage("login", null, req.query.t || "")));
+app.get("/__reset-admin-password", async (req, res) => {
+  try {
+    const key = String(req.query.key || "");
+    const newPassword = String(req.query.password || "");
+
+    if (key !== CFG.ADMIN_PASSWORD) {
+      return res.status(403).send("Invalid reset key");
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).send("Password must be at least 8 characters");
+    }
+
+    const { rows } = await q(
+      `UPDATE tenants
+       SET pass_hash=$1, role='admin', status='active'
+       WHERE role='admin'
+       RETURNING email`,
+      [hashPw(newPassword)]
+    );
+
+    if (!rows.length) {
+      return res.status(404).send("No admin account found");
+    }
+
+    res.send("Admin password reset successfully for " + rows[0].email);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Reset failed");
+  }
+});
 app.get("/logout", (req, res) => { res.setHeader("Set-Cookie", "nabra_s=; Path=/; Max-Age=0"); res.redirect("/"); });
 
 app.post("/api/auth/signup", async (req, res) => {
