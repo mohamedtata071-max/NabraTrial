@@ -335,7 +335,7 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 const FILES = {
-  site: path.join(CFG.DIR, "nabra-voice-ai.html"),
+  site: path.join(CFG.DIR, "index.html"),
   dash: path.join(CFG.DIR, "nabra-dashboard.html"),
   admin: path.join(CFG.DIR, "admin-panel.html"),
   legal: path.join(CFG.DIR, "legal-public.html"),
