@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light only">
+<meta name="theme-color" content="#EEF2F9">
+<title>Console — NABRA</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E0F11'/%3E%3Cpath d='M16 8a2.6 2.6 0 0 0-2.6 2.6v5.6a2.6 2.6 0 0 0 5.2 0v-5.6A2.6 2.6 0 0 0 16 8z' fill='%23FCFCFB'/%3E%3Cpath d='M21.4 15.6v1a5.4 5.4 0 0 1-10.8 0v-1' stroke='%23B8501C' stroke-width='1.7' fill='none' stroke-linecap='round'/%3E%3Cline x1='16' y1='22' x2='16' y2='24.5' stroke='%23FCFCFB' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Chivo+Mono:wght@300;400;500&family=Alexandria:wght@300;400;500;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:only light;
+  --ink:#163466;
+  --ink-deep:#0E2450;
+  --on-ink:#EEF3FA;
+  --bone:#EEF2F9; --bone-hi:#FFFFFF; --paper:#DEE6F3;
+  --fg:#163466; --fg-mute:#4A5F86; --fg-faint:#8394B2;
+  --rule:rgba(22,52,102,.115); --rule-soft:rgba(22,52,102,.055);
+  --ember:#C08A2E; --ember-wash:rgba(192,138,46,.07);
+  --display:'Plus Jakarta Sans',system-ui,sans-serif;
+  --body:'Plus Jakarta Sans',system-ui,sans-serif;
+  --mono:'Chivo Mono',ui-monospace,monospace;
+  --ar-display:'Alexandria',sans-serif;
+  --ar-body:'IBM Plex Sans Arabic',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --rail:236px;
+}
+@media (prefers-color-scheme: dark){
+  :root{color-scheme:only light}
+  html,body{background:#EEF2F9 !important;color:#163466 !important}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+html{background:#EEF2F9;color-scheme:only light}
+body{background:var(--bone);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+html[dir="rtl"] body{font-family:var(--ar-body)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px;border-radius:4px}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--rule);border-radius:3px}
+
+.mono{font-family:var(--mono)}
+.lbl{font-family:var(--mono);font-size:.58rem;letter-spacing:.17em;text-transform:uppercase;color:var(--fg-faint)}
+html[dir="rtl"] .lbl{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.72rem}
+.ser{font-family:var(--display);font-weight:700;letter-spacing:-.025em;letter-spacing:-.01em}
+html[dir="rtl"] .ser{font-family:var(--ar-display)}
+
+/* ---------------- shell ---------------- */
+.app{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100vh}
+@media(max-width:900px){.app{grid-template-columns:1fr}}
+
+.rail{
+  border-inline-end:1px solid var(--rule);background:var(--bone-hi);
+  display:flex;flex-direction:column;padding:1.2rem .8rem;position:sticky;top:0;height:100vh;
+}
+@media(max-width:900px){
+  .rail{position:fixed;inset-block:0;inset-inline-start:0;width:var(--rail);z-index:80;
+    transform:translateX(-100%);transition:transform .4s var(--ease);box-shadow:0 0 60px rgba(22,52,102,.18)}
+  html[dir="rtl"] .rail{transform:translateX(100%)}
+  .rail.open{transform:none}
+}
+.brand{display:flex;align-items:center;gap:.5rem;padding:.2rem .5rem 1.3rem;border-bottom:1px solid var(--rule);margin-bottom:1rem}
+.brand .mk{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:1.35rem}
+.brand .dot{width:5px;height:5px;border-radius:50%;background:var(--ember)}
+.brand .sub{font-family:var(--mono);font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-faint);margin-inline-start:auto}
+
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.nav .grp{font-family:var(--mono);font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-faint);padding:1rem .6rem .4rem}
+html[dir="rtl"] .nav .grp{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.68rem}
+.nav button{
+  display:flex;align-items:center;gap:.65rem;padding:.55rem .6rem;border-radius:9px;
+  font-size:.87rem;color:var(--fg-mute);text-align:start;transition:background .25s,color .25s;
+}
+.nav button svg{width:15px;height:15px;flex-shrink:0;opacity:.75}
+.nav button:hover{background:var(--paper);color:var(--fg)}
+.nav button[aria-current="true"]{background:var(--fg);color:var(--bone-hi)}
+.nav button[aria-current="true"] svg{opacity:1}
+.nav .pill{margin-inline-start:auto;font-family:var(--mono);font-size:.58rem;background:var(--ember-wash);color:var(--ember);padding:.1rem .35rem;border-radius:4px}
+.nav button[aria-current="true"] .pill{background:rgba(255,255,255,.16);color:#fff}
+
+.rail-foot{border-top:1px solid var(--rule);padding-top:.9rem;margin-top:.6rem}
+.acct{display:flex;align-items:center;gap:.6rem;padding:.4rem .5rem;border-radius:9px}
+.acct:hover{background:var(--paper)}
+.acct .av{width:30px;height:30px;border-radius:50%;background:var(--fg);color:var(--bone-hi);display:grid;place-items:center;font-size:.72rem;font-weight:600;flex-shrink:0}
+.acct .nm{display:block;font-size:.82rem;font-weight:500;line-height:1.3}
+.acct .pl{display:block;font-size:.68rem;color:var(--fg-faint);line-height:1.3}
+
+/* ---------------- topbar ---------------- */
+.main{min-width:0;display:flex;flex-direction:column}
+.top{
+  position:sticky;top:0;z-index:40;background:rgba(238,243,250,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--rule);padding:.85rem clamp(1rem,3vw,2rem);
+  display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+}
+.burger{display:none;width:32px;height:32px;border:1px solid var(--rule);border-radius:8px;place-items:center}
+@media(max-width:900px){.burger{display:grid}}
+.top h1{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:1.35rem;font-weight:400;line-height:1}
+html[dir="rtl"] .top h1{font-family:var(--ar-display);font-size:1.2rem;line-height:1.35}
+.top .right{margin-inline-start:auto;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+
+.live-chip{display:inline-flex;align-items:center;gap:.45rem;border:1px solid var(--rule);border-radius:999px;padding:.35rem .7rem;
+  font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-mute)}
+html[dir="rtl"] .live-chip{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.72rem}
+.live-chip .ld{width:6px;height:6px;border-radius:50%;background:var(--ember);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.langsel{display:flex;border:1px solid var(--rule);border-radius:999px;padding:2px;position:relative}
+.langsel button{padding:.28rem .6rem;border-radius:999px;font-size:.74rem;color:var(--fg-mute);transition:all .3s}
+.langsel button[aria-pressed="true"]{background:var(--fg);color:var(--bone-hi)}
+.langsel button:nth-child(n+2){font-family:var(--ar-body)}
+
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:999px;
+  border:1px solid var(--fg);background:var(--fg);color:var(--bone-hi);font-size:.82rem;font-weight:500;transition:transform .25s var(--ease)}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--rule)}
+.btn.ghost:hover{border-color:var(--fg)}
+.btn svg{width:14px;height:14px}
+
+.view{padding:clamp(1.1rem,3vw,2rem);flex:1;display:none;animation:fade .45s var(--ease)}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------------- primitives ---------------- */
+.grid{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:14px;overflow:hidden}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:980px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}}
+@media(max-width:520px){.g4{grid-template-columns:1fr}}
+
+.stat{background:var(--bone-hi);padding:1.15rem 1.2rem;display:flex;flex-direction:column;gap:.35rem;min-height:118px}
+.stat .v{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:2rem;line-height:1}
+.stat .d{font-size:.76rem;color:var(--fg-mute)}
+.stat .spark{margin-top:auto;display:flex;align-items:flex-end;gap:2px;height:26px}
+.stat .spark i{flex:1;background:var(--fg);opacity:.16;border-radius:1px}
+.stat .spark i:last-child{opacity:.85;background:var(--ember)}
+
+.card{background:var(--bone-hi);border:1px solid var(--rule);border-radius:14px;padding:1.2rem 1.25rem}
+.card h3{font-size:.92rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem}
+.card h3 .more{margin-inline-start:auto;font-size:.75rem;color:var(--fg-mute);font-weight:400}
+
+.cols{display:grid;grid-template-columns:1.4fr 1fr;gap:1rem;margin-top:1rem}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{font-family:var(--mono);font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;color:var(--fg-faint);
+  text-align:start;padding:.55rem .6rem;border-bottom:1px solid var(--rule);white-space:nowrap;font-weight:400}
+html[dir="rtl"] th{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.7rem}
+td{padding:.78rem .6rem;border-bottom:1px solid var(--rule-soft);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .2s}
+tbody tr:hover{background:var(--paper)}
+td.num{font-family:var(--mono);font-size:.78rem;color:var(--fg-mute);white-space:nowrap;direction:ltr}
+td .ar{font-family:var(--ar-body);direction:rtl;display:inline-block}
+.tw{overflow-x:auto;margin-inline:-.3rem}
+
+.tag{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:.2rem .45rem;border-radius:4px;border:1px solid var(--rule);color:var(--fg-mute);white-space:nowrap}
+html[dir="rtl"] .tag{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.7rem}
+.tag.on{border-color:var(--fg);color:var(--fg)}
+.tag.hot{border-color:rgba(192,138,46,.4);color:var(--ember);background:var(--ember-wash)}
+.tag.dim{color:var(--fg-faint)}
+
+.bar{height:4px;background:var(--paper);border-radius:2px;overflow:hidden;min-width:70px}
+.bar span{display:block;height:100%;background:var(--fg);border-radius:2px;transition:width .8s var(--ease)}
+
+.rowline{display:flex;align-items:center;gap:.8rem;padding:.78rem 0;border-bottom:1px solid var(--rule-soft)}
+.rowline:last-child{border-bottom:none}
+.rowline .who{width:28px;height:28px;border-radius:50%;background:var(--paper);display:grid;place-items:center;font-size:.68rem;font-weight:600;color:var(--fg-mute);flex-shrink:0}
+.rowline .t1{display:block;font-size:.85rem;font-weight:500;line-height:1.4}
+.rowline .t2{display:block;font-size:.74rem;color:var(--fg-faint);margin-top:.15rem;line-height:1.4}
+.rowline .end{margin-inline-start:auto;text-align:end}
+
+.empty{padding:2.4rem 1rem;text-align:center;color:var(--fg-faint);font-size:.85rem}
+
+
+/* script library + knowledge */
+.pick{display:flex;gap:.5rem;flex-wrap:wrap}
+.pick button{border:1px solid var(--rule);border-radius:10px;padding:.5rem .85rem;font-size:.83rem;color:var(--fg-mute);display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;transition:all .25s;text-align:start}
+.pick button:hover{border-color:var(--fg);color:var(--fg)}
+.pick button[aria-pressed="true"]{background:var(--fg);color:var(--bone-hi);border-color:var(--fg)}
+.pick button .sub{font-size:.66rem;opacity:.65;font-weight:400}
+.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem}
+@media(max-width:1120px){.vgrid{grid-template-columns:1fr}}
+.vcard{background:var(--bone-hi);border:1px solid var(--rule);border-radius:14px;padding:1.05rem;display:flex;flex-direction:column;gap:.75rem;transition:border-color .25s}
+.vcard:hover{border-color:var(--fg)}
+.vcard .conv{display:flex;flex-direction:column;gap:.5rem;background:var(--paper);border-radius:10px;padding:.85rem .9rem;flex:1}
+.vcard .conv p{font-size:.85rem;line-height:1.85;margin:0}
+.vcard .conv p[data-by="u"]{color:var(--fg-faint)}
+.vcard .conv p .w{font-family:var(--mono);font-size:.5rem;letter-spacing:.13em;text-transform:uppercase;color:var(--fg-faint);display:block;margin-bottom:.05rem}
+html[dir="rtl"] .vcard .conv p .w{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.62rem}
+.vcard .conv p.msarab{font-family:var(--ar-body);direction:rtl;text-align:right}
+.vcard .conv p.msen{direction:ltr;text-align:left}
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:14px;overflow:hidden}
+@media(max-width:980px){.kgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kgrid{grid-template-columns:1fr}}
+.kmethod{background:var(--bone-hi);padding:1.05rem 1.1rem;display:flex;flex-direction:column;gap:.4rem;cursor:pointer;text-align:start;transition:background .25s;min-height:148px}
+.kmethod:hover{background:var(--paper)}
+.kmethod[aria-pressed="true"]{background:var(--fg)}
+.kmethod[aria-pressed="true"] .ser{color:var(--bone-hi)}
+.kmethod[aria-pressed="true"] .d,.kmethod[aria-pressed="true"] .lbl{color:rgba(255,255,255,.66)}
+.kmethod .d{font-size:.76rem;color:var(--fg-mute);line-height:1.65}
+.drop{border:1.5px dashed var(--rule);border-radius:12px;padding:2rem 1rem;text-align:center;color:var(--fg-faint);font-size:.85rem;cursor:pointer;transition:all .25s}
+.drop:hover{border-color:var(--ember);color:var(--fg-mute);background:var(--ember-wash)}
+.prog{display:flex;flex-direction:column;gap:.55rem;padding:.3rem 0}
+.prog .st{display:flex;align-items:center;gap:.6rem;font-size:.83rem;color:var(--fg-faint);transition:color .3s}
+.prog .st.done{color:var(--fg)}
+.prog .st .dotp{width:7px;height:7px;border-radius:50%;background:var(--rule);flex:none;transition:background .3s}
+.prog .st.done .dotp{background:var(--ember)}
+.menu-ed input{background:var(--bone);border:1px solid var(--rule-soft);border-radius:6px;padding:.28rem .45rem;font:inherit;font-size:.82rem;width:100%}
+.menu-ed input.arv{font-family:var(--ar-body);direction:rtl;text-align:right}
+.menu-ed input.pr{font-family:var(--mono);width:76px;text-align:end;direction:ltr}
+.provpick{display:flex;flex-direction:column;gap:.3rem;margin-top:.2rem}
+.provpick button{border:1px solid var(--rule);border-radius:8px;padding:.35rem .6rem;font-size:.76rem;color:var(--fg-mute);text-align:start;transition:all .2s}
+.provpick button:hover{border-color:var(--fg);color:var(--fg)}
+.scgrid{display:grid;grid-template-columns:1fr 260px;gap:1rem;align-items:end}
+@media(max-width:760px){.scgrid{grid-template-columns:1fr}}
+summary::-webkit-details-marker{display:none}
+
+/* transcript viewer */
+.tr{display:flex;flex-direction:column;gap:.85rem;max-height:420px;overflow-y:auto;padding-inline-end:.3rem}
+.tr .ln{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start}
+.tr .ln .w{font-family:var(--mono);font-size:.54rem;letter-spacing:.13em;text-transform:uppercase;color:var(--fg-faint);padding-top:.28rem;white-space:nowrap}
+html[dir="rtl"] .tr .ln .w{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.68rem}
+.tr .ln .x{font-family:var(--ar-body);direction:rtl;text-align:right;font-size:.92rem;line-height:1.85}
+.tr .ln[data-by="ai"] .x{color:var(--ember)}
+
+/* toggles */
+.sw{width:36px;height:20px;border-radius:10px;background:var(--paper);border:1px solid var(--rule);position:relative;transition:background .3s}
+.sw::after{content:"";position:absolute;top:2px;inset-inline-start:2px;width:14px;height:14px;border-radius:50%;background:var(--fg-faint);transition:.3s}
+.sw[aria-pressed="true"]{background:var(--fg);border-color:var(--fg)}
+.sw[aria-pressed="true"]::after{inset-inline-start:18px;background:#fff}
+
+.fld{margin-bottom:.85rem}
+.fld label{display:block;font-family:var(--mono);font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--fg-faint);margin-bottom:.35rem}
+html[dir="rtl"] .fld label{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.7rem}
+.fld input,.fld select,.fld textarea{width:100%;background:var(--bone);border:1px solid var(--rule);border-radius:9px;
+  padding:.6rem .75rem;font-family:inherit;font-size:.87rem;color:var(--fg);outline:none;transition:border-color .25s}
+.fld textarea{min-height:150px;resize:vertical;line-height:1.7}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--fg)}
+.fld.ar textarea,.fld.ar input{font-family:var(--ar-body);direction:rtl;text-align:right}
+
+.seg{display:flex;gap:.35rem;flex-wrap:wrap}
+.seg button{padding:.4rem .75rem;border:1px solid var(--rule);border-radius:8px;font-size:.8rem;color:var(--fg-mute);transition:all .25s}
+.seg button[aria-pressed="true"]{border-color:var(--fg);color:var(--fg);background:var(--paper);font-weight:600}
+
+.note{font-size:.76rem;color:var(--fg-faint);line-height:1.65;border-top:1px solid var(--rule-soft);padding-top:.9rem;margin-top:1rem}
+
+.scrim{position:fixed;inset:0;background:rgba(22,52,102,.35);z-index:70;opacity:0;pointer-events:none;transition:opacity .35s}
+.scrim.open{opacity:1;pointer-events:auto}
+@media(min-width:901px){.scrim{display:none}}
+
+.vpanel{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;padding:1rem;
+  background:rgba(22,52,102,.4);backdrop-filter:blur(6px)}
+.vpanel.open{display:flex}
+.vbox{background:var(--bone-hi);border:1px solid var(--rule);border-radius:16px;width:min(560px,100%);
+  max-height:92vh;overflow-y:auto;padding:clamp(1.3rem,3vw,1.8rem)}
+.vbox .vtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.vbox h3{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:1.5rem;font-weight:400}
+.vbox .vlead{font-size:.84rem;color:var(--fg-mute);line-height:1.7;margin-bottom:1.4rem}
+.vrow{display:grid;grid-template-columns:26px 1fr;gap:.8rem;padding:.9rem 0;border-top:1px solid var(--rule-soft)}
+.vrow .vnum{width:24px;height:24px;border-radius:50%;border:1px solid var(--rule);display:grid;place-items:center;
+  font-family:var(--mono);font-size:.6rem;color:var(--fg-mute)}
+.vrow.done .vnum{background:var(--fg);border-color:var(--fg);color:var(--bone-hi)}
+.vrow .vt{display:block;font-size:.9rem;font-weight:600}
+.vrow .vd{display:block;font-size:.78rem;color:var(--fg-mute);line-height:1.6;margin-top:.2rem}
+.codebox{display:flex;align-items:center;gap:.7rem;margin-top:.7rem;flex-wrap:wrap}
+.codebox .cd{font-family:var(--mono);font-size:1.35rem;letter-spacing:.32em;background:var(--paper);
+  border:1px solid var(--rule);border-radius:9px;padding:.5rem .8rem}
+.codebox .ct{font-family:var(--mono);font-size:.68rem;color:var(--fg-faint)}
+.codebox .cn{font-family:var(--mono);font-size:.92rem;color:var(--fg);direction:ltr}
+.vstatus{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.58rem;
+  letter-spacing:.13em;text-transform:uppercase;padding:.22rem .5rem;border-radius:5px;margin-top:.6rem}
+.vstatus.pend{background:var(--paper);color:var(--fg-mute)}
+.vstatus.ok{background:rgba(22,52,102,.06);color:var(--fg)}
+.vstatus.bad{background:var(--ember-wash);color:var(--ember)}
+.toast{position:fixed;inset-block-end:1.3rem;inset-inline-start:1.3rem;z-index:200;
+  background:var(--fg);color:var(--bone-hi);padding:.7rem 1.1rem;border-radius:10px;font-size:.85rem;
+  opacity:0;transform:translateY(10px);pointer-events:none;transition:.4s var(--ease)}
+.toast.show{opacity:1;transform:none}
+
+/* ==== FORCED-DARK HARDENING ====================================
+   Some in-app browsers (notably iOS) repaint pages that theme via
+   CSS variables. Literal values plus !important cannot be reached
+   that way, so the page stays light wherever it is opened. */
+html{color-scheme:only light !important;background:#EEF2F9 !important;background-color:#EEF2F9 !important}
+body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#163466 !important}
+@media (prefers-color-scheme:dark){
+  :root{color-scheme:only light !important}
+  html,body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#163466 !important}
+}
+@media (prefers-color-scheme:dark){
+  .card,.stat,.topbar,.side,table{background:#FFFFFF !important}
+  h1,h2,h3,.ser,.v{color:#163466 !important}
+  .lbl,.note{color:#4A5F86 !important}
+  .btn{background:#163466 !important;color:#FFFFFF !important}
+  .btn.ghost{background:transparent !important;color:#163466 !important}
+}
+
+.empty{padding:2.6rem 1.5rem;text-align:center;border:1px dashed var(--rule);border-radius:10px;background:#FFFFFF}
+.empty h4{font-size:1.05rem;font-weight:600;margin-bottom:.35rem}
+.empty p{color:var(--fg-mute);font-size:.9rem;max-width:44ch;margin-inline:auto}
+.empty .btn{margin-top:1rem}
+.sample{font-size:.8rem;color:var(--fg-mute);padding:.45rem .8rem;border:1px solid var(--rule);border-radius:99px;display:inline-block;margin-bottom:1rem}
+.stag{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:.15rem .5rem;border-radius:99px}
+.stag.live{background:rgba(27,122,74,.1);color:#1B7A4A}.stag.draft{background:var(--paper);color:var(--fg-mute)}.stag.paused{background:rgba(192,138,46,.1);color:#C08A2E}
+
+/* Text fill must follow each element's own colour. Setting it to a fixed value
+   on body inherits everywhere and repaints light text on dark buttons black,
+   which is invisible. currentColor keeps the forced-dark protection without
+   that side effect. */
+*,*::before,*::after{-webkit-text-fill-color:currentColor}
+
+/* calendar */
+.cal-top{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem}
+.cal-top b{font-size:1rem}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-d{position:relative;aspect-ratio:1;border:1px solid var(--rule-soft);border-radius:8px;background:#fff;
+  cursor:pointer;font-family:var(--body);font-size:.82rem;color:var(--fg);display:grid;place-items:center;padding:0}
+.cal-d.out{color:var(--fg-faint);background:transparent;border-color:transparent}
+.cal-d.today{border-color:var(--ember)}
+.cal-d.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cal-d i{position:absolute;bottom:5px;inset-inline-end:5px;width:16px;height:16px;border-radius:50%;
+  background:var(--ember);color:#fff;font-style:normal;font-size:.58rem;display:grid;place-items:center}
+.cal-d.sel i{background:#fff;color:var(--ink)}
+.cal-sub{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:1.1rem;padding-top:1rem;
+  border-top:1px solid var(--rule-soft);font-size:.82rem;color:var(--fg-mute)}
+.cal-sub code{font-family:var(--mono);font-size:.72rem;background:var(--paper);padding:.3rem .5rem;
+  border-radius:6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.daylist{display:grid;gap:1px;background:var(--rule-soft);border:1px solid var(--rule-soft);border-radius:10px;overflow:hidden;margin-top:.8rem}
+.bk{display:grid;grid-template-columns:auto 1fr auto;gap:.8rem;align-items:center;background:#fff;padding:.75rem .9rem}
+.bk .bt{font-family:var(--mono);font-size:.78rem;color:var(--ember)}
+.bk .bb{display:flex;flex-direction:column;min-width:0}
+.bk .t1{font-size:.92rem;font-weight:500}
+.bk .t2{font-size:.78rem;color:var(--fg-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bk .bst{font-family:var(--body);font-size:.76rem;padding:.3rem .45rem;border:1px solid var(--rule);
+  border-radius:7px;background:var(--bone);color:var(--fg)}
+
+.bk .oh{font-style:normal;font-family:var(--mono);font-size:.56rem;letter-spacing:.07em;text-transform:uppercase;
+  padding:.12rem .4rem;border-radius:99px;background:rgba(192,138,46,.16);color:#8A5A00;margin-inline-start:.35rem}
+.oh-note{margin-top:.9rem;font-size:.8rem;color:var(--fg-mute);border-inline-start:2px solid var(--ember);
+  padding-inline-start:.7rem;line-height:1.55}
+.cal-d.req::after{content:"";position:absolute;top:5px;inset-inline-start:5px;width:5px;height:5px;
+  border-radius:50%;background:#C08A2E}
+
+.plancard{display:flex;flex-wrap:wrap;align-items:center;gap:1.2rem 2rem;margin-bottom:1rem}
+.pc-main{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.pc-k{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-mute)}
+.pc-plan{font-size:1.15rem;font-weight:600}
+.pc-cyc{font-size:.82rem;font-weight:400;color:var(--fg-mute)}
+.pc-state{font-size:.72rem;padding:.2rem .6rem;border-radius:99px}
+.pc-state.ok{background:rgba(27,122,74,.12);color:#1B7A4A}
+.pc-state.warn{background:var(--ember-wash);color:#8A5A00}
+.pc-side{display:flex;flex-direction:column;gap:.1rem;margin-inline-start:auto}
+.pc-side b{font-size:1.15rem;font-weight:600}
+.pc-warn{flex-basis:100%;margin:0;font-size:.86rem;color:var(--fg-mute);
+  border-inline-start:2px solid var(--ember);padding-inline-start:.7rem;line-height:1.5}
+
+.rail .brand{text-decoration:none;color:inherit;display:flex;align-items:center;gap:.5rem}
+.railfoot-links{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.9rem}
+.railfoot-links a{font-size:.8rem;color:var(--fg-mute);text-decoration:none}
+.railfoot-links a:hover{color:var(--ember)}
+</style>
+</head>
+<body>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="app">
+  <!-- ============ RAIL ============ -->
+  <aside class="rail" id="rail">
+    <a class="brand" href="/" title="Back to the site">
+      <span class="mk">NABRA</span><span class="dot"></span>
+      <span class="sub">Console</span>
+    </a>
+
+    <nav class="nav" id="nav"></nav>
+
+    <div class="rail-foot">
+      <div class="railfoot-links">
+        <a href="/setup">Set up an agent</a>
+        <a href="/legal">Terms &amp; privacy</a>
+      </div>
+      <div class="acct">
+        <span class="av">MT</span>
+        <span>
+          <span class="nm" id="acctName">Mohamed T.</span>
+          <span class="pl" id="acctPlan">Growth plan</span>
+        </span>
+        <a href="/logout" class="pl" id="acctOut" data-k="logout" style="margin-inline-start:auto;font-size:.68rem;color:var(--fg-faint)">Sign out</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="top">
+      <button class="burger" id="burger" aria-label="Menu">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h1 id="viewTitle">Overview</h1>
+      <div class="right">
+        <span class="live-chip"><span class="ld"></span><span id="liveCount">3 live calls</span></span>
+        <div class="langsel">
+          <button data-setlang="en" aria-pressed="true">EN</button>
+          <button data-setlang="ar" aria-pressed="false">عربية</button>
+          <button data-setlang="eg" aria-pressed="false">مصري</button>
+        </div>
+        <button class="btn" id="newAgent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span data-k="new">New agent</span></button>
+      </div>
+    </header>
+
+    <section class="view on" data-view="overview" id="v-overview"></section>
+    <section class="view" data-view="calls" id="v-calls"></section>
+    <section class="view" data-view="agents" id="v-agents"></section>
+    <section class="view" data-view="scripts" id="v-scripts"></section>
+    <section class="view" data-view="knowledge" id="v-knowledge"></section>
+    <section class="view" data-view="campaigns" id="v-campaigns"></section>
+    <section class="view" data-view="orders" id="v-orders"></section>
+    <section class="view" data-view="bookings" id="v-bookings"></section>
+    <section class="view" data-view="leads" id="v-leads"></section>
+    <section class="view" data-view="recordings" id="v-recordings"></section>
+    <section class="view" data-view="routes" id="v-routes"></section>
+    <section class="view" data-view="numbers" id="v-numbers"></section>
+    <section class="view" data-view="billing" id="v-billing"></section>
+  </div>
+</div>
+
+<div class="vpanel" id="vpanel"><div class="vbox" id="vbox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+
+/* ---------------- i18n ---------------- */
+const T={
+ en:{
+  overview:"Overview",calls:"Calls",agents:"Agents",campaigns:"Campaigns",leads:"Leads",bookings:"Bookings",orders:"Orders",numbers:"Numbers",billing:"Billing",
+  gOps:"Operations",gBuild:"Build",gAcct:"Account",new:"New agent",
+  live:"live calls",
+  s1:"Calls handled",s2:"Booked",s3:"Qualified leads",s4:"Minutes used",
+  d1:"last 7 days",d2:"this month",d3:"awaiting a rep",d4:"of your monthly allowance",
+  liveNow:"Live right now",recent:"Recent outcomes",viewAll:"View all",
+  colWhen:"When",colFrom:"From",colDir:"Direction",colLang:"Language",colDur:"Length",colOut:"Outcome",colAgent:"Agent",
+  inb:"Inbound",outb:"Outbound",
+  oBooked:"Booked",oQual:"Qualified",oTransfer:"Transferred",oNo:"Not interested",oMiss:"No answer",
+  transcript:"Transcript",picked:"Select a call to read the transcript.",
+  agentName:"Agent",agentRole:"Handles",agentVoice:"Voice",agentStatus:"Status",
+  on:"Live",off:"Paused",edit:"Edit script",
+  script:"What the agent says",scriptHint:"Write it the way your team actually speaks. Masri is fine.",
+  dialect:"Dialect",voice:"Voice",save:"Save agent",
+  cName:"Campaign",cLeads:"Leads",cProgress:"Progress",cConv:"Booked",cState:"State",
+  start:"Start",pause:"Pause",
+  lName:"Name",lPhone:"Phone",lCo:"Company",lState:"Status",lAttempt:"Attempts",lNext:"Next action",
+  upload:"Upload list",filterAll:"All",
+  routes:"Where leads go",
+  rtLead:"When a call ends, the agent decides what happened — then does something about it before hanging up.",
+  rtDest:"Destinations",rtDestL:"Where the agent can write. Connect once, use in any rule.",
+  rtRules:"Rules",rtRulesL:"Read each one as: when this happens on a call, do these things.",
+  rtWhen:"When a call ends as",rtThen:"then",rtOn:"Live",rtOff:"Paused",
+  dCrm:"Your CRM",dCrmD:"Creates or updates the contact with everything the agent learned",
+  dCal:"Calendar",dCalD:"Books the slot the caller agreed to, and blocks it",
+  dWa:"WhatsApp",dWaD:"Sends the confirmation before the call ends",
+  dSheet:"Spreadsheet",dSheetD:"Appends a row — useful while you are still deciding on a CRM",
+  dHook:"Webhook",dHookD:"Posts the full call payload to any endpoint you own",
+  connect:"Connect",connected:"Connected",disconnect:"Disconnect",
+  rtFields:"What gets sent",rtFieldsL:"Extracted from the conversation itself, not from a form.",
+  fName:"Name",fPhone:"Phone",fCompany:"Company",fIntent:"Intent",fBudget:"Budget",fTimeline:"Timeline",
+  fSlot:"Booked slot",fLang:"Language",fSummary:"Summary",fTranscript:"Transcript link",fScore:"Qualification",
+  fSource:"Source",rtTest:"Send a test",rtTestD:"Pushes one sample lead so you can check it lands in the right place.",
+  rtNone:"nothing yet — pick a destination",
+  recordings:"Recordings",recOn:"Recording",recOff:"Recording off",
+  recLead:"Egyptian law requires every party to consent before a call is recorded.",
+  recBody:"With recording on, the agent states at the start of each call that it is being recorded and the caller can decline. Declined calls are never stored. Transcripts are unaffected — they are produced for you as operator, not captured from the caller's voice.",
+  recToggle:"Record calls on this agent",recRetain:"Delete recordings after",recDays:"days",
+  recConsent:"Consent",recGiven:"Given",recDeclined:"Declined",recNone:"No recording",
+  colPlay:"Audio",play:"Play",unavailable:"Not stored",
+  recStore:"Stored in Egypt",recExport:"Export",recDelete:"Delete",
+  numLabel:"Number",numUse:"Used by",numRegion:"Region",numAdd:"Add a number",
+  numMine:"Your numbers",numType:"Type",numStatus:"Status",numActive:"Active",numPending:"Connecting",
+  numConnect:"Connect a number you already own",
+  numConnectLead:"Keep the number your customers already know. Nothing printed on your vans or invoices has to change.",
+  numM1:"Call forwarding",numM1d:"Fastest route, works with any line including a hotline. You set unconditional forwarding on your existing number to the connector number we give you. Live the same day.",
+  numM2:"SIP redirect",numM2d:"If you already run a PBX or SIP trunk, point a route at us instead of forwarding. Better audio and no forwarding charges from your carrier.",
+  numM3:"Port the number to us",numM3d:"We take over the number entirely. Cleanest long term, but it takes weeks and needs paperwork with your current operator. Hotlines are slower still.",
+  numRec:"Recommended for hotlines",numFast:"Live today",numBest:"Best quality",numSlow:"Weeks",
+  numStart:"Start",numBuy:"Buy a number from us",
+  numBuyLead:"We provision it on a licensed Egyptian carrier and it appears here ready to use.",
+  numSetup:"Setup",numMonthly:"Monthly",numGet:"Get this number",
+  numT1:"Cairo landline",numT1d:"02 xxxx xxxx · what most businesses use",
+  numT2:"National number",numT2d:"reachable countrywide at local rates",
+  numT3:"Mobile number",numT3d:"01x · answered more often on outbound",
+  numT4:"Hotline short code",numT4d:"16xxx / 19xxx · assigned by the regulator, allow several weeks",
+  vTitle:"Verify the number",vClose:"Close",
+  vLead:"Caller ID can be forged, so we check two independent things: that you can call from the line, and that you can answer on it.",
+  vs1:"Call us from that line",vs1d:"Dial the verification number below from the number you are connecting, then key in this code.",
+  vs2:"Enter the code we read back",vs2d:"We ring the number and read a second code to whoever answers. Type it here.",
+  vs3:"Set the forward, then test",vs3d:"Point your line at the connector number. We place a live call to confirm it lands.",
+  vs4:"Signed authorisation",vs4d:"Porting only. Upload a signed letter plus a recent operator invoice in your company name.",
+  vCode:"Your code",vExpires:"Expires in",vCallNum:"Verification number",vEnter:"Code you heard",
+  vCheck:"Verify",vPending:"Waiting for your call",vDone:"Verified",vFail:"Not matched",
+  vAttempts:"attempts left",vOneAcct:"A number can be active on one account at a time.",
+  numQuote:"On request",numNote:"Numbers are provisioned on a licensed Egyptian operator. You are the subscriber of record and can port away at any time.",
+  plan:"Your plan",card:"Payment method",invoices:"Invoices",
+  changePlan:"Change plan",updateCard:"Update card",renews:"Renews",
+  cycM:"Billed monthly",cycY:"Billed yearly",ymFree:"2 months free",
+  perMo:"/month",perYr:"/year",approxMo:"≈{p}/month",ySave:"you save {s} a year vs monthly",
+  sample:"Sample data. Sign in to see your own account.",
+  kAgents:"Live agents",yourPlan:"Your plan",billedM:"billed monthly",billedY:"billed yearly",minsUsed:"Minutes used",stActive:"Active",stPending:"Waiting on payment",stUnverified:"Confirm your email to put an agent live. Check your inbox.",bkToday:"Today",bkWeek:"Week",bkMonth:"Month",bkNew:"Add booking",bkSub:"Subscribe in your calendar",bkCopy:"Copy link",bkCopied:"Link copied",bkNoneH:"Nothing booked yet",bkNoneP:"When an agent takes a booking on a call it appears here, and in any calendar you subscribe from.",bkOutside:"Outside hours",bkOutsideNote:"{n} request(s) for a time you are normally closed. They are not confirmed, and they are worth reading: repeated requests at the same hour are a reason to open then.",odNoneH:"No orders yet",odNoneP:"Switch orders on for an agent and anything it takes on a call lands here, with the items and the address.",odItems:"Order",odAddr:"Address",bkWhen:"When",bkWho:"Who",bkWhat:"For",bkAgent:"Agent",bkStatus:"Status",bkNoDay:"Nothing on this day",kCalls:"Calls, last 7 days",kLeads:"Leads captured",kMin:"Minutes used",
+  noAgentsH:"No agents yet",noAgentsP:"Create your first agent in about five minutes. Connect a line, teach it your business, test it, deploy.",
+  noAgentsB:"Create an agent",
+  noCallsH:"No calls yet",noCallsP:"Calls appear here the moment your first agent answers one, with the transcript and outcome.",
+  noLeadsH:"No leads yet",noLeadsP:"When an agent captures a caller's name and number, it lands here automatically.",
+  stDraft:"Draft",stLive:"Live",stPaused:"Paused",edit:"Edit",
+  inSetupH:"This lives in setup",inSetupP:"Your agent's knowledge, script and rules are edited in the guided setup, so the live agent and what you see here can never drift apart.",inSetupB:"Open setup",
+  soonH:"Not available yet",soonP:"This part of the product is not switched on for your account. Nothing here is hidden or broken; it does not exist yet, and we would rather say so than show you sample data.",
+  colOutcome:"Outcome",colMins:"Minutes",noTranscript:"No transcript for this call",pickCall:"Select a call to read it",
+  usage:"Usage this cycle",minutes:"Call minutes",agentsU:"Agents",numbersU:"Numbers",
+  invDate:"Date",invAmt:"Amount",invState:"Status",paid:"Paid",
+  logout:"Sign out",
+  saved:"Saved",started:"Campaign started",paused:"Campaign paused",
+  noWire:"This console is a working front end. Connect it to your account API to load real data.",
+  scripts:"Script library",knowledge:"Knowledge",
+  scLead:"Pick your business, what you want the calls to achieve, and the tone. We show you a few ready scripts side by side — change the tone and watch them rewrite themselves. Choose one and it becomes an agent.",
+  scStep1:"Your business",scStep2:"What should the call achieve",scStep3:"Tone",scStep4:"Pick a script",
+  bizLbl:"Business name",bizPh:"e.g. El Ezba Grill",
+  bRest:"Restaurant & café",bClinic:"Clinic",bRealty:"Real estate",bSalon:"Salon & spa",bShop:"Online store",bAuto:"Auto service",
+  gBook:"Reservations & booking",gQual:"Lead qualification",gSell:"Selling & upsell",gFollow:"Follow-up & reminders",gSupp:"FAQ & support",
+  tExcited:"Excited",tExcitedD:"High energy, big welcome",
+  tWarm:"Warm",tWarmD:"Friendly and personal",
+  tCalm:"Professional",tCalmD:"Calm, precise, no fuss",
+  tCloser:"Closer",tCloserD:"Pushes the sale, asks to close",
+  tFormal:"Formal",tFormalD:"Fusha, full courtesy",
+  vA:"Straight to it",vAD:"Asks early. Shortest calls.",
+  vB:"Ask first",vBD:"Two questions before it proposes.",
+  vC:"Lead with the offer",vCD:"Opens with what is in it for them.",
+  scHow:"How it sounds",scWhat:"The instructions it saves",scLang:"Script language",
+  scMenuTie:"Answers prices and dishes from your uploaded menu",
+  useScript:"Use this script",applyTo:"Which agent gets it?",newAgentOpt:"Create a new agent",
+  scRouteL:"When it books: write to the calendar and CRM, confirm on WhatsApp",
+  applyGo:"Apply",applied:"Script applied — it is on the agent now",
+  agCaller:"Caller",agAgent:"Agent",fromLib:"Start from the library",
+  knLead:"Whatever you put here, the agent answers from it — menus, price lists, opening hours, FAQs. Upload it once, and it stops guessing.",
+  knSources:"What it knows now",knAdd:"Teach it something new",
+  knItems:"items",knUpdated:"updated",knReady:"Live",knSecs:"sections",
+  kmType:"Type it in",kmTypeD:"A quick editor. Best for opening hours or a short list.",
+  kmSite:"Your website",kmSiteD:"Paste the address. We read the pages and pull out the menu and prices.",
+  kmScan:"Photo or scan",kmScanD:"Snap the printed menu with your phone. We read it — even the specials board.",
+  kmPdf:"PDF file",kmPdfD:"The file your designer sent. We pull the items and prices out of it.",
+  kmUrlPh:"https://your-restaurant.com",kmRead:"Read it",
+  kmDrop:"Drop the file here, or tap to choose",kmTypePh:"Grilled chicken — 260\nMixed grill (half kilo) — 480\nLamb chops — 520",
+  knProg1:"Reading the file",knProg2:"Finding the sections",knProg3:"Pulling items and prices",
+  knReview:"Check what we read",knReviewL:"Fix anything, then confirm. You can edit any time.",
+  knShowing:"showing the first",knOf:"of",
+  knConfirm:"Looks right — let the agent use it",knDone:"Done. The agent answers from this now.",
+  knSection:"Section",knItem:"Item",knPrice:"Price (EGP)",
+  knSrcMenu:"Menu",knSrcFaq:"FAQ & opening hours",knByPdf:"from PDF",knByScan:"from a scan",knBySite:"from your website",knByType:"typed in",
+  via:"via",pickProv:"Which one?",
+  provNabra:"Built-in CRM — your Leads tab",provHub:"HubSpot",provZoho:"Zoho CRM",
+  provGcal:"Google Calendar",provOut:"Outlook Calendar",provCaly:"Calendly",
+  cardOnFile:"Card on file",exp:"Expires"
+ },
+ ar:{
+  overview:"نظرة عامة",calls:"المكالمات",agents:"الوكلاء",campaigns:"الحملات",leads:"العملاء",bookings:"الحجوزات",orders:"الطلبات",numbers:"الأرقام",billing:"الفوترة",
+  gOps:"التشغيل",gBuild:"الإعداد",gAcct:"الحساب",new:"وكيل جديد",
+  live:"مكالمات جارية",
+  s1:"مكالمات تمت",s2:"مواعيد محجوزة",s3:"عملاء مؤهلون",s4:"دقائق مستخدمة",
+  d1:"آخر ٧ أيام",d2:"هذا الشهر",d3:"بانتظار مندوب",d4:"من حصتك الشهرية",
+  liveNow:"جارية الآن",recent:"أحدث النتائج",viewAll:"عرض الكل",
+  colWhen:"الوقت",colFrom:"من",colDir:"الاتجاه",colLang:"اللغة",colDur:"المدة",colOut:"النتيجة",colAgent:"الوكيل",
+  inb:"واردة",outb:"صادرة",
+  oBooked:"محجوز",oQual:"مؤهل",oTransfer:"محوّل",oNo:"غير مهتم",oMiss:"لا رد",
+  transcript:"النص",picked:"اختر مكالمة لقراءة نصها.",
+  agentName:"الوكيل",agentRole:"يتولى",agentVoice:"الصوت",agentStatus:"الحالة",
+  on:"يعمل",off:"متوقف",edit:"تعديل السكريبت",
+  script:"ما يقوله الوكيل",scriptHint:"اكتبه بالطريقة التي يتحدث بها فريقك فعلاً. العامية مناسبة.",
+  dialect:"اللهجة",voice:"الصوت",save:"حفظ الوكيل",
+  cName:"الحملة",cLeads:"العملاء",cProgress:"التقدم",cConv:"محجوز",cState:"الحالة",
+  start:"تشغيل",pause:"إيقاف",
+  lName:"الاسم",lPhone:"الهاتف",lCo:"الشركة",lState:"الحالة",lAttempt:"المحاولات",lNext:"الخطوة التالية",
+  upload:"رفع قائمة",filterAll:"الكل",
+  routes:"إلى أين تذهب الفرص",
+  rtLead:"عند انتهاء المكالمة يحدد الوكيل ما حدث، ثم ينفّذ إجراءً قبل أن يغلق الخط.",
+  rtDest:"الوجهات",rtDestL:"أين يستطيع الوكيل الكتابة. اربطها مرة واستخدمها في أي قاعدة.",
+  rtRules:"القواعد",rtRulesL:"اقرأ كل قاعدة هكذا: حين يحدث هذا في مكالمة، نفّذ ما يلي.",
+  rtWhen:"عند انتهاء المكالمة بـ",rtThen:"نفّذ",rtOn:"مفعّلة",rtOff:"متوقفة",
+  dCrm:"نظام العملاء لديك",dCrmD:"ينشئ جهة الاتصال أو يحدّثها بكل ما عرفه الوكيل",
+  dCal:"التقويم",dCalD:"يحجز الموعد الذي وافق عليه المتصل ويحجزه فعلياً",
+  dWa:"واتساب",dWaD:"يرسل التأكيد قبل انتهاء المكالمة",
+  dSheet:"جدول بيانات",dSheetD:"يضيف صفاً — مفيد وأنت لم تستقر على نظام عملاء بعد",
+  dHook:"Webhook",dHookD:"يرسل بيانات المكالمة كاملة إلى أي نقطة تملكها",
+  connect:"اربط",connected:"مربوط",disconnect:"فصل",
+  rtFields:"ما يُرسَل",rtFieldsL:"مستخلص من المحادثة نفسها، لا من نموذج.",
+  fName:"الاسم",fPhone:"الهاتف",fCompany:"الشركة",fIntent:"النية",fBudget:"الميزانية",fTimeline:"التوقيت",
+  fSlot:"الموعد المحجوز",fLang:"اللغة",fSummary:"الملخص",fTranscript:"رابط النص",fScore:"التأهيل",
+  fSource:"المصدر",rtTest:"أرسل تجربة",rtTestD:"يرسل عميلاً تجريبياً واحداً لتتأكد من وصوله في مكانه.",
+  rtNone:"لا شيء بعد — اختر وجهة",
+  recordings:"التسجيلات",recOn:"التسجيل مفعّل",recOff:"التسجيل معطّل",
+  recLead:"يشترط القانون المصري موافقة كل أطراف المكالمة قبل تسجيلها.",
+  recBody:"عند تفعيل التسجيل يوضح الوكيل في بداية كل مكالمة أنها تُسجَّل ويمكن للمتصل الرفض. والمكالمات المرفوضة لا تُحفظ إطلاقاً. أما النصوص فلا تتأثر لأنها تُنتَج لك بصفتك المشغّل وليست التقاطاً لصوت المتصل.",
+  recToggle:"تسجيل مكالمات هذا الوكيل",recRetain:"حذف التسجيلات بعد",recDays:"يوماً",
+  recConsent:"الموافقة",recGiven:"مُنحت",recDeclined:"رُفضت",recNone:"بدون تسجيل",
+  colPlay:"الصوت",play:"تشغيل",unavailable:"غير محفوظ",
+  recStore:"مخزَّنة في مصر",recExport:"تصدير",recDelete:"حذف",
+  numLabel:"الرقم",numUse:"يستخدمه",numRegion:"المنطقة",numAdd:"إضافة رقم",
+  numMine:"أرقامك",numType:"النوع",numStatus:"الحالة",numActive:"يعمل",numPending:"جارٍ التوصيل",
+  numConnect:"اربط رقماً تملكه بالفعل",
+  numConnectLead:"احتفظ بالرقم الذي يعرفه عملاؤك. لا شيء مطبوع على سياراتك أو فواتيرك يحتاج إلى تغيير.",
+  numM1:"تحويل المكالمات",numM1d:"الأسرع، ويعمل مع أي خط بما في ذلك الخط الساخن. تضبط تحويلاً غير مشروط من رقمك الحالي إلى رقم الربط الذي نعطيه لك. يعمل في نفس اليوم.",
+  numM2:"إعادة توجيه SIP",numM2d:"إذا كان لديك سنترال أو خط SIP، وجّه مساراً إلينا بدلاً من التحويل. جودة صوت أفضل وبلا رسوم تحويل من مشغّلك.",
+  numM3:"نقل الرقم إلينا",numM3d:"ننقل الرقم بالكامل. الأنظف على المدى الطويل، لكنه يستغرق أسابيع ويحتاج أوراقاً مع مشغّلك الحالي. والخطوط الساخنة أبطأ.",
+  numRec:"مناسب للخطوط الساخنة",numFast:"يعمل اليوم",numBest:"أفضل جودة",numSlow:"أسابيع",
+  numStart:"ابدأ",numBuy:"اشترِ رقماً منا",
+  numBuyLead:"نوفّره لدى مشغّل مصري مرخَّص ويظهر هنا جاهزاً للاستخدام.",
+  numSetup:"التأسيس",numMonthly:"شهرياً",numGet:"احصل على الرقم",
+  numT1:"خط أرضي بالقاهرة",numT1d:"٠٢ · ما تستخدمه معظم الشركات",
+  numT2:"رقم قومي",numT2d:"يُطلب من كل المحافظات بسعر المكالمة المحلية",
+  numT3:"رقم محمول",numT3d:"٠١ · يُرد عليه أكثر في المكالمات الصادرة",
+  numT4:"خط ساخن مختصر",numT4d:"١٦ / ١٩ · يخصصه الجهاز المنظّم، ويحتاج عدة أسابيع",
+  vTitle:"تحقق من الرقم",vClose:"إغلاق",
+  vLead:"رقم المتصل قابل للتزوير، لذلك نتحقق من أمرين مستقلين: أن تستطيع الاتصال من الخط، وأن تستطيع الرد عليه.",
+  vs1:"اتصل بنا من ذلك الخط",vs1d:"اتصل برقم التحقق أدناه من الرقم الذي تربطه، ثم أدخل هذا الرمز.",
+  vs2:"أدخل الرمز الذي نقرأه لك",vs2d:"نتصل بالرقم ونقرأ رمزاً ثانياً لمن يرد. اكتبه هنا.",
+  vs3:"اضبط التحويل ثم اختبر",vs3d:"وجّه خطك إلى رقم الربط، ونجري مكالمة حقيقية للتأكد من وصولها.",
+  vs4:"تفويض موقَّع",vs4d:"للنقل فقط. ارفع خطاب تفويض موقَّعاً وفاتورة حديثة من المشغّل باسم شركتك.",
+  vCode:"رمزك",vExpires:"ينتهي خلال",vCallNum:"رقم التحقق",vEnter:"الرمز الذي سمعته",
+  vCheck:"تحقق",vPending:"في انتظار اتصالك",vDone:"تم التحقق",vFail:"غير مطابق",
+  vAttempts:"محاولات متبقية",vOneAcct:"يمكن تفعيل الرقم على حساب واحد فقط في الوقت ذاته.",
+  numQuote:"عند الطلب",numNote:"تُوفَّر الأرقام لدى مشغّل مصري مرخَّص. أنت المشترك المسجَّل ويمكنك نقل الرقم في أي وقت.",
+  plan:"خطتك",card:"وسيلة الدفع",invoices:"الفواتير",
+  changePlan:"تغيير الخطة",updateCard:"تحديث البطاقة",renews:"التجديد",
+  cycM:"فوترة شهرية",cycY:"فوترة سنوية",ymFree:"شهران مجاناً",
+  perMo:"/شهر",perYr:"/سنة",approxMo:"≈{p} شهرياً",ySave:"توفر {s} في السنة مقارنة بالشهري",
+  sample:"بيانات تجريبية. سجّل الدخول لترى حسابك.",
+  kAgents:"وكلاء يعملون",yourPlan:"خطتك",billedM:"تُحصَّل شهرياً",billedY:"تُحصَّل سنوياً",minsUsed:"الدقائق المستخدمة",stActive:"فعّالة",stPending:"في انتظار الدفع",stUnverified:"أكّد بريدك حتى يعمل الوكيل. تحقق من صندوق الوارد.",bkToday:"اليوم",bkWeek:"الأسبوع",bkMonth:"الشهر",bkNew:"إضافة حجز",bkSub:"اشترك به في تقويمك",bkCopy:"نسخ الرابط",bkCopied:"تم نسخ الرابط",bkNoneH:"لا حجوزات بعد",bkNoneP:"حين يأخذ الوكيل حجزاً في مكالمة يظهر هنا، وفي أي تقويم تشترك به.",bkOutside:"خارج المواعيد",bkOutsideNote:"{n} طلب لوقت تكون فيه مغلقاً عادةً. وهي غير مؤكدة، وتستحق القراءة: تكرار الطلب في الساعة نفسها سبب وجيه لفتح فيها.",odNoneH:"لا طلبات بعد",odNoneP:"فعّل الطلبات لأحد الوكلاء، وكل ما يأخذه في مكالمة يظهر هنا بالأصناف والعنوان.",odItems:"الطلب",odAddr:"العنوان",bkWhen:"الموعد",bkWho:"الاسم",bkWhat:"الغرض",bkAgent:"الوكيل",bkStatus:"الحالة",bkNoDay:"لا شيء في هذا اليوم",kCalls:"مكالمات آخر ٧ أيام",kLeads:"عملاء محتملون",kMin:"دقائق مستخدمة",
+  noAgentsH:"لا يوجد وكلاء بعد",noAgentsP:"أنشئ أول وكيل في نحو خمس دقائق: وصّل خطاً، علّمه نشاطك، جرّبه، ثم فعّله.",
+  noAgentsB:"إنشاء وكيل",
+  noCallsH:"لا مكالمات بعد",noCallsP:"تظهر المكالمات هنا فور أن يرد وكيلك على أول مكالمة، مع النص والنتيجة.",
+  noLeadsH:"لا عملاء محتملون بعد",noLeadsP:"حين يلتقط الوكيل اسم المتصل ورقمه، يظهر هنا تلقائياً.",
+  stDraft:"مسودة",stLive:"يعمل",stPaused:"متوقف",edit:"تعديل",
+  inSetupH:"هذا موجود في الإعداد",inSetupP:"معرفة وكيلك ونصه وقواعده تُعدَّل في الإعداد الموجّه، حتى لا يختلف الوكيل الحي عما تراه هنا أبداً.",inSetupB:"افتح الإعداد",
+  soonH:"غير متاح بعد",soonP:"هذا الجزء من المنتج غير مفعّل لحسابك. لا شيء هنا مخفي أو معطل؛ هو غير موجود بعد، ونفضّل أن نقول ذلك بدل أن نعرض لك بيانات تجريبية.",
+  colOutcome:"النتيجة",colMins:"الدقائق",noTranscript:"لا يوجد نص لهذه المكالمة",pickCall:"اختر مكالمة لقراءتها",
+  usage:"الاستهلاك هذه الدورة",minutes:"دقائق المكالمات",agentsU:"الوكلاء",numbersU:"الأرقام",
+  invDate:"التاريخ",invAmt:"المبلغ",invState:"الحالة",paid:"مدفوعة",
+  logout:"تسجيل الخروج",
+  saved:"تم الحفظ",started:"بدأت الحملة",paused:"أُوقفت الحملة",
+  noWire:"لوحة التحكم هذه واجهة عاملة. اربطها بواجهة حسابك لتحميل البيانات الفعلية.",
+  scripts:"مكتبة السكريبتات",knowledge:"المعرفة",
+  scLead:"اختر نشاطك، وما تريد أن تحققه المكالمات، والنبرة. نعرض لك عدة سكريبتات جاهزة جنباً إلى جنب — غيّر النبرة وشاهدها تُعاد كتابتها. اختر واحداً ليصبح وكيلاً.",
+  scStep1:"نشاطك",scStep2:"ما الذي تحققه المكالمة",scStep3:"النبرة",scStep4:"اختر سكريبتاً",
+  bizLbl:"اسم النشاط",bizPh:"مثال: مشويات العزبة",
+  bRest:"مطعم وكافيه",bClinic:"عيادة",bRealty:"عقارات",bSalon:"صالون وسبا",bShop:"متجر إلكتروني",bAuto:"خدمة سيارات",
+  gBook:"الحجوزات والمواعيد",gQual:"تأهيل العملاء",gSell:"البيع ورفع قيمة الطلب",gFollow:"المتابعة والتذكير",gSupp:"الأسئلة الشائعة والدعم",
+  tExcited:"متحمسة",tExcitedD:"طاقة عالية وترحيب كبير",
+  tWarm:"ودّية",tWarmD:"قريبة وشخصية",
+  tCalm:"مهنية",tCalmD:"هادئة ودقيقة",
+  tCloser:"بيعية",tCloserD:"تدفع نحو البيع وتطلب الإغلاق",
+  tFormal:"رسمية",tFormalD:"بالفصحى وكامل اللياقة",
+  vA:"مباشر إلى الهدف",vAD:"يطلب مبكراً. أقصر المكالمات.",
+  vB:"اسأل أولاً",vBD:"سؤالان قبل أن يقترح.",
+  vC:"ابدأ بالعرض",vCD:"يفتتح بما يعود على المتصل.",
+  scHow:"كيف يبدو في المكالمة",scWhat:"التعليمات التي تُحفظ",scLang:"لغة السكريبت",
+  scMenuTie:"يجيب عن الأصناف والأسعار من قائمة الطعام المرفوعة",
+  useScript:"استخدم هذا السكريبت",applyTo:"أي وكيل يحصل عليه؟",newAgentOpt:"إنشاء وكيل جديد",
+  scRouteL:"عند الحجز: يكتب في التقويم ونظام العملاء ويؤكد على واتساب",
+  applyGo:"تطبيق",applied:"طُبق السكريبت — أصبح على الوكيل الآن",
+  agCaller:"المتصل",agAgent:"الوكيل",fromLib:"ابدأ من المكتبة",
+  knLead:"كل ما تضعه هنا يجيب الوكيل منه — قوائم الطعام والأسعار ومواعيد العمل والأسئلة الشائعة. ارفعه مرة واحدة ليتوقف عن التخمين.",
+  knSources:"ما يعرفه الآن",knAdd:"علّمه شيئاً جديداً",
+  knItems:"صنفاً",knUpdated:"آخر تحديث",knReady:"فعّال",knSecs:"أقسام",
+  kmType:"اكتبها بنفسك",kmTypeD:"محرر سريع. الأنسب لمواعيد العمل أو قائمة قصيرة.",
+  kmSite:"موقعك الإلكتروني",kmSiteD:"الصق العنوان ونحن نقرأ الصفحات ونستخرج القائمة والأسعار.",
+  kmScan:"صورة أو مسح ضوئي",kmScanD:"صوّر القائمة المطبوعة بهاتفك ونحن نقرؤها — حتى لوحة الأطباق اليومية.",
+  kmPdf:"ملف PDF",kmPdfD:"الملف الذي أرسله المصمم. نستخرج منه الأصناف والأسعار.",
+  kmUrlPh:"https://your-restaurant.com",kmRead:"اقرأه",
+  kmDrop:"أسقط الملف هنا أو اضغط للاختيار",kmTypePh:"فراخ مشوية — ٢٦٠\nمشويات مشكلة (نصف كيلو) — ٤٨٠\nريش ضاني — ٥٢٠",
+  knProg1:"قراءة الملف",knProg2:"تحديد الأقسام",knProg3:"استخراج الأصناف والأسعار",
+  knReview:"راجع ما قرأناه",knReviewL:"صحّح أي شيء ثم أكّد. يمكنك التعديل في أي وقت.",
+  knShowing:"عرض أول",knOf:"من",
+  knConfirm:"صحيح — دع الوكيل يستخدمه",knDone:"تم. الوكيل يجيب من هذا الآن.",
+  knSection:"القسم",knItem:"الصنف",knPrice:"السعر (ج.م)",
+  knSrcMenu:"قائمة الطعام",knSrcFaq:"الأسئلة الشائعة ومواعيد العمل",knByPdf:"من PDF",knByScan:"من مسح ضوئي",knBySite:"من موقعك",knByType:"مكتوبة يدوياً",
+  via:"عبر",pickProv:"أيها؟",
+  provNabra:"النظام المدمج — تبويب العملاء",provHub:"HubSpot",provZoho:"Zoho CRM",
+  provGcal:"تقويم Google",provOut:"تقويم Outlook",provCaly:"Calendly",
+  cardOnFile:"بطاقة محفوظة",exp:"تنتهي"
+ },
+ eg:{
+  overview:"نظرة عامة",calls:"المكالمات",agents:"الوكلاء",campaigns:"الحملات",leads:"العملاء",bookings:"الحجوزات",orders:"الطلبات",numbers:"الأرقام",billing:"الفوترة",
+  gOps:"التشغيل",gBuild:"الإعداد",gAcct:"الحساب",new:"وكيل جديد",
+  live:"مكالمات شغالة",
+  s1:"مكالمات اتعملت",s2:"مواعيد اتحجزت",s3:"عملاء مؤهلين",s4:"دقايق اتستخدمت",
+  d1:"آخر ٧ أيام",d2:"الشهر ده",d3:"مستنيين مندوب",d4:"من حصتك الشهرية",
+  liveNow:"شغالة دلوقتي",recent:"آخر النتايج",viewAll:"عرض الكل",
+  colWhen:"الوقت",colFrom:"من",colDir:"الاتجاه",colLang:"اللغة",colDur:"المدة",colOut:"النتيجة",colAgent:"الوكيل",
+  inb:"داخلة",outb:"خارجة",
+  oBooked:"اتحجز",oQual:"مؤهل",oTransfer:"اتحول",oNo:"مش مهتم",oMiss:"مردش",
+  transcript:"النص",picked:"اختار مكالمة عشان تقرا النص بتاعها.",
+  agentName:"الوكيل",agentRole:"بيمسك",agentVoice:"الصوت",agentStatus:"الحالة",
+  on:"شغال",off:"متوقف",edit:"عدّل السكريبت",
+  script:"اللي الوكيل بيقوله",scriptHint:"اكتبه بالطريقة اللي فريقك بيتكلم بيها فعلاً. المصري تمام.",
+  dialect:"اللهجة",voice:"الصوت",save:"احفظ الوكيل",
+  cName:"الحملة",cLeads:"العملاء",cProgress:"التقدم",cConv:"اتحجز",cState:"الحالة",
+  start:"شغّل",pause:"وقّف",
+  lName:"الاسم",lPhone:"التليفون",lCo:"الشركة",lState:"الحالة",lAttempt:"محاولات",lNext:"الخطوة الجاية",
+  upload:"ارفع ليستة",filterAll:"الكل",
+  routes:"الفرص بتروح فين",
+  rtLead:"أول ما المكالمة تخلص، الوكيل بيحدد حصل إيه، وبعدين بينفّذ حاجة قبل ما يقفل.",
+  rtDest:"الوجهات",rtDestL:"الوكيل بيقدر يكتب فين. اربطها مرة وتستخدمها في أي قاعدة.",
+  rtRules:"القواعد",rtRulesL:"اقرا كل قاعدة كده: لما ده يحصل في مكالمة، اعمل الحاجات دي.",
+  rtWhen:"لما المكالمة تنتهي بـ",rtThen:"اعمل",rtOn:"شغالة",rtOff:"متوقفة",
+  dCrm:"نظام العملاء بتاعك",dCrmD:"بيعمل جهة الاتصال أو بيحدّثها بكل اللي الوكيل عرفه",
+  dCal:"الكاليندر",dCalD:"بيحجز الميعاد اللي المتصل وافق عليه وبيقفله",
+  dWa:"واتساب",dWaD:"بيبعت التأكيد قبل ما المكالمة تقفل",
+  dSheet:"شيت",dSheetD:"بيضيف صف — مفيد وإنت لسه مقررتش على نظام عملاء",
+  dHook:"Webhook",dHookD:"بيبعت بيانات المكالمة كلها لأي نقطة إنت مالكها",
+  connect:"اربط",connected:"مربوط",disconnect:"فصل",
+  rtFields:"اللي بيتبعت",rtFieldsL:"مستخرج من المحادثة نفسها، مش من فورم.",
+  fName:"الاسم",fPhone:"التليفون",fCompany:"الشركة",fIntent:"النية",fBudget:"الميزانية",fTimeline:"التوقيت",
+  fSlot:"الميعاد المحجوز",fLang:"اللغة",fSummary:"الملخص",fTranscript:"لينك النص",fScore:"التأهيل",
+  fSource:"المصدر",rtTest:"ابعت تجربة",rtTestD:"بيبعت عميل تجريبي واحد عشان تتأكد إنه وصل مكانه الصح.",
+  rtNone:"لسه مفيش — اختار وجهة",
+  recordings:"التسجيلات",recOn:"التسجيل شغال",recOff:"التسجيل مقفول",
+  recLead:"القانون المصري بيشترط موافقة كل أطراف المكالمة قبل ما تتسجل.",
+  recBody:"لما تفعّل التسجيل، الوكيل بيقول في أول المكالمة إنها بتتسجل والمتصل يقدر يرفض. والمكالمات المرفوضة مبتتحفظش خالص. النصوص مبتتأثرش لأنها بتتعمل ليك كمشغّل، مش التقاط لصوت المتصل.",
+  recToggle:"سجّل مكالمات الوكيل ده",recRetain:"امسح التسجيلات بعد",recDays:"يوم",
+  recConsent:"الموافقة",recGiven:"اتمنحت",recDeclined:"اترفضت",recNone:"من غير تسجيل",
+  colPlay:"الصوت",play:"شغّل",unavailable:"مش محفوظ",
+  recStore:"متخزنة في مصر",recExport:"تصدير",recDelete:"حذف",
+  numLabel:"الرقم",numUse:"يستخدمه",numRegion:"المنطقة",numAdd:"إضافة رقم",
+  numMine:"أرقامك",numType:"النوع",numStatus:"الحالة",numActive:"يعمل",numPending:"جارٍ التوصيل",
+  numConnect:"اربط رقماً تملكه بالفعل",
+  numConnectLead:"خلي الرقم اللي عملاؤك عارفينه. مفيش حاجة مطبوعة على عربياتك أو فواتيرك محتاجة تتغير.",
+  numM1:"تحويل المكالمات",numM1d:"الأسرع، ويعمل مع أي خط بما في ذلك الخط الساخن. تضبط تحويلاً غير مشروط من رقمك الحالي إلى رقم الربط الذي نعطيه لك. يعمل في نفس اليوم.",
+  numM2:"إعادة توجيه SIP",numM2d:"إذا كان لديك سنترال أو خط SIP، وجّه مساراً إلينا بدلاً من التحويل. جودة صوت أفضل وبلا رسوم تحويل من مشغّلك.",
+  numM3:"نقل الرقم إلينا",numM3d:"ننقل الرقم بالكامل. الأنظف على المدى الطويل، لكنه يستغرق أسابيع ويحتاج أوراقاً مع مشغّلك الحالي. والخطوط الساخنة أبطأ.",
+  numRec:"مناسب للخطوط الساخنة",numFast:"يعمل اليوم",numBest:"أفضل جودة",numSlow:"أسابيع",
+  numStart:"ابدأ",numBuy:"اشترِ رقماً منا",
+  numBuyLead:"نوفّره لدى مشغّل مصري مرخَّص ويظهر هنا جاهزاً للاستخدام.",
+  numSetup:"التأسيس",numMonthly:"شهرياً",numGet:"احصل على الرقم",
+  numT1:"خط أرضي بالقاهرة",numT1d:"٠٢ · ما تستخدمه معظم الشركات",
+  numT2:"رقم قومي",numT2d:"يُطلب من كل المحافظات بسعر المكالمة المحلية",
+  numT3:"رقم محمول",numT3d:"٠١ · يُرد عليه أكثر في المكالمات الصادرة",
+  numT4:"خط ساخن مختصر",numT4d:"١٦ / ١٩ · يخصصه الجهاز المنظّم، ويحتاج عدة أسابيع",
+  vTitle:"اتحقق من الرقم",vClose:"إقفال",
+  vLead:"رقم المتصل ممكن يتزوّر، عشان كده بنتحقق من حاجتين مستقلين: إنك تقدر تتصل من الخط، وإنك تقدر ترد عليه.",
+  vs1:"اتصل بينا من الخط ده",vs1d:"اتصل برقم التحقق تحت من الرقم اللي بتربطه، وبعدين دخّل الرمز ده.",
+  vs2:"دخّل الرمز اللي بنقوله لك",vs2d:"بنتصل بالرقم ونقرا رمز تاني لأي حد بيرد. اكتبه هنا.",
+  vs3:"اظبط التحويل وبعدين اختبر",vs3d:"وجّه خطك لرقم الربط، وإحنا بنعمل مكالمة حقيقية نتأكد إنها وصلت.",
+  vs4:"تفويض موقّع",vs4d:"للنقل بس. ارفع خطاب تفويض موقّع وفاتورة حديثة من المشغّل باسم شركتك.",
+  vCode:"الرمز بتاعك",vExpires:"بينتهي خلال",vCallNum:"رقم التحقق",vEnter:"الرمز اللي سمعته",
+  vCheck:"تحقق",vPending:"مستنيين اتصالك",vDone:"اتحقق",vFail:"مش مطابق",
+  vAttempts:"محاولات فاضلة",vOneAcct:"الرقم بيتفعّل على حساب واحد بس في نفس الوقت.",
+  numQuote:"عند الطلب",numNote:"تُوفَّر الأرقام لدى مشغّل مصري مرخَّص. أنت المشترك المسجَّل ويمكنك نقل الرقم في أي وقت.",
+  plan:"خطتك",card:"وسيلة الدفع",invoices:"الفواتير",
+  changePlan:"غيّر الخطة",updateCard:"حدّث الكارت",renews:"التجديد",
+  cycM:"فوترة شهرية",cycY:"فوترة سنوية",ymFree:"شهرين ببلاش",
+  perMo:"/شهر",perYr:"/سنة",approxMo:"≈{p} في الشهر",ySave:"بتوفر {s} في السنة عن الشهري",
+  sample:"بيانات تجريبية. سجّل دخولك عشان تشوف حسابك.",
+  kAgents:"وكلاء شغالين",yourPlan:"خطتك",billedM:"بتتحصل شهري",billedY:"بتتحصل سنوي",minsUsed:"الدقايق المستخدمة",stActive:"شغالة",stPending:"مستنية الدفع",stUnverified:"أكّد إيميلك عشان الوكيل يشتغل. بص في الوارد.",bkToday:"النهاردة",bkWeek:"الأسبوع",bkMonth:"الشهر",bkNew:"ضيف حجز",bkSub:"اشترك بيه في التقويم",bkCopy:"انسخ اللينك",bkCopied:"اتنسخ اللينك",bkNoneH:"مفيش حجوزات لسه",bkNoneP:"لما الوكيل ياخد حجز في مكالمة هيظهر هنا، وفي أي تقويم تشترك بيه.",bkOutside:"برّه المواعيد",bkOutsideNote:"{n} طلب في وقت بتكون قافل فيه عادة. مش مؤكدين، ويستحقوا القراية: تكرار الطلب في نفس الساعة سبب كويس إنك تفتح فيها.",odNoneH:"مفيش طلبات لسه",odNoneP:"فعّل الطلبات لوكيل، وأي حاجة ياخدها في مكالمة هتظهر هنا بالأصناف والعنوان.",odItems:"الطلب",odAddr:"العنوان",bkWhen:"الميعاد",bkWho:"الاسم",bkWhat:"الغرض",bkAgent:"الوكيل",bkStatus:"الحالة",bkNoDay:"مفيش حاجة في اليوم ده",kCalls:"مكالمات آخر ٧ أيام",kLeads:"عملاء محتملين",kMin:"دقايق اتستخدمت",
+  noAgentsH:"مفيش وكلاء لسه",noAgentsP:"اعمل أول وكيل في حوالي خمس دقايق: وصّل خط، علّمه شغلك، جرّبه، وشغّله.",
+  noAgentsB:"اعمل وكيل",
+  noCallsH:"مفيش مكالمات لسه",noCallsP:"المكالمات هتظهر هنا أول ما وكيلك يرد على أول مكالمة، بالنص والنتيجة.",
+  noLeadsH:"مفيش عملاء محتملين لسه",noLeadsP:"لما الوكيل ياخد اسم المتصل ورقمه، هيظهر هنا لوحده.",
+  stDraft:"مسودة",stLive:"شغال",stPaused:"متوقف",edit:"تعديل",
+  inSetupH:"ده موجود في الإعداد",inSetupP:"معرفة وكيلك والسكريبت والقواعد بتتعدل في الإعداد الموجّه، عشان الوكيل الشغال واللي بتشوفه هنا ميختلفوش أبداً.",inSetupB:"افتح الإعداد",
+  soonH:"مش متاح لسه",soonP:"الجزء ده من المنتج مش مفعّل لحسابك. مفيش حاجة هنا مخفية أو بايظة؛ هو مش موجود لسه، وبنفضل نقول كده بدل ما نعرضلك بيانات تجريبية.",
+  colOutcome:"النتيجة",colMins:"الدقايق",noTranscript:"مفيش نص للمكالمة دي",pickCall:"اختار مكالمة عشان تقراها",
+  usage:"الاستهلاك الدورة دي",minutes:"دقايق المكالمات",agentsU:"الوكلاء",numbersU:"الأرقام",
+  invDate:"التاريخ",invAmt:"المبلغ",invState:"الحالة",paid:"مدفوعة",
+  logout:"خروج",
+  saved:"اتحفظ",started:"الحملة بدأت",paused:"الحملة وقفت",
+  noWire:"لوحة التحكم دي واجهة شغالة. اربطها بواجهة حسابك عشان تحمّل البيانات الحقيقية.",
+  scripts:"مكتبة السكريبتات",knowledge:"معلومات الوكيل",
+  scLead:"اختار شغلك، والمكالمات المفروض تعمل إيه، والنبرة. هنعرضلك كذا سكريبت جاهز جنب بعض — غيّر النبرة وشوفهم بيتكتبوا تاني قدامك. اختار واحد وهو يبقى وكيل على طول.",
+  scStep1:"شغلك إيه",scStep2:"المكالمة المفروض تعمل إيه",scStep3:"النبرة",scStep4:"اختار سكريبت",
+  bizLbl:"اسم المكان",bizPh:"مثلاً: مشويات العزبة",
+  bRest:"مطعم وكافيه",bClinic:"عيادة",bRealty:"عقارات",bSalon:"صالون وسبا",bShop:"متجر أونلاين",bAuto:"مركز سيارات",
+  gBook:"حجوزات ومواعيد",gQual:"تأهيل العملاء",gSell:"بيع ورفع الأوردر",gFollow:"متابعة وتذكير",gSupp:"أسئلة ودعم",
+  tExcited:"متحمسة",tExcitedD:"طاقة عالية وترحيب كبير",
+  tWarm:"ودّية",tWarmD:"قريبة وبتحسسك إنك في بيتك",
+  tCalm:"مهنية",tCalmD:"هادية ودقيقة ومن غير لف",
+  tCloser:"بيّاعة",tCloserD:"بتزّق للبيع وبتقفل الصفقة",
+  tFormal:"رسمية",tFormalD:"بالفصحى وبكامل الذوق",
+  vA:"في الموضوع على طول",vAD:"بيطلب بدري. أقصر مكالمات.",
+  vB:"اسأل الأول",vBD:"سؤالين قبل ما يقترح.",
+  vC:"ابدأ بالعرض",vCD:"بيفتح باللي المتصل هيكسبه.",
+  scHow:"شكله إيه في المكالمة",scWhat:"التعليمات اللي بتتحفظ",scLang:"لغة السكريبت",
+  scMenuTie:"بيرد عن الأصناف والأسعار من المنيو اللي رفعته",
+  useScript:"استخدم السكريبت ده",applyTo:"يتحط على أنهي وكيل؟",newAgentOpt:"اعمل وكيل جديد",
+  scRouteL:"لما يحجز: يكتب في الكاليندر ونظام العملاء ويأكد على الواتساب",
+  applyGo:"طبّق",applied:"السكريبت اتحط على الوكيل خلاص",
+  agCaller:"المتصل",agAgent:"الوكيل",fromLib:"ابدأ من المكتبة",
+  knLead:"أي حاجة تحطها هنا الوكيل بيرد منها — المنيو والأسعار ومواعيد الشغل والأسئلة الشائعة. ارفعها مرة واحدة وهو يبطّل تخمين.",
+  knSources:"عارف إيه دلوقتي",knAdd:"علّمه حاجة جديدة",
+  knItems:"صنف",knUpdated:"آخر تحديث",knReady:"شغال",knSecs:"أقسام",
+  kmType:"اكتبها بإيدك",kmTypeD:"محرر سريع. أنسب حاجة لمواعيد الشغل أو ليستة قصيرة.",
+  kmSite:"موقعك",kmSiteD:"حط اللينك وإحنا نقرا الصفحات ونطلّع المنيو والأسعار.",
+  kmScan:"صورة أو سكان",kmScanD:"صوّر المنيو المطبوع بموبايلك وإحنا نقراه — حتى لوحة أطباق اليوم.",
+  kmPdf:"ملف PDF",kmPdfD:"الملف اللي المصمم بعتهولك. بنطلّع منه الأصناف والأسعار.",
+  kmUrlPh:"https://your-restaurant.com",kmRead:"اقراه",
+  kmDrop:"حط الملف هنا أو دوس تختار",kmTypePh:"فراخ مشوية — ٢٦٠\nمشويات مشكلة (نص كيلو) — ٤٨٠\nريش ضاني — ٥٢٠",
+  knProg1:"بنقرا الملف",knProg2:"بنحدد الأقسام",knProg3:"بنطلّع الأصناف والأسعار",
+  knReview:"بص على اللي قريناه",knReviewL:"صلّح أي حاجة وبعدين أكّد. تقدر تعدّل في أي وقت.",
+  knShowing:"عرض أول",knOf:"من",
+  knConfirm:"تمام كده — خلي الوكيل يستخدمه",knDone:"خلاص. الوكيل بيرد من ده دلوقتي.",
+  knSection:"القسم",knItem:"الصنف",knPrice:"السعر (ج.م)",
+  knSrcMenu:"المنيو",knSrcFaq:"الأسئلة الشائعة ومواعيد الشغل",knByPdf:"من PDF",knByScan:"من سكان",knBySite:"من موقعك",knByType:"مكتوبة بالإيد",
+  via:"عن طريق",pickProv:"أنهي واحد؟",
+  provNabra:"النظام المدمج — تبويب العملاء",provHub:"HubSpot",provZoho:"Zoho CRM",
+  provGcal:"Google Calendar",provOut:"Outlook",provCaly:"Calendly",
+  cardOnFile:"كارت محفوظ",exp:"بينتهي"
+ }
+};
+let L="en";
+const t=k=>(T[L]&&T[L][k])||T.en[k]||k;
+
+/* ---------------- demo data (replace with your account API) ---------------- */
+const CALLS=[
+ {id:1,when:"09:41",from:"+20 10 •• •• 4417",dir:"in",lang:"eg",dur:"03:12",out:"oBooked",agent:"Reception",
+  tr:[["user","أهلاً، ممكن أعرف تفاصيل الشقة المتاحة؟"],["ai","أهلاً بيك. عندنا أكتر من وحدة. تحب مساحة معينة؟"],["user","حوالي ١٥٠ متر."],["ai","تمام. تحب أحجزلك معاينة الأحد الصبح؟"],["user","آه ينفع."],["ai","اتحجز. هيوصلك تأكيد دلوقتي."]]},
+ {id:2,when:"09:33",from:"+20 12 •• •• 9082",dir:"out",lang:"mix",dur:"02:04",out:"oQual",agent:"Sales follow-up",
+  tr:[["ai","أهلاً أستاذة منى، بخصوص الـ quotation اللي بعتناه."],["user","آه شفته بس لسه بنراجع."],["ai","ولا يهمك. في حاجة واقفة قدامكم؟"],["user","الـ implementation بياخد قد إيه؟"],["ai","أسبوعين تقريباً. أحوّلك لمتخصص يشرحلك؟"]]},
+ {id:3,when:"09:20",from:"+20 11 •• •• 3355",dir:"in",lang:"ar",dur:"01:47",out:"oTransfer",agent:"Reception",
+  tr:[["user","السلام عليكم، أريد التحدث مع قسم الحسابات."],["ai","وعليكم السلام. القسم مشغول حالياً، أسجل رقمك أم تفضل التحويل؟"],["user","حوّلني لو سمحت."],["ai","حاضر، لحظة واحدة."]]},
+ {id:4,when:"09:02",from:"+20 10 •• •• 7741",dir:"out",lang:"eg",dur:"00:38",out:"oNo",agent:"Sales follow-up",
+  tr:[["ai","أهلاً، بكلمك من فريق المبيعات، عندك دقيقة؟"],["user","مش دلوقتي والله."],["ai","ولا يهمك، أسيبلك رسالة وأرجعلك بعدين. شكراً لوقتك."]]},
+ {id:5,when:"08:54",from:"+20 12 •• •• 1120",dir:"in",lang:"eg",dur:"02:29",out:"oBooked",agent:"Reception",
+  tr:[["user","عايز أحجز ميعاد كشف."],["ai","حاضر. بكرة ١١ ولا الأربع؟"],["user","الأربع أحسن."],["ai","اتحجز الأربع. تأكيد جاي على الواتساب."]]},
+ {id:6,when:"08:31",from:"+20 11 •• •• 6690",dir:"out",lang:"eg",dur:"00:00",out:"oMiss",agent:"Sales follow-up",tr:[]}
+];
+const LIVE=[
+ {name:"+20 10 •• •• 2214",agent:"Reception",dir:"in",p:62,dur:"02:34"},
+ {name:"+20 12 •• •• 8890",agent:"Sales follow-up",dir:"out",p:24,dur:"00:47"},
+ {name:"+20 11 •• •• 4501",agent:"Reception",dir:"in",p:88,dur:"04:12"}
+];
+const AGENTS=[
+ {id:1,name:"Reception",role:"Inbound · reception and booking",voice:"Hazem · Masri",on:true,
+  rec:false,script:"أنت موظف استقبال في شركة عقارات. رحّب بالمتصل، افهم طلبه، ولو مهتم احجزله معاينة. لو طلب حد من الفريق حوّله فوراً."},
+ {id:2,name:"Sales follow-up",role:"Outbound · qualification",voice:"Fatima · Masri",on:true,
+  rec:false,script:"أنت من فريق المبيعات. بتتابع مع عميل سيب بياناته. اسأل عن الميزانية والتوقيت وصاحب القرار، ولو مهتم احجز ديمو."},
+ {id:3,name:"After hours",role:"Inbound · nights and weekends",voice:"Tim · English",on:false,
+  rec:false,script:"You are the after-hours line. Take the caller's details, answer basic questions, and promise a call back in the morning."}
+];
+const CAMPAIGNS=[
+ {id:1,name:"Compound launch — Sheikh Zayed",leads:340,done:210,booked:47,on:true},
+ {id:2,name:"Corporate packages Q3",leads:180,done:90,booked:18,on:false},
+ {id:3,name:"Winter re-engagement",leads:0,done:0,booked:0,on:false}
+];
+const LEADS=[
+ {n:"محمد الشريف",p:"+20 100 123 4567",c:"شركة النيل",s:"oBooked",a:1,next:"Viewing · Sun 11:00"},
+ {n:"سارة عبدالله",p:"+20 111 234 5678",c:"مجموعة القاهرة",s:"oQual",a:1,next:"Rep to call"},
+ {n:"أحمد حسن",p:"+20 123 456 7890",c:"تك إيجيبت",s:"oTransfer",a:2,next:"With sales"},
+ {n:"نورا خالد",p:"+20 109 876 5432",c:"ستار ميديا",s:"oNo",a:1,next:"—"},
+ {n:"كريم إبراهيم",p:"+20 134 567 8901",c:"دلتا لوجستيكس",s:"oBooked",a:3,next:"Demo · Tue 14:00"},
+ {n:"منى رضا",p:"+20 145 678 9012",c:"مصر للتأمين",s:"oMiss",a:2,next:"Retry 16:00"}
+];
+const RECS=[
+ {id:1,when:"09:41",from:"+20 10 •• •• 4417",dur:"03:12",agent:"Reception",consent:"given",size:"2.9 MB",expires:"in 84 days"},
+ {id:2,when:"09:33",from:"+20 12 •• •• 9082",dur:"02:04",agent:"Sales follow-up",consent:"given",size:"1.9 MB",expires:"in 84 days"},
+ {id:3,when:"09:20",from:"+20 11 •• •• 3355",dur:"01:47",agent:"Reception",consent:"declined",size:"—",expires:"—"},
+ {id:4,when:"08:54",from:"+20 12 •• •• 1120",dur:"02:29",agent:"Reception",consent:"given",size:"2.3 MB",expires:"in 83 days"},
+ {id:5,when:"08:31",from:"+20 11 •• •• 6690",dur:"00:00",agent:"Sales follow-up",consent:"none",size:"—",expires:"—"}
+];
+const DESTS=[
+ {k:"crm",  on:true },
+ {k:"cal",  on:true },
+ {k:"wa",   on:true },
+ {k:"sheet",on:false},
+ {k:"hook", on:false}
+];
+const RULES=[
+ {when:"oQual",    dest:["crm","wa"],        on:true },
+ {when:"oBooked",  dest:["cal","crm","wa"],  on:true },
+ {when:"oTransfer",dest:["crm"],             on:true },
+ {when:"oNo",      dest:["crm"],             on:false},
+ {when:"oMiss",    dest:["sheet"],           on:false}
+];
+const PROVS={ crm:["provNabra","provHub","provZoho"], cal:["provGcal","provOut","provCaly"] };
+const DPROV={ crm:"provNabra", cal:"provGcal" };
+let provPick=null;
+const FIELDS=["fName","fPhone","fCompany","fIntent","fScore","fBudget","fTimeline","fSlot","fLang","fSummary","fTranscript","fSource"];
+const NUMBERS=[
+ {n:"+20 2 •••• 4417",use:"Reception",r:"Cairo",type:"numT1",own:false,st:"numActive"},
+ {n:"19xxx",use:"Reception",r:"Hotline · forwarded",type:"numT4",own:true,st:"numActive"},
+ {n:"+20 10 •••• 8890",use:"Sales follow-up",r:"Mobile · Egypt",type:"numT3",own:false,st:"numActive"},
+ {n:"+20 2 •••• 1102",use:"After hours",r:"Cairo",type:"numT1",own:true,st:"numPending"}
+];
+const NUMSHOP=[
+ {k:"numT1",setup:null,monthly:null},
+ {k:"numT2",setup:null,monthly:null},
+ {k:"numT3",setup:null,monthly:null},
+ {k:"numT4",setup:null,monthly:null}
+];
+
+/* ---------------- nav ---------------- */
+const VIEWS=[
+ {g:"gOps"},
+ {k:"overview",i:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'},
+ {k:"calls",i:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12 19.8 19.8 0 0 1 1.6 3.4 2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.7 2z"/>',pill:"3"},
+ {k:"recordings",i:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>'},
+ {k:"orders",i:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'},
+ {k:"bookings",i:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'},
+ {k:"leads",i:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/>'},
+ {g:"gBuild"},
+ {k:"agents",i:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4"/><circle cx="9" cy="14" r="1.2"/><circle cx="15" cy="14" r="1.2"/>'},
+ {k:"scripts",i:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',pill:"✦"},
+ {k:"knowledge",i:'<path d="M12 6.25c-2-1.6-4.6-2.1-8-1.6v13.1c3.4-.5 6-.05 8 1.55 2-1.6 4.6-2.05 8-1.55V4.65c-3.4-.5-6 0-8 1.6z"/><path d="M12 6.25v13.05"/>'},
+ {k:"campaigns",i:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'},
+ {k:"routes",i:'<path d="M6 3v12"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v3a6 6 0 0 1-6 6H9"/>'},
+ {k:"numbers",i:'<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/>'},
+ {g:"gAcct"},
+ {k:"billing",i:'<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>'}
+];
+let view="overview";
+
+function renderNav(){
+  $("#nav").innerHTML = VIEWS.map(v=> v.g
+    ? `<div class="grp">${t(v.g)}</div>`
+    : `<button data-v="${v.k}" aria-current="${v.k===view}">
+         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${v.i}</svg>
+         <span>${t(v.k)}</span>${v.pill?`<span class="pill">${v.pill}</span>`:""}
+       </button>`).join("");
+  $$("#nav button").forEach(b=> b.addEventListener("click", ()=>{ go(b.dataset.v); closeRail(); }));
+}
+function go(k){ view=k; $$(".view").forEach(v=> v.classList.toggle("on", v.dataset.view===k));
+  $("#viewTitle").textContent=t(k); renderNav(); }
+
+/* ---------------- helpers ---------------- */
+const dirTag = d => `<span class="tag ${d==="in"?"":"dim"}">${d==="in"?t("inb"):t("outb")}</span>`;
+const langTag = l => `<span class="tag ${l==="mix"?"hot":""}">${({eg:"مصري",ar:"عربي",en:"English",mix:"مصري + EN"})[l]}</span>`;
+const outTag = o => `<span class="tag ${o==="oBooked"?"on":(o==="oNo"||o==="oMiss")?"dim":""}">${t(o)}</span>`;
+function toast(m){ const el=$("#toast"); el.textContent=m; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2200); }
+function spark(d){ return `<span class="spark">${d.map(v=>`<i style="height:${v}%"></i>`).join("")}</span>`; }
+
+/* ---------------- views ---------------- */
+let pickedCall=null;
+
+
+/* ---- what the owner should see first: is my account live, and on what ---- */
+/* esc() and t() are declared further down the file, so this block carries its
+   own copies rather than reaching forward into their temporal dead zone. */
+const escP = v => String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function planCard(){
+  const t=(window.NABRA_BOOT||{}).tenant||{};
+  const plan=(t.plan||"").replace(/^./,c=>c.toUpperCase());
+  const cycle=t.cycle==="annual" ? tt("billedY") : tt("billedM");
+  const live = t.status==="active";
+  const warn = !live ? tt("stPending") : (t.email_verified===false ? tt("stUnverified") : "");
+  const used = Number(t.minutes_used||0);
+  return `
+  <div class="card plancard">
+    <div class="pc-main">
+      <span class="pc-k">${tt("yourPlan")}</span>
+      <b class="pc-plan">${escP(plan)||"—"} <span class="pc-cyc">${cycle}</span></b>
+      <span class="pc-state ${live?"ok":"warn"}">${live?tt("stActive"):tt("stPending")}</span>
+    </div>
+    <div class="pc-side">
+      <span class="pc-k">${tt("minsUsed")}</span>
+      <b>${used.toLocaleString("en-US")}</b>
+    </div>
+    ${warn && (!live || t.email_verified===false) ? `<p class="pc-warn">${warn}</p>` : ""}
+  </div>`;
+}
+function tt(k){ try{ return t(k); }catch(_){ return k; } }
+
+function vOverview(){
+  $("#v-overview").innerHTML=`${window.NABRA_BOOT?planCard():""}
+  <div class="grid g4">
+    <div class="stat"><span class="lbl">${t("s1")}</span><span class="v">1,284</span><span class="d">${t("d1")}</span>${spark([30,52,41,66,58,74,90])}</div>
+    <div class="stat"><span class="lbl">${t("s2")}</span><span class="v">173</span><span class="d">${t("d2")}</span>${spark([20,34,28,49,40,62,71])}</div>
+    <div class="stat"><span class="lbl">${t("s3")}</span><span class="v">58</span><span class="d">${t("d3")}</span>${spark([44,30,55,38,61,47,68])}</div>
+    <div class="stat"><span class="lbl">${t("s4")}</span><span class="v">3,940</span><span class="d">${t("d4")}</span>${spark([25,40,35,55,48,70,82])}</div>
+  </div>
+
+  <div class="cols">
+    <div class="card">
+      <h3>${t("liveNow")}<span class="more">${LIVE.length}</span></h3>
+      ${LIVE.map(c=>`
+        <div class="rowline">
+          <span class="who">${c.dir==="in"?"↓":"↑"}</span>
+          <span><span class="t1 mono">${c.name}</span><span class="t2">${c.agent}</span></span>
+          <span class="end" style="display:flex;align-items:center;gap:.7rem">
+            <span class="bar" style="width:90px"><span style="width:${c.p}%"></span></span>
+            <span class="t2 mono">${c.dur}</span>
+          </span>
+        </div>`).join("")}
+    </div>
+    <div class="card">
+      <h3>${t("recent")}<button class="more" data-goto="calls">${t("viewAll")}</button></h3>
+      ${CALLS.slice(0,5).map(c=>`
+        <div class="rowline">
+          <span class="who">${c.dir==="in"?"↓":"↑"}</span>
+          <span><span class="t1 mono">${c.from}</span><span class="t2">${c.when} · ${c.agent}</span></span>
+          <span class="end">${outTag(c.out)}</span>
+        </div>`).join("")}
+    </div>
+  </div>
+  <p class="note">${t("noWire")}</p>`;
+  $$("[data-goto]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.goto)));
+}
+
+function vCalls(){
+  const c = pickedCall!=null ? CALLS.find(x=>x.id===pickedCall) : null;
+  $("#v-calls").innerHTML=`
+  <div class="cols">
+    <div class="card" style="padding-top:1rem">
+      <div class="tw"><table>
+        <thead><tr><th>${t("colWhen")}</th><th>${t("colFrom")}</th><th>${t("colDir")}</th><th>${t("colLang")}</th><th>${t("colDur")}</th><th>${t("colOut")}</th></tr></thead>
+        <tbody>${CALLS.map(x=>`
+          <tr data-call="${x.id}" style="cursor:pointer">
+            <td class="num">${x.when}</td><td class="num">${x.from}</td>
+            <td>${dirTag(x.dir)}</td><td>${langTag(x.lang)}</td>
+            <td class="num">${x.dur}</td><td>${outTag(x.out)}</td>
+          </tr>`).join("")}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>${t("transcript")}</h3>
+      ${c && c.tr.length ? `<div class="tr">${c.tr.map(l=>`
+        <div class="ln" data-by="${l[0]}"><span class="w">${l[0]==="ai"?"NABRA":"Caller"}</span><span class="x">${l[1]}</span></div>`).join("")}</div>`
+        : `<p class="empty">${t("picked")}</p>`}
+    </div>
+  </div>`;
+  $$("[data-call]").forEach(r=> r.addEventListener("click", ()=>{ pickedCall=+r.dataset.call; vCalls(); }));
+}
+
+function vAgents(){
+  $("#v-agents").innerHTML=`
+  <div class="grid g3">
+    ${AGENTS.map(a=>`
+      <div class="stat" style="gap:.6rem">
+        <span class="lbl">${t("agentName")}</span>
+        <span class="ser" style="font-size:1.5rem">${a.name}</span>
+        <span class="d">${a.role}</span>
+        <span class="d">${t("agentVoice")}: ${a.voice}</span>
+        <span style="display:flex;align-items:center;gap:.6rem;margin-top:auto">
+          <button class="sw" data-agent="${a.id}" aria-pressed="${a.on}"></button>
+          <span class="t2 lbl">${a.on?t("on"):t("off")}</span>
+          <button class="btn ghost" style="margin-inline-start:auto;padding:.35rem .7rem;font-size:.76rem" data-edit="${a.id}">${t("edit")}</button>
+        </span>
+      </div>`).join("")}
+  </div>
+  <div class="card" style="margin-top:1rem" id="editor"></div>`;
+  $$("[data-agent]").forEach(b=> b.addEventListener("click",()=>{
+    const a=AGENTS.find(x=>x.id==b.dataset.agent); a.on=!a.on; vAgents(); toast(t("saved"));
+  }));
+  $$("[data-edit]").forEach(b=> b.addEventListener("click",()=> editAgent(+b.dataset.edit)));
+  editAgent(AGENTS[0].id);
+}
+function editAgent(id){
+  const a=AGENTS.find(x=>x.id===id); if(!a) return;
+  $("#editor").innerHTML=`
+    <h3>${t("script")} — ${a.name}</h3>
+    <div class="fld ar"><textarea id="sc">${a.script}</textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+      <div class="fld"><label>${t("dialect")}</label>
+        <select><option>مصري — Masri</option><option>العربية الفصحى</option><option>English</option></select></div>
+      <div class="fld"><label>${t("voice")}</label>
+        <select><option>${a.voice}</option><option>Hazem · Masri</option><option>Fatima · Masri</option><option>Tim · English</option></select></div>
+    </div>
+    <p class="note">${t("scriptHint")}</p>
+    <span style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem">
+      <button class="btn" id="saveAgent">${t("save")}</button>
+      <button class="btn ghost" id="agLib">✦ ${t("fromLib")}</button>
+    </span>`;
+  $("#saveAgent").addEventListener("click",()=>{ a.script=$("#sc").value; toast(t("saved")); });
+  $("#agLib").addEventListener("click",()=>{ go("scripts"); });
+}
+
+function vCampaigns(){
+  $("#v-campaigns").innerHTML=`
+  <div class="card" style="padding-top:1rem">
+    <div class="tw"><table>
+      <thead><tr><th>${t("cName")}</th><th>${t("cLeads")}</th><th>${t("cProgress")}</th><th>${t("cConv")}</th><th>${t("cState")}</th><th></th></tr></thead>
+      <tbody>${CAMPAIGNS.map(c=>{
+        const p=c.leads?Math.round(c.done/c.leads*100):0;
+        return `<tr>
+          <td style="font-weight:500">${c.name}</td>
+          <td class="num">${c.leads}</td>
+          <td><span style="display:flex;align-items:center;gap:.6rem"><span class="bar" style="width:110px"><span style="width:${p}%"></span></span><span class="num">${p}%</span></span></td>
+          <td class="num">${c.booked}</td>
+          <td><span class="tag ${c.on?"on":"dim"}">${c.on?t("on"):t("off")}</span></td>
+          <td style="text-align:end"><button class="btn ghost" style="padding:.32rem .7rem;font-size:.76rem" data-camp="${c.id}">${c.on?t("pause"):t("start")}</button></td>
+        </tr>`}).join("")}</tbody>
+    </table></div>
+  </div>`;
+  $$("[data-camp]").forEach(b=> b.addEventListener("click",()=>{
+    const c=CAMPAIGNS.find(x=>x.id==b.dataset.camp); c.on=!c.on; vCampaigns(); toast(c.on?t("started"):t("paused"));
+  }));
+}
+
+let leadFilter="all";
+function vLeads(){
+  const rows = leadFilter==="all"?LEADS:LEADS.filter(l=>l.s===leadFilter);
+  $("#v-leads").innerHTML=`
+  <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
+    <div class="seg">
+      ${["all","oBooked","oQual","oTransfer","oNo","oMiss"].map(f=>
+        `<button data-f="${f}" aria-pressed="${f===leadFilter}">${f==="all"?t("filterAll"):t(f)}</button>`).join("")}
+    </div>
+    <button class="btn ghost" style="margin-inline-start:auto" id="up">${t("upload")}</button>
+  </div>
+  <div class="card" style="padding-top:1rem">
+    <div class="tw"><table>
+      <thead><tr><th>${t("lName")}</th><th>${t("lPhone")}</th><th>${t("lCo")}</th><th>${t("lState")}</th><th>${t("lAttempt")}</th><th>${t("lNext")}</th></tr></thead>
+      <tbody>${rows.length?rows.map(l=>`
+        <tr><td><span class="ar" style="font-weight:500">${l.n}</span></td>
+        <td class="num">${l.p}</td><td><span class="ar">${l.c}</span></td>
+        <td>${outTag(l.s)}</td><td class="num">${l.a}</td><td class="num">${l.next}</td></tr>`).join("")
+        :`<tr><td colspan="6"><p class="empty">—</p></td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+  $$("[data-f]").forEach(b=> b.addEventListener("click",()=>{ leadFilter=b.dataset.f; vLeads(); }));
+  $("#up").addEventListener("click",()=> toast(t("noWire")));
+}
+
+function vRecordings(){
+  const tag=c=> c==="given"?`<span class="tag on">${t("recGiven")}</span>`
+    : c==="declined"?`<span class="tag hot">${t("recDeclined")}</span>`
+    : `<span class="tag dim">${t("recNone")}</span>`;
+  $("#v-recordings").innerHTML=`
+  <div class="card" style="border-color:var(--ember);background:var(--ember-wash)">
+    <h3 style="color:var(--ember)">${t("recLead")}</h3>
+    <p style="font-size:.85rem;color:var(--fg-mute);line-height:1.75;max-width:78ch">${t("recBody")}</p>
+  </div>
+  <div class="cols">
+    <div class="card" style="padding-top:1rem">
+      <div class="tw"><table>
+        <thead><tr><th>${t("colWhen")}</th><th>${t("colFrom")}</th><th>${t("colAgent")}</th><th>${t("colDur")}</th><th>${t("recConsent")}</th><th>${t("colPlay")}</th></tr></thead>
+        <tbody>${RECS.map(r=>`<tr>
+          <td class="num">${r.when}</td><td class="num">${r.from}</td><td>${r.agent}</td>
+          <td class="num">${r.dur}</td><td>${tag(r.consent)}</td>
+          <td>${r.consent==="given"
+            ? `<button class="btn ghost" style="padding:.25rem .6rem;font-size:.74rem">${t("play")}</button>`
+            : `<span class="t2" style="color:var(--fg-faint);font-size:.78rem">${t("unavailable")}</span>`}</td>
+        </tr>`).join("")}</tbody>
+      </table></div>
+    </div>
+    <div class="card" style="height:fit-content">
+      <h3>${t("recordings")}</h3>
+      ${AGENTS.map(a=>`
+        <div class="rowline">
+          <span><span class="t1">${a.name}</span><span class="t2">${a.rec?t("recOn"):t("recOff")}</span></span>
+          <span class="end"><button class="sw" data-rec="${a.id}" aria-pressed="${!!a.rec}"></button></span>
+        </div>`).join("")}
+      <div class="fld" style="margin-top:1rem"><label>${t("recRetain")}</label>
+        <select><option>30 ${t("recDays")}</option><option selected>90 ${t("recDays")}</option><option>180 ${t("recDays")}</option><option>365 ${t("recDays")}</option></select></div>
+      <p class="note">${t("recStore")} · ${t("noWire")}</p>
+    </div>
+  </div>`;
+  $$("[data-rec]").forEach(b=> b.addEventListener("click",()=>{
+    const a=AGENTS.find(x=>x.id==b.dataset.rec); a.rec=!a.rec; vRecordings(); toast(t("saved"));
+  }));
+}
+
+let VSTATE={code:null,heard:"",step:1,attempts:3,status:"pend"};
+function openVerify(){
+  VSTATE={code:String(Math.floor(100000+Math.random()*900000)),heard:"",step:1,attempts:3,status:"pend"};
+  drawVerify(); $("#vpanel").classList.add("open");
+}
+function drawVerify(){
+  const st = VSTATE.status;
+  $("#vbox").innerHTML=`
+    <div class="vtop"><h3>${t("vTitle")}</h3>
+      <button class="btn ghost" style="padding:.3rem .8rem;font-size:.76rem" id="vX">${t("vClose")}</button></div>
+    <p class="vlead">${t("vLead")}</p>
+
+    <div class="vrow ${VSTATE.step>1?"done":""}">
+      <span class="vnum">1</span>
+      <span><span class="vt">${t("vs1")}</span><span class="vd">${t("vs1d")}</span>
+        <span class="codebox">
+          <span class="cd">${VSTATE.code}</span>
+          <span><span class="ct">${t("vCallNum")}</span><br><span class="cn">+20 2 2100 0000</span></span>
+          <span class="ct">${t("vExpires")} 09:42</span>
+        </span>
+        <span class="vstatus ${VSTATE.step>1?"ok":"pend"}">${VSTATE.step>1?t("vDone"):t("vPending")}</span>
+      </span>
+    </div>
+
+    <div class="vrow ${st==="ok"?"done":""}">
+      <span class="vnum">2</span>
+      <span><span class="vt">${t("vs2")}</span><span class="vd">${t("vs2d")}</span>
+        <span class="codebox">
+          <input id="vheard" maxlength="6" placeholder="••••••" style="width:140px;text-align:center;font-family:var(--mono);letter-spacing:.2em">
+          <button class="btn" style="padding:.42rem .9rem;font-size:.78rem" id="vgo">${t("vCheck")}</button>
+          <span class="ct">${VSTATE.attempts} ${t("vAttempts")}</span>
+        </span>
+        ${st!=="pend"?`<span class="vstatus ${st==="ok"?"ok":"bad"}">${st==="ok"?t("vDone"):t("vFail")}</span>`:""}
+      </span>
+    </div>
+
+    <div class="vrow"><span class="vnum">3</span>
+      <span><span class="vt">${t("vs3")}</span><span class="vd">${t("vs3d")}</span></span></div>
+    <div class="vrow"><span class="vnum">4</span>
+      <span><span class="vt">${t("vs4")}</span><span class="vd">${t("vs4d")}</span></span></div>
+
+    <p class="note">${t("vOneAcct")} ${t("noWire")}</p>`;
+  $("#vX").addEventListener("click",()=> $("#vpanel").classList.remove("open"));
+  $("#vgo").addEventListener("click",()=>{
+    const v=$("#vheard").value.trim();
+    if(v.length===6){ VSTATE.status="ok"; VSTATE.step=3; toast(t("vDone")); }
+    else { VSTATE.attempts--; VSTATE.status="bad"; }
+    drawVerify();
+  });
+  const f=$("#vheard"); if(f) f.focus();
+}
+
+function vRoutes(){
+  const dName=k=>t("d"+k.charAt(0).toUpperCase()+k.slice(1));
+  $("#v-routes").innerHTML=`
+  <div class="card">
+    <h3>${t("routes")}</h3>
+    <p style="font-size:.86rem;color:var(--fg-mute);line-height:1.7;max-width:78ch">${t("rtLead")}</p>
+  </div>
+
+  <div class="card">
+    <h3>${t("rtDest")}<span class="more">${t("rtDestL")}</span></h3>
+    <div class="grid g3" style="margin-top:.4rem">
+      ${DESTS.map(d=>{
+        const hasProv=!!PROVS[d.k];
+        return `
+        <div class="stat" style="gap:.5rem;min-height:172px">
+          <span class="lbl">${d.on?t("connected"):"—"}</span>
+          <span class="ser" style="font-size:1.2rem">${dName(d.k)}</span>
+          <span class="d" style="line-height:1.6">${t("d"+d.k.charAt(0).toUpperCase()+d.k.slice(1)+"D")}</span>
+          ${d.on&&hasProv?`<span class="tag on" style="align-self:flex-start">${t("via")} ${t(DPROV[d.k])}</span>`:""}
+          ${provPick===d.k?`
+            <span class="lbl" style="margin-top:.2rem">${t("pickProv")}</span>
+            <span class="provpick">${PROVS[d.k].map(pk=>`<button data-prov="${d.k}" data-pv="${pk}">${t(pk)}</button>`).join("")}</span>`
+          :`<button class="btn ${d.on?"ghost":""}" style="margin-top:auto;align-self:flex-start;padding:.34rem .8rem;font-size:.77rem"
+            data-dest="${d.k}">${d.on?t("disconnect"):t("connect")}</button>`}
+        </div>`}).join("")}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>${t("rtRules")}<span class="more">${t("rtRulesL")}</span></h3>
+    ${RULES.map((r,i)=>`
+      <div class="rowline" style="align-items:flex-start;gap:1rem;flex-wrap:wrap">
+        <span style="flex:1;min-width:240px">
+          <span class="t2">${t("rtWhen")}</span>
+          <span style="display:block;margin:.3rem 0 .5rem">${outTag(r.when)}</span>
+          <span class="t2">${t("rtThen")}</span>
+          <span style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem">
+            ${DESTS.map(d=>{
+              const active=r.dest.includes(d.k);
+              return `<button class="tag ${active?"on":"dim"}" data-rule="${i}" data-dk="${d.k}"
+                style="cursor:pointer;${d.on?"":"opacity:.45"}">${dName(d.k)}</button>`;
+            }).join("")}
+          </span>
+          ${r.dest.length?"":`<span class="t2" style="color:var(--ember);margin-top:.4rem;display:block">${t("rtNone")}</span>`}
+        </span>
+        <span class="end" style="display:flex;align-items:center;gap:.6rem">
+          <span class="t2">${r.on?t("rtOn"):t("rtOff")}</span>
+          <button class="sw" data-ron="${i}" aria-pressed="${r.on}"></button>
+        </span>
+      </div>`).join("")}
+  </div>
+
+  <div class="cols">
+    <div class="card">
+      <h3>${t("rtFields")}<span class="more">${t("rtFieldsL")}</span></h3>
+      <div class="tw"><table>
+        <tbody>${FIELDS.map(f=>`<tr><td>${t(f)}</td><td style="text-align:end;color:var(--fg-faint)">auto</td></tr>`).join("")}</tbody>
+      </table></div>
+    </div>
+    <div class="card" style="height:fit-content">
+      <h3>${t("rtTest")}</h3>
+      <p style="font-size:.83rem;color:var(--fg-mute);line-height:1.65;margin-bottom:1rem">${t("rtTestD")}</p>
+      <button class="btn" style="width:100%;justify-content:center" id="rtTestBtn">${t("rtTest")}</button>
+      <p class="note">${t("noWire")}</p>
+    </div>
+  </div>`;
+
+  $$("[data-dest]").forEach(b=> b.addEventListener("click",()=>{
+    const d=DESTS.find(x=>x.k===b.dataset.dest);
+    if(!d.on && PROVS[d.k]){ provPick=d.k; vRoutes(); return; }      // pick the provider before connecting
+    d.on=!d.on;
+    if(!d.on) RULES.forEach(r=> r.dest=r.dest.filter(k=>k!==d.k));   // a disconnected destination cannot stay in a rule
+    vRoutes(); toast(t("saved"));
+  }));
+  $$("[data-prov]").forEach(b=> b.addEventListener("click",()=>{
+    const d=DESTS.find(x=>x.k===b.dataset.prov);
+    DPROV[d.k]=b.dataset.pv; d.on=true; provPick=null;
+    vRoutes(); toast(t("connected")+" — "+t(b.dataset.pv));
+  }));
+  $$("[data-rule]").forEach(b=> b.addEventListener("click",()=>{
+    const r=RULES[+b.dataset.rule], k=b.dataset.dk;
+    const d=DESTS.find(x=>x.k===k);
+    if(!d.on){ toast(t("connect")+" — "+dName(k)); return; }
+    r.dest = r.dest.includes(k) ? r.dest.filter(x=>x!==k) : r.dest.concat(k);
+    vRoutes();
+  }));
+  $$("[data-ron]").forEach(b=> b.addEventListener("click",()=>{
+    const r=RULES[+b.dataset.ron];
+    if(!r.on && !r.dest.length){ toast(t("rtNone")); return; }
+    r.on=!r.on; vRoutes(); toast(t("saved"));
+  }));
+  $("#rtTestBtn").addEventListener("click",()=> toast(t("noWire")));
+}
+
+function vNumbers(){
+  const price=v=> v==null ? t("numQuote") : v;
+  $("#v-numbers").innerHTML=`
+  <div class="card" style="padding-top:1rem">
+    <h3>${t("numMine")}</h3>
+    <div class="tw"><table>
+      <thead><tr><th>${t("numLabel")}</th><th>${t("numType")}</th><th>${t("numUse")}</th><th>${t("numRegion")}</th><th>${t("numStatus")}</th></tr></thead>
+      <tbody>${NUMBERS.map(n=>`<tr>
+        <td class="num" style="font-size:.88rem;color:var(--fg)">${n.n}${n.own?` <span class="tag dim">${t("numConnect").split(" ")[0]}</span>`:""}</td>
+        <td>${t(n.type)}</td><td>${n.use}</td><td>${n.r}</td>
+        <td><span class="tag ${n.st==="numActive"?"on":"hot"}">${t(n.st)}</span></td>
+      </tr>`).join("")}</tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>${t("numConnect")}</h3>
+    <p style="font-size:.85rem;color:var(--fg-mute);line-height:1.7;max-width:74ch;margin-bottom:1.2rem">${t("numConnectLead")}</p>
+    <div class="grid g3">
+      ${[["numM1","numM1d","numFast",true],["numM2","numM2d","numBest",false],["numM3","numM3d","numSlow",false]].map(([k,d,tag,rec])=>`
+        <div class="stat" style="gap:.55rem;min-height:200px">
+          <span style="display:flex;align-items:center;gap:.5rem">
+            <span class="tag ${rec?"on":"dim"}">${t(tag)}</span>
+            ${rec?`<span class="tag hot">${t("numRec")}</span>`:""}
+          </span>
+          <span class="ser" style="font-size:1.25rem;margin-top:.2rem">${t(k)}</span>
+          <span class="d" style="line-height:1.65">${t(d)}</span>
+          <button class="btn ghost" style="margin-top:auto;align-self:flex-start;padding:.35rem .8rem;font-size:.78rem" data-conn="${k}">${t("numStart")}</button>
+        </div>`).join("")}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>${t("numBuy")}</h3>
+    <p style="font-size:.85rem;color:var(--fg-mute);line-height:1.7;max-width:74ch;margin-bottom:1.2rem">${t("numBuyLead")}</p>
+    <div class="tw"><table>
+      <thead><tr><th>${t("numType")}</th><th>${t("numSetup")}</th><th>${t("numMonthly")}</th><th></th></tr></thead>
+      <tbody>${NUMSHOP.map(x=>`<tr>
+        <td><span style="display:block;font-weight:500">${t(x.k)}</span><span style="display:block;font-size:.76rem;color:var(--fg-faint);margin-top:.15rem">${t(x.k+"d")}</span></td>
+        <td>${price(x.setup)}</td><td>${price(x.monthly)}</td>
+        <td style="text-align:end"><button class="btn ghost" style="padding:.3rem .7rem;font-size:.76rem" data-buynum="${x.k}">${t("numGet")}</button></td>
+      </tr>`).join("")}</tbody>
+    </table></div>
+    <p class="note">${t("numNote")}</p>
+  </div>`;
+  $$("[data-conn]").forEach(b=> b.addEventListener("click", openVerify));
+  $$("[data-buynum]").forEach(b=> b.addEventListener("click",()=> toast(t("noWire"))));
+}
+
+/* Account plan + cycle. Overwritten by NABRA_BOOT when served at /app;
+   PLANS is pulled from the gateway (/api/pricing) so prices stay in
+   lockstep with what checkout actually charges. */
+let ACCT = { plan:"growth", cycle:"monthly" };
+let PLANS = { plans:{ starter:49, growth:129, enterprise:399 }, annualMonthsFree:2 }; // fallback for standalone preview
+let FXR = null; // billing rate from /api/fx/current, if reachable
+(async ()=>{ try{
+  const r = await fetch("/api/pricing"); if(r.ok){ PLANS = await r.json(); }
+}catch(_){}
+ try{
+  const r = await fetch("/api/fx/current"); if(r.ok){ FXR = await r.json(); }
+}catch(_){}
+ vBilling();
+})();
+const fmt$ = v => v==null ? "—" : "$"+Math.round(v).toLocaleString();
+const fmtE = v => (FXR && v!=null) ? "E£"+(Math.ceil(v*(FXR.billingRate||FXR.liveBuffered)/5)*5).toLocaleString() : "";
+
+function vBilling(){
+  const usd    = PLANS.plans[ACCT.plan];
+  const yearly = ACCT.cycle==="annual";
+  const yTotal = usd==null ? null : usd*(12-PLANS.annualMonthsFree);
+  const save   = usd==null ? null : usd*12 - yTotal;
+  const planNm = ACCT.plan.charAt(0).toUpperCase()+ACCT.plan.slice(1);
+  const egp    = yearly ? fmtE(yTotal) : fmtE(usd);
+  const priceLine = usd==null ? "" : yearly
+    ? `<div style="display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.4rem">
+         <span class="ser" style="font-size:1.5rem">${fmt$(yTotal)}</span><span class="lbl">${t("perYr")}</span>
+         <span class="lbl">${t("approxMo").replace("{p}", fmt$(yTotal/12))}${egp?` · ${egp}`:""}</span>
+       </div>
+       <p class="note" style="margin:0 0 1rem">${t("ySave").replace("{s}", fmt$(save))}</p>`
+    : `<div style="display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem">
+         <span class="ser" style="font-size:1.5rem">${fmt$(usd)}</span><span class="lbl">${t("perMo")}${egp?` · ${egp}`:""}</span>
+       </div>`;
+
+  $("#v-billing").innerHTML=`
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h3>${t("plan")}</h3>
+        <div style="display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin-bottom:.6rem">
+          <span class="ser" style="font-size:1.9rem">${planNm}</span>
+          <span class="tag ${yearly?"on":""}">${yearly?t("cycY")+" · "+t("ymFree"):t("cycM")}</span>
+          <span class="lbl">${t("renews")} · 09.09.2026</span>
+        </div>
+        ${priceLine}
+        <div class="grid g3" style="border-radius:10px">
+          <div class="stat" style="min-height:96px"><span class="lbl">${t("minutes")}</span><span class="v" style="font-size:1.4rem">3,940</span><span class="bar" style="margin-top:.5rem"><span style="width:66%"></span></span></div>
+          <div class="stat" style="min-height:96px"><span class="lbl">${t("agentsU")}</span><span class="v" style="font-size:1.4rem">3</span><span class="bar" style="margin-top:.5rem"><span style="width:30%"></span></span></div>
+          <div class="stat" style="min-height:96px"><span class="lbl">${t("numbersU")}</span><span class="v" style="font-size:1.4rem">3</span><span class="bar" style="margin-top:.5rem"><span style="width:30%"></span></span></div>
+        </div>
+        <button class="btn ghost" style="margin-top:1rem">${t("changePlan")}</button>
+      </div>
+
+      <div class="card" style="margin-top:1rem">
+        <h3>${t("invoices")}</h3>
+        <div class="tw"><table>
+          <thead><tr><th>${t("invDate")}</th><th>${t("invAmt")}</th><th>${t("invState")}</th></tr></thead>
+          <tbody>
+            ${["09.08.2026","09.07.2026","09.06.2026"].map(d=>`
+              <tr><td class="num">${d}</td><td class="num">—</td><td><span class="tag on">${t("paid")}</span></td></tr>`).join("")}
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="card" style="height:fit-content">
+      <h3>${t("card")}</h3>
+      <div class="rowline" style="border-bottom:none">
+        <span class="who">••</span>
+        <span><span class="t1 mono">•••• •••• •••• 4242</span><span class="t2">${t("cardOnFile")} · ${t("exp")} 09/29</span></span>
+      </div>
+      <button class="btn ghost" style="width:100%;justify-content:center;margin-top:.8rem">${t("updateCard")}</button>
+      <p class="note">${t("noWire")}</p>
+    </div>
+  </div>`;
+}
+
+
+/* ================= SCRIPT LIBRARY ================= */
+/* Tone kits: how the same script opens, pushes and closes in each tone. */
+const TK={
+ tExcited:{
+  eg:{open:"أهلاً أهلاً! نوّرتنا.",push:"صدقني مش هتندم!",close:"مستنيينك بفارغ الصبر! أأكدلك دلوقتي؟",style:"متحمسة وطاقتها عالية، ورحّب ترحيب كبير"},
+  en:{open:"Hey, welcome! Great to hear from you.",push:"Honestly, you won't regret it!",close:"We can't wait to have you! Shall I confirm it right now?",style:"excited and high-energy, with a big welcome"}},
+ tWarm:{
+  eg:{open:"أهلاً بيك يا فندم.",push:"وأنا واثق إنها هتعجب حضرتك.",close:"تحت أمر حضرتك في أي وقت. أقفلهالك؟",style:"ودّية وقريبة، وخلّي المتصل حاسس إنه في بيته"},
+  en:{open:"Hello, so glad you called.",push:"I really think you'll love it.",close:"We're here whenever you need us. Shall I set it up for you?",style:"warm and personal — make the caller feel at home"}},
+ tCalm:{
+  eg:{open:"مساء الخير.",push:"دي أنسب حاجة لطلب حضرتك.",close:"تحب أكمّل الإجراء؟",style:"هادية ومهنية ومختصرة، من غير لف"},
+  en:{open:"Good afternoon.",push:"That would be the best fit for what you need.",close:"Would you like me to go ahead?",style:"calm, professional and to the point"}},
+ tCloser:{
+  eg:{open:"أهلاً بيك.",push:"العرض ده لفترة محدودة — أثبتهولك قبل ما يخلص؟",close:"نقفلها دلوقتي وأبعتلك التأكيد حالاً؟",style:"بيّاعة: اعرض بثقة، عالج الاعتراض، واطلب الإغلاق صراحةً"},
+  en:{open:"Hi there, good timing.",push:"This offer won't last — shall I lock it in before it's gone?",close:"Let's close it now and I'll send your confirmation right away. Deal?",style:"a closer: present with confidence, handle the objection, and explicitly ask for the sale"}},
+ tFormal:{
+  eg:{open:"السلام عليكم، أهلاً وسهلاً بكم.",push:"يسعدنا أن نؤكد لكم ذلك.",close:"هل تسمحون بإتمام الإجراء؟",style:"رسمية بالعربية الفصحى وبكامل عبارات اللياقة"},
+  en:{open:"Good day, and thank you for calling.",push:"It would be our pleasure to confirm that for you.",close:"May I proceed with the arrangement?",style:"formal and courteous throughout"}}
+};
+/* Caller lines used in the preview, per goal. */
+const CLN={
+ gBook:{eg:"كنت عايز أحجز.",en:"I'd like to make a booking."},
+ gQual:{eg:"كنت بسأل أعرف التفاصيل بس.",en:"I was just calling to ask about the details."},
+ gSell:{eg:"طيب وبكام ده؟",en:"Okay — and how much is that?"},
+ gFollow:{eg:"أيوه افتكرت، خير؟",en:"Oh right, yes — what's up?"},
+ gSupp:{eg:"عندي سؤال بس.",en:"I just have a quick question."}
+};
+/* Category kits: the domain content, per language. */
+const SC={
+ bRest:{goals:["gBook","gSell","gFollow"],menu:true,
+  eg:{who:"أنت موظف استقبال وحجوزات في مطعم",greet:"معاك {biz}.",
+      disc:["حضرتك كام فرد؟","تحب جوّه ولا في التراس؟"],
+      offer:"النهارده عندنا عرض على المشويات المشكّلة.",
+      core:{gBook:"عندي مكان الساعة ٨ أو ٩ ونص.",gSell:"أنصح حضرتك بطبق الشيف — أكتر حاجة بتتطلب عندنا.",gFollow:"بكلم حضرتك أأكد حجز بكرة الساعة ٩."},
+      ask:{gBook:"أحجزلك أنهي معاد؟",gSell:"أضيفهولك على الأوردر؟",gFollow:"الحجز تمام ولا تحب تعدّل المعاد؟"},
+      instr:{gBook:"افهم عدد الأفراد والمعاد المطلوب واحجز من المواعيد المتاحة.",gSell:"اقترح أصناف من المنيو وارفع قيمة الأوردر بذوق ومن غير إلحاح مبالغ.",gFollow:"أكّد حجوزات بكرة وقلّل الغيابات، ولو حد عايز يعدّل ظبطله معاد تاني."},
+      extra:"جاوب عن الأصناف والأسعار من المنيو المرفوع في المعرفة، ولو صنف مش موجود قول إنه مش متاح."},
+  en:{who:"You are the reception and bookings host of a restaurant",greet:"This is {biz}.",
+      disc:["How many will you be?","Inside, or on the terrace?"],
+      offer:"We have an offer on the mixed grill today.",
+      core:{gBook:"I have a table at 8, or half past 9.",gSell:"I'd recommend the chef's platter — it's our most ordered dish.",gFollow:"I'm calling to confirm your booking for tomorrow at 9."},
+      ask:{gBook:"Which time shall I book for you?",gSell:"Shall I add it to your order?",gFollow:"Is the booking still good, or shall I move it?"},
+      instr:{gBook:"Establish the party size and preferred time, then book from the available slots.",gSell:"Suggest dishes from the menu and raise the order value tastefully, never pushily.",gFollow:"Confirm tomorrow's bookings to cut no-shows; reschedule anyone who asks."},
+      extra:"Answer dish and price questions from the uploaded menu in Knowledge; if an item is not on it, say it is unavailable."}},
+ bClinic:{goals:["gBook","gFollow","gSupp"],
+  eg:{who:"أنت موظف استقبال في عيادة",greet:"معاك عيادة {biz}.",
+      disc:["الكشف لحضرتك ولا لحد من العيلة؟","أول زيارة ولا متابعة؟"],
+      offer:"في مواعيد متاحة بكرة الصبح.",
+      core:{gBook:"أقرب معاد بكرة ١١ الصبح أو ٥ بعد الضهر.",gFollow:"بذكّر حضرتك بمعاد الكشف بكرة الساعة ٥.",gSupp:"مواعيد العيادة من ١٠ الصبح لـ ٨ بالليل ما عدا الجمعة."},
+      ask:{gBook:"أحجزلك أنهي معاد؟",gFollow:"المعاد مناسب ولا أأجّلهولك؟",gSupp:"أقدر أساعد حضرتك في حاجة تانية؟"},
+      instr:{gBook:"اعرف نوع الكشف واحجز أقرب معاد مناسب.",gFollow:"أكّد مواعيد بكرة وقلّل المواعيد اللي بتضيع.",gSupp:"جاوب عن المواعيد والأسعار والعنوان من المعرفة."},
+      extra:"متدّيش أي نصيحة طبية إطلاقاً — أي سؤال طبي حوّله للدكتور."},
+  en:{who:"You are the front desk of a clinic",greet:"This is {biz} clinic.",
+      disc:["Is the appointment for you, or a family member?","First visit, or a follow-up?"],
+      offer:"We have openings tomorrow morning.",
+      core:{gBook:"The nearest slots are tomorrow at 11am or 5pm.",gFollow:"I'm calling to remind you of your appointment tomorrow at 5.",gSupp:"We're open 10am to 8pm, every day except Friday."},
+      ask:{gBook:"Which slot shall I book?",gFollow:"Does that still work, or shall I move it?",gSupp:"Anything else I can help with?"},
+      instr:{gBook:"Establish the visit type and book the nearest suitable slot.",gFollow:"Confirm tomorrow's appointments to reduce no-shows.",gSupp:"Answer hours, prices and directions from Knowledge."},
+      extra:"Never give medical advice of any kind — route every medical question to the doctor."}},
+ bRealty:{goals:["gQual","gBook","gFollow"],
+  eg:{who:"أنت مسؤول مبيعات في شركة تطوير عقاري",greet:"معاك {biz} للتطوير العقاري.",
+      disc:["حضرتك بتدور على سكن ولا استثمار؟","الميزانية في حدود قد إيه تقريباً؟"],
+      offer:"لسه فاتحين مرحلة جديدة بأسعار الإطلاق.",
+      core:{gQual:"عشان أوفّر وقت حضرتك، هاخد منك تلات معلومات بس.",gBook:"أقدر أحجزلك معاينة في الموقع مع مهندس المبيعات.",gFollow:"بتابع مع حضرتك بخصوص الوحدة اللي سألت عليها."},
+      ask:{gQual:"ينفع أعرف التوقيت المناسب للاستلام؟",gBook:"يناسبك الجمعة ولا السبت؟",gFollow:"لسه مهتم نكمّل الإجراءات؟"},
+      instr:{gQual:"اسأل عن الغرض والميزانية وتوقيت الاستلام وصاحب القرار، وسجّل الإجابات في بيانات العميل.",gBook:"اقفل على معاد معاينة محدد بيوم وساعة.",gFollow:"تابع العملاء المهتمين وحرّك كل واحد خطوة قدام."},
+      extra:"لو المتصل جاهز، حوّله فوراً لمهندس المبيعات."},
+  en:{who:"You are a sales agent at a property developer",greet:"This is {biz} Developments.",
+      disc:["Are you buying to live in, or to invest?","Roughly what budget are you working with?"],
+      offer:"We've just opened a new phase at launch prices.",
+      core:{gQual:"To save you time, I'll just take three quick details.",gBook:"I can book you a site visit with a sales engineer.",gFollow:"I'm following up about the unit you asked about."},
+      ask:{gQual:"And when would you want to move in?",gBook:"Does Friday work, or Saturday?",gFollow:"Still interested in taking the next step?"},
+      instr:{gQual:"Ask purpose, budget, move-in timing and who decides; log every answer on the lead.",gBook:"Close on a specific viewing day and time.",gFollow:"Work the interested leads and move each one a step forward."},
+      extra:"If the caller is ready, transfer them straight to a sales engineer."}},
+ bSalon:{goals:["gBook","gSell","gFollow"],
+  eg:{who:"أنت موظف حجوزات في صالون تجميل",greet:"معاك {biz}.",
+      disc:["الخدمة المطلوبة إيه — قص ولا صبغة ولا عناية؟","تحبي مع حد معيّن من الفريق؟"],
+      offer:"عندنا خصم ١٥٪ على الباقات وسط الأسبوع.",
+      core:{gBook:"متاح النهارده الساعة ٦ أو بكرة ١٢.",gSell:"مع الصبغة أنصحك بحمّام كريم بروتين — النتيجة بتفرق جداً.",gFollow:"بأكد معاد حضرتك بكرة الساعة ١٢."},
+      ask:{gBook:"أحجزلك أنهي معاد؟",gSell:"أضيفهولك على الحجز؟",gFollow:"المعاد تمام؟"},
+      instr:{gBook:"اعرفي الخدمة والمتخصص المفضل واحجزي أقرب معاد.",gSell:"اقترحي خدمة مكمّلة مناسبة وارفعي قيمة الحجز بلطف.",gFollow:"أكّدي مواعيد بكرة وافتحي باب إعادة الحجز."},
+      extra:""},
+  en:{who:"You are the bookings desk of a salon",greet:"This is {biz}.",
+      disc:["What are we booking — a cut, colour, or treatment?","Any stylist you prefer?"],
+      offer:"We're running 15% off midweek packages.",
+      core:{gBook:"I have today at 6, or tomorrow at 12.",gSell:"With the colour I'd suggest a protein treatment — it makes a real difference.",gFollow:"I'm confirming your appointment tomorrow at 12."},
+      ask:{gBook:"Which one shall I book?",gSell:"Shall I add it to the booking?",gFollow:"Still good?"},
+      instr:{gBook:"Establish the service and preferred stylist, then book the nearest slot.",gSell:"Suggest one fitting add-on and gently raise the booking value.",gFollow:"Confirm tomorrow's appointments and invite rebooking."},
+      extra:""}},
+ bShop:{goals:["gSell","gQual","gSupp"],
+  eg:{who:"أنت مسؤول مبيعات في متجر أونلاين",greet:"معاك {biz}.",
+      disc:["حضرتك شفت المنتج على الموقع ولا على الصفحة؟","المقاس أو الموديل المطلوب إيه؟"],
+      offer:"في شحن مجاني على الأوردرات فوق ٥٠٠ جنيه النهارده.",
+      core:{gSell:"المنتج متوفر وعليه خصم دلوقتي.",gQual:"هاخد بيانات حضرتك ومندوبنا يأكد التفاصيل.",gSupp:"الاستبدال والاسترجاع متاحين خلال ١٤ يوم."},
+      ask:{gSell:"أأكدلك الأوردر والدفع عند الاستلام؟",gQual:"أسجّل الأوردر مبدئياً؟",gSupp:"في حاجة تانية أقدر أساعد فيها؟"},
+      instr:{gSell:"أكّد توفر المنتج واعرض بديل لو خلصان، واقفل الأوردر بالدفع عند الاستلام.",gQual:"سجّل الاسم والعنوان والمنتج المطلوب لتأكيد لاحق.",gSupp:"جاوب عن الشحن والاستبدال والمقاسات من المعرفة."},
+      extra:"أكّد العنوان ورقم الموبايل قبل إقفال أي أوردر."},
+  en:{who:"You are the sales line of an online store",greet:"This is {biz}.",
+      disc:["Did you see the product on the site, or on our page?","Which size or model do you need?"],
+      offer:"Free delivery on orders over 500 EGP, today only.",
+      core:{gSell:"It's in stock, and discounted right now.",gQual:"I'll take your details and our rep will confirm everything.",gSupp:"Exchanges and returns are open for 14 days."},
+      ask:{gSell:"Shall I confirm the order, cash on delivery?",gQual:"Shall I log the order provisionally?",gSupp:"Anything else I can help with?"},
+      instr:{gSell:"Confirm stock, offer an alternative if sold out, and close the order cash-on-delivery.",gQual:"Capture name, address and requested product for later confirmation.",gSupp:"Answer delivery, exchange and sizing questions from Knowledge."},
+      extra:"Always confirm the address and mobile number before closing an order."}},
+ bAuto:{goals:["gBook","gQual","gFollow"],
+  eg:{who:"أنت موظف حجوزات في مركز صيانة سيارات",greet:"معاك مركز {biz}.",
+      disc:["العربية نوعها وموديلها إيه؟","المشكلة إيه بالظبط ولا صيانة دورية؟"],
+      offer:"فحص الـ ٢٠ نقطة مجاني مع أي صيانة الأسبوع ده.",
+      core:{gBook:"أقرب معاد بكرة ١٠ الصبح.",gQual:"هسجّل بيانات العربية والمشكلة والفني يتواصل مع حضرتك.",gFollow:"العربية خلصت وجاهزة للاستلام."},
+      ask:{gBook:"أحجزهالك؟",gQual:"أظبط كده؟",gFollow:"تستلم النهارده ولا بكرة؟"},
+      instr:{gBook:"اعرف نوع العربية والمطلوب واحجز أقرب معاد.",gQual:"سجّل الماركة والموديل والمشكلة عشان الفني يتصل جاهز.",gFollow:"بلّغ إن العربية جاهزة وظبّط معاد الاستلام."},
+      extra:""},
+  en:{who:"You are the bookings desk of an auto service centre",greet:"This is {biz}.",
+      disc:["What's the car — make and model?","What's the issue exactly, or is it routine service?"],
+      offer:"Free 20-point check with any service this week.",
+      core:{gBook:"The nearest slot is tomorrow at 10am.",gQual:"I'll log the car and the issue, and a technician will call you.",gFollow:"Your car is done and ready for pickup."},
+      ask:{gBook:"Shall I book it?",gQual:"Shall I set that up?",gFollow:"Picking up today, or tomorrow?"},
+      instr:{gBook:"Establish the car and the job, then book the nearest slot.",gQual:"Log make, model and issue so the technician calls prepared.",gFollow:"Announce the car is ready and fix a pickup time."},
+      extra:""}}
+};
+const SVARS={
+ vA:{eg:"ادخل في الموضوع بسرعة واطلب من بدري.",en:"Get to the point fast and ask early."},
+ vB:{eg:"اسأل سؤالين الأول تفهم بيهم المتصل قبل ما تقترح.",en:"Ask two discovery questions before you propose anything."},
+ vC:{eg:"ابدأ بالعرض اللي هيكسبه المتصل وبعدين اطلب.",en:"Open with what the caller gains, then ask."}
+};
+
+let sc={cat:"bRest",goal:"gBook",tone:"tWarm",biz:"",slang:"eg",applying:null,routeOn:true};
+
+function scBiz(l){ return sc.biz.trim() || (l==="eg"?"مطعمك":"your business"); }
+function scLines(v){
+  const l=sc.slang, C=SC[sc.cat][l], K=TK[sc.tone][l], g=sc.goal;
+  const biz=scBiz(l), fill=x=>x.replace("{biz}",biz);
+  const A=x=>({by:"ai",x:fill(x)}), U=x=>({by:"u",x});
+  const pushy = (sc.tone==="tCloser"||g==="gSell") ? [A(K.push)] : [];
+  if(v==="vA") return [A(K.open+" "+C.greet),U(CLN[g][l]),A(C.core[g]),A(C.ask[g]),...pushy,A(K.close)];
+  if(v==="vB") return [A(K.open+" "+C.greet),U(CLN[g][l]),A(C.disc[0]),A(C.disc[1]+" "+C.core[g]),A(C.ask[g]),A(K.close)];
+  return [A(K.open+" "+C.greet+" "+C.offer),U(CLN[g][l]),A(C.core[g]),A(C.ask[g]),...pushy,A(K.close)];
+}
+function scInstr(v){
+  const l=sc.slang, C=SC[sc.cat][l], K=TK[sc.tone][l], g=sc.goal, biz=scBiz(l);
+  const bits = l==="eg"
+    ? [C.who+" اسمه "+biz+".","اتكلم بنبرة "+K.style+".",C.instr[g],SVARS[v].eg,C.extra,"لو المتصل طلب موظف حوّله فوراً."]
+    : [C.who+" called "+biz+".","Speak in a tone that is "+K.style+".",C.instr[g],SVARS[v].en,C.extra,"If the caller asks for a person, transfer immediately."];
+  return bits.filter(Boolean).join(" ");
+}
+function vScripts(){
+  const C=SC[sc.cat];
+  if(!C.goals.includes(sc.goal)) sc.goal=C.goals[0];
+  $("#v-scripts").innerHTML=`
+  <div class="card">
+    <p style="font-size:.86rem;color:var(--fg-mute);line-height:1.7;max-width:78ch">${t("scLead")}</p>
+  </div>
+
+  <div class="card" style="margin-top:1rem;display:grid;gap:1.1rem">
+    <div><span class="lbl" style="display:block;margin-bottom:.5rem">${t("scStep1")}</span>
+      <div class="pick">${Object.keys(SC).map(k=>`<button data-scat="${k}" aria-pressed="${k===sc.cat}">${t(k)}</button>`).join("")}</div></div>
+    <div class="scgrid">
+      <div><span class="lbl" style="display:block;margin-bottom:.5rem">${t("scStep2")}</span>
+        <div class="pick">${C.goals.map(k=>`<button data-sgoal="${k}" aria-pressed="${k===sc.goal}">${t(k)}</button>`).join("")}</div></div>
+      <div class="fld" style="margin:0"><label>${t("bizLbl")}</label>
+        <input id="scBiz" class="${L==="en"?"":"arv"}" value="${sc.biz.replace(/"/g,"&quot;")}" placeholder="${t("bizPh")}" style="${sc.biz&&/[\u0600-\u06FF]/.test(sc.biz)?"font-family:var(--ar-body);direction:rtl;text-align:right":""}"></div>
+    </div>
+    <div><span class="lbl" style="display:block;margin-bottom:.5rem">${t("scStep3")}</span>
+      <div class="pick">${Object.keys(TK).map(k=>`<button data-stone="${k}" aria-pressed="${k===sc.tone}">${t(k)}<span class="sub">${t(k+"D")}</span></button>`).join("")}</div></div>
+    <div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap">
+      <span class="lbl">${t("scStep4")}</span>
+      <span style="margin-inline-start:auto;display:flex;align-items:center;gap:.5rem">
+        <span class="lbl">${t("scLang")}</span>
+        <span class="seg"><button data-slang="eg" aria-pressed="${sc.slang==="eg"}">مصري</button><button data-slang="en" aria-pressed="${sc.slang==="en"}">English</button></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="vgrid">
+    ${["vA","vB","vC"].map(v=>{
+      const lines=scLines(v), cls=sc.slang==="eg"?"msarab":"msen";
+      return `<div class="vcard">
+        <div>
+          <span style="display:flex;align-items:center;gap:.5rem">
+            <span class="ser" style="font-size:1.15rem">${t(v)}</span>
+            ${C.menu?`<span class="tag hot" style="margin-inline-start:auto">${t("scMenuTie")}</span>`:""}
+          </span>
+          <span class="t2" style="display:block;margin-top:.15rem">${t(v+"D")}</span>
+        </div>
+        <span class="lbl">${t("scHow")}</span>
+        <div class="conv" dir="${sc.slang==="eg"?"rtl":"ltr"}">
+          ${lines.map(ln=>`<p class="${cls}" data-by="${ln.by}"><span class="w">${ln.by==="ai"?"NABRA":t("agCaller")}</span>${ln.x}</p>`).join("")}
+        </div>
+        <details>
+          <summary class="lbl" style="cursor:pointer;list-style:none">${t("scWhat")} ↓</summary>
+          <p class="${sc.slang==="eg"?"msarab":""}" dir="${sc.slang==="eg"?"rtl":"ltr"}" style="font-size:.8rem;line-height:1.8;color:var(--fg-mute);margin-top:.5rem;${sc.slang==="eg"?"font-family:var(--ar-body);text-align:right":""}">${scInstr(v)}</p>
+        </details>
+        ${sc.applying===v?`
+          <div style="display:grid;gap:.6rem;border-top:1px solid var(--rule-soft);padding-top:.8rem">
+            <div class="fld" style="margin:0"><label>${t("applyTo")}</label>
+              <select id="scAgent">${AGENTS.map(a=>`<option value="${a.id}">${a.name}</option>`).join("")}<option value="new">＋ ${t("newAgentOpt")}</option></select></div>
+            <label style="display:flex;align-items:flex-start;gap:.55rem;font-size:.78rem;color:var(--fg-mute);line-height:1.55;cursor:pointer">
+              <input type="checkbox" id="scRoute" ${sc.routeOn?"checked":""} style="margin-top:.2rem;accent-color:var(--ember)">${t("scRouteL")}</label>
+            <button class="btn" data-apply="${v}" style="justify-content:center">${t("applyGo")}</button>
+          </div>`
+        :`<button class="btn ghost" data-pickv="${v}" style="justify-content:center">${t("useScript")}</button>`}
+      </div>`;
+    }).join("")}
+  </div>
+  <p class="note">${t("noWire")}</p>`;
+
+  $$("[data-scat]").forEach(b=>b.addEventListener("click",()=>{ sc.cat=b.dataset.scat; sc.applying=null; vScripts(); }));
+  $$("[data-sgoal]").forEach(b=>b.addEventListener("click",()=>{ sc.goal=b.dataset.sgoal; sc.applying=null; vScripts(); }));
+  $$("[data-stone]").forEach(b=>b.addEventListener("click",()=>{ sc.tone=b.dataset.stone; vScripts(); }));
+  $$("[data-slang]").forEach(b=>b.addEventListener("click",()=>{ sc.slang=b.dataset.slang; vScripts(); }));
+  $$("[data-pickv]").forEach(b=>b.addEventListener("click",()=>{ sc.applying=b.dataset.pickv; vScripts(); }));
+  const bz=$("#scBiz");
+  bz.addEventListener("change",()=>{ sc.biz=bz.value; vScripts(); });
+  bz.addEventListener("keydown",e=>{ if(e.key==="Enter"){ sc.biz=bz.value; vScripts(); }});
+  $$("[data-apply]").forEach(b=>b.addEventListener("click",()=>{
+    sc.routeOn=$("#scRoute").checked;
+    const v=b.dataset.apply, sel=$("#scAgent").value, text=scInstr(v);
+    let a;
+    if(sel==="new"){
+      const id=Math.max(...AGENTS.map(x=>x.id))+1;
+      a={id,name:t(sc.cat)+" · "+t(sc.goal),role:t(sc.goal),voice:"Fatima · Masri",on:false,rec:false,script:text};
+      AGENTS.push(a);
+    }else{ a=AGENTS.find(x=>x.id==sel); a.script=text; }
+    if(sc.routeOn){
+      ["crm","cal","wa"].forEach(k=>{ const d=DESTS.find(x=>x.k===k); if(d) d.on=true; });
+      const r=RULES.find(x=>x.when==="oBooked"); if(r){ r.on=true; ["crm","cal","wa"].forEach(k=>{ if(!r.dest.includes(k)) r.dest.push(k); }); }
+    }
+    sc.applying=null; toast(t("applied")); go("agents"); vAgents(); editAgent(a.id); vRoutes();
+  }));
+}
+
+/* ================= KNOWLEDGE ================= */
+const KNOW=[
+ {id:1,nameK:"knSrcFaq",byK:"knByType",items:9,secs:2,when:"—"}
+];
+const KMENU=[
+ ["مشويات","كباب وكفتة (نص كيلو)","480"],
+ ["مشويات","ريش ضاني","520"],
+ ["مشويات","فراخ مشوية","260"],
+ ["مشويات","حمام محشي (زوج)","340"],
+ ["طواجن","طاجن لحمة بالبصل","310"],
+ ["طواجن","طاجن أوطة باللحمة المفرومة","290"],
+ ["طواجن","طاجن بامية","240"],
+ ["مقبلات","بابا غنوج","60"],
+ ["مقبلات","سلطة خضرا","40"],
+ ["مقبلات","طحينة","35"],
+ ["مشروبات","عصير قصب","30"],
+ ["مشروبات","سوبيا","35"]
+];
+let kn={method:null,stage:"pick",url:"",prog:0,timer:null};
+
+function knSrcName(m){ return {kmType:"knByType",kmSite:"knBySite",kmScan:"knByScan",kmPdf:"knByPdf"}[m]; }
+function vKnowledge(){
+  $("#v-knowledge").innerHTML=`
+  <div class="card">
+    <p style="font-size:.86rem;color:var(--fg-mute);line-height:1.7;max-width:78ch">${t("knLead")}</p>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <h3>${t("knSources")}</h3>
+    ${KNOW.length?KNOW.map(k=>`
+      <div class="rowline">
+        <span class="who">✓</span>
+        <span><span class="t1">${t(k.nameK)}</span><span class="t2">${t(k.byK)} · ${k.secs} ${t("knSecs")} · ${k.items} ${t("knItems")}${k.when!=="—"?` · ${t("knUpdated")} ${k.when}`:""}</span></span>
+        <span class="end"><span class="tag on">${t("knReady")}</span></span>
+      </div>`).join(""):`<p class="empty">—</p>`}
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <h3>${t("knAdd")}</h3>
+    <div class="kgrid">
+      ${["kmType","kmSite","kmScan","kmPdf"].map(m=>`
+        <button class="kmethod" data-km="${m}" aria-pressed="${kn.method===m}">
+          <span class="lbl">${{kmType:"⌨",kmSite:"⌁",kmScan:"⌾",kmPdf:"❑"}[m]}</span>
+          <span class="ser" style="font-size:1.15rem">${t(m)}</span>
+          <span class="d">${t(m+"D")}</span>
+        </button>`).join("")}
+    </div>
+    <div id="knFlow" style="margin-top:1rem"></div>
+  </div>
+  <p class="note">${t("noWire")}</p>`;
+  $$("[data-km]").forEach(b=>b.addEventListener("click",()=>{
+    if(kn.timer){clearTimeout(kn.timer);kn.timer=null;}
+    kn.method=b.dataset.km; kn.stage="input"; kn.prog=0; vKnowledge();
+  }));
+  knFlow();
+}
+function knFlow(){
+  const el=$("#knFlow"); if(!el) return;
+  if(!kn.method||kn.stage==="pick"){ el.innerHTML=""; return; }
+  if(kn.stage==="input"){
+    if(kn.method==="kmSite"){
+      el.innerHTML=`<div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <input id="knUrl" placeholder="${t("kmUrlPh")}" value="${kn.url}" dir="ltr"
+          style="flex:1;min-width:240px;background:var(--bone);border:1px solid var(--rule);border-radius:9px;padding:.55rem .8rem;font:inherit;font-size:.85rem">
+        <button class="btn" id="knGo">${t("kmRead")}</button></div>`;
+      $("#knGo").addEventListener("click",()=>{ kn.url=$("#knUrl").value; knStartRead(); });
+    }else if(kn.method==="kmType"){
+      el.innerHTML=`<div class="fld ar" style="margin:0"><textarea id="knTxt" placeholder="${t("kmTypePh")}"></textarea></div>
+        <button class="btn" id="knGo" style="margin-top:.7rem">${t("knConfirm")}</button>`;
+      $("#knGo").addEventListener("click",()=>{ knCommit(); });
+    }else{
+      el.innerHTML=`<div class="drop" id="knDrop">${t("kmDrop")}</div>`;
+      $("#knDrop").addEventListener("click",()=> knStartRead());
+    }
+    return;
+  }
+  if(kn.stage==="reading"){
+    el.innerHTML=`<div class="prog">${["knProg1","knProg2","knProg3"].map((k,i)=>`
+      <span class="st ${i<kn.prog?"done":""}"><span class="dotp"></span>${t(k)}${i<kn.prog?" ✓":"…"}</span>`).join("")}</div>`;
+    if(kn.prog<3){ kn.timer=setTimeout(()=>{ kn.prog++; knFlow(); },700); }
+    else { kn.stage="review"; knFlow(); }
+    return;
+  }
+  if(kn.stage==="review"){
+    el.innerHTML=`
+      <h3 style="font-size:.92rem;font-weight:600;margin-bottom:.2rem">${t("knReview")}</h3>
+      <p class="t2" style="margin-bottom:.8rem">${t("knReviewL")} · ${t("knShowing")} ${KMENU.length} ${t("knOf")} 42</p>
+      <div class="tw menu-ed"><table>
+        <thead><tr><th style="width:130px">${t("knSection")}</th><th>${t("knItem")}</th><th style="width:110px">${t("knPrice")}</th></tr></thead>
+        <tbody>${KMENU.map(r=>`<tr>
+          <td><input class="arv" value="${r[0]}"></td>
+          <td><input class="arv" value="${r[1]}"></td>
+          <td><input class="pr" value="${r[2]}"></td>
+        </tr>`).join("")}</tbody></table></div>
+      <button class="btn" id="knGo" style="margin-top:1rem">${t("knConfirm")}</button>`;
+    $("#knGo").addEventListener("click",()=> knCommit());
+  }
+}
+function knStartRead(){ kn.stage="reading"; kn.prog=0; knFlow(); }
+function knCommit(){
+  KNOW.push({id:KNOW.length+1,nameK:"knSrcMenu",byK:knSrcName(kn.method),items:42,secs:6,when:"—"});
+  kn={method:null,stage:"pick",url:"",prog:0,timer:null};
+  toast(t("knDone")); vKnowledge();
+}
+
+/* ---------------- language + boot ---------------- */
+function applyLang(l){
+  L=l;
+  const rtl=l!=="en";
+  document.documentElement.setAttribute("lang", l==="en"?"en":"ar");
+  document.documentElement.setAttribute("dir", rtl?"rtl":"ltr");
+  $$("[data-setlang]").forEach(b=> b.setAttribute("aria-pressed", String(b.dataset.setlang===l)));
+  $$("[data-k]").forEach(e=> e.textContent=t(e.dataset.k));
+  $("#liveCount").textContent = LIVE.length+" "+t("live");
+  renderNav(); $("#viewTitle").textContent=t(view);
+  vOverview(); vCalls(); vAgents(); vScripts(); vKnowledge(); vCampaigns(); vLeads(); vRecordings(); vRoutes(); vNumbers(); vBilling();
+}
+$$("[data-setlang]").forEach(b=> b.addEventListener("click",()=> applyLang(b.dataset.setlang)));
+
+function closeRail(){ $("#rail").classList.remove("open"); $("#scrim").classList.remove("open"); }
+$("#burger").addEventListener("click",()=>{ $("#rail").classList.toggle("open"); $("#scrim").classList.toggle("open"); });
+$("#scrim").addEventListener("click", closeRail);
+$("#newAgent").addEventListener("click",()=>{ go("agents"); });
+
+applyLang("en");
+
+/* ---- identity injected by the gateway when served at /app ---- */
+/* ============================================================
+   REAL DATA
+   ------------------------------------------------------------
+   When served by the gateway, the overview, agents and leads
+   views read the account's own tables. When opened as a file,
+   the sample data stays, clearly labelled as sample.
+   ============================================================ */
+let REAL=null;
+/* Everything below renders data that ultimately comes from callers — a lead
+   name is whatever someone said on the phone. It is escaped before it
+   touches the DOM, without exception. */
+const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const empty=(h,p,btn)=>`<div class="empty"><h4>${t(h)}</h4><p>${t(p)}</p>${btn?`<a class="btn" href="/setup">${t(btn)}</a>`:""}</div>`;
+const _vOverview=vOverview, _vAgents=vAgents, _vLeads=vLeads;
+
+vOverview=function(){
+  if(!REAL){ _vOverview(); $("#v-overview").insertAdjacentHTML("afterbegin",`<span class="sample">${t("sample")}</span>`); return; }
+  const wk=Date.now()-7*864e5;
+  const calls7=REAL.calls.filter(c=>new Date(c.at).getTime()>wk);
+  const mins=REAL.calls.reduce((a,c)=>a+Math.ceil((c.duration_s||0)/60),0);
+  const liveN=REAL.agents.filter(a=>a.status==="live").length;
+  const byDay=[...Array(7)].map((_,i)=>{const d=new Date(Date.now()-(6-i)*864e5).toDateString();return REAL.calls.filter(c=>new Date(c.at).toDateString()===d).length;});
+  $("#v-overview").innerHTML=`${planCard()}
+  <div class="grid g4">
+    <div class="stat"><span class="lbl">${t("kAgents")}</span><span class="v">${liveN}</span><span class="d">${REAL.agents.length} total</span></div>
+    <div class="stat"><span class="lbl">${t("kCalls")}</span><span class="v">${calls7.length}</span>${spark(byDay.length?byDay:[0])}</div>
+    <div class="stat"><span class="lbl">${t("kLeads")}</span><span class="v">${REAL.leads.length}</span></div>
+    <div class="stat"><span class="lbl">${t("kMin")}</span><span class="v">${mins.toLocaleString()}</span></div>
+  </div>
+  <div class="cols">
+    <div class="card"><h3>${t("recent")}<button class="more" data-goto="calls">${t("viewAll")}</button></h3>
+      ${REAL.calls.length? REAL.calls.slice(0,6).map(c=>`
+        <div class="rowline"><span class="who">${c.direction==="outboundPhoneCall"?"↑":"↓"}</span>
+          <span><span class="t1 mono">${esc(c.from_number)||"—"}</span><span class="t2">${new Date(c.at).toLocaleString()} · ${Math.ceil((c.duration_s||0)/60)} min</span></span>
+          <span class="end t2">${esc(c.outcome)}</span></div>`).join("") : empty("noCallsH","noCallsP")}
+    </div>
+    <div class="card"><h3>${t("leads")}<button class="more" data-goto="leads">${t("viewAll")}</button></h3>
+      ${REAL.leads.length? REAL.leads.slice(0,6).map(l=>`
+        <div class="rowline"><span class="who">●</span>
+          <span><span class="t1">${esc(l.name)||"—"}</span><span class="t2 mono">${esc(l.phone)} · ${esc(l.intent)}</span></span>
+          <span class="end t2">${esc(l.status)}</span></div>`).join("") : empty("noLeadsH","noLeadsP")}
+    </div>
+  </div>`;
+  $$("#v-overview [data-goto]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.goto)));
+};
+
+vAgents=function(){
+  if(!REAL){ _vAgents(); return; }
+  $("#v-agents").innerHTML = REAL.agents.length ? `<div class="card">
+    ${REAL.agents.map(a=>`<div class="rowline">
+      <span class="who">${a.channel==="web"?"◎":"☎"}</span>
+      <span><span class="t1">${esc(a.name)}</span><span class="t2">${esc(a.direction)} · ${Number(a.readiness.score)||0}% ready</span></span>
+      <span class="end" style="display:flex;gap:.6rem;align-items:center">
+        <span class="stag ${esc(a.status)}">${t(a.status==="live"?"stLive":a.status==="paused"?"stPaused":"stDraft")}</span>
+        <a class="more" href="/setup">${t("edit")}</a></span></div>`).join("")}
+  </div>` : empty("noAgentsH","noAgentsP","noAgentsB");
+};
+
+vLeads=function(){
+  if(!REAL){ _vLeads(); return; }
+  $("#v-leads").innerHTML = REAL.leads.length ? `<div class="card"><div class="tw"><table>
+    <thead><tr><th>Name</th><th>Phone</th><th>Intent</th><th>Detail</th><th>Status</th><th>When</th></tr></thead>
+    <tbody>${REAL.leads.map(l=>`<tr><td>${esc(l.name)||"—"}</td><td class="mono">${esc(l.phone)}</td><td>${esc(l.intent)}</td>
+      <td>${esc((l.detail||"").slice(0,90))}</td><td>${esc(l.status)}</td><td>${new Date(l.created_at).toLocaleDateString()}</td></tr>`).join("")}</tbody>
+  </table></div></div>` : empty("noLeadsH","noLeadsP");
+};
+
+const _vCalls=vCalls, _vScripts=vScripts, _vKnowledge=vKnowledge, _vCampaigns=vCampaigns,
+      _vRecordings=vRecordings, _vRoutes=vRoutes, _vNumbers=vNumbers;
+let pickedReal=null;
+
+vCalls=function(){
+  if(!REAL){ _vCalls(); return; }
+  const c = pickedReal!=null ? REAL.calls.find(x=>x.id===pickedReal) : null;
+  $("#v-calls").innerHTML = REAL.calls.length ? `
+  <div class="cols">
+    <div class="card" style="padding-top:1rem"><div class="tw"><table>
+      <thead><tr><th>${t("colWhen")}</th><th>${t("colFrom")}</th><th>${t("colDir")}</th><th>${t("colMins")}</th><th>${t("colOutcome")}</th></tr></thead>
+      <tbody>${REAL.calls.map(x=>`<tr data-rc="${Number(x.id)}" style="cursor:pointer">
+        <td>${esc(new Date(x.at).toLocaleString())}</td><td class="mono">${esc(x.from_number)||"—"}</td>
+        <td>${x.direction==="outboundPhoneCall"?"↑":"↓"}</td><td>${Math.ceil((x.duration_s||0)/60)}</td><td>${esc(x.outcome)}</td></tr>`).join("")}</tbody>
+    </table></div></div>
+    <div class="card">${c ? `
+      <h3>${esc(c.from_number)||"—"}</h3>
+      <p class="note" style="margin-bottom:.8rem">${esc(new Date(c.at).toLocaleString())} · ${Math.ceil((c.duration_s||0)/60)} min · ${esc(c.outcome)}</p>
+      ${c.summary?`<p style="margin-bottom:1rem">${esc(c.summary)}</p>`:""}
+      <pre style="white-space:pre-wrap;font-family:inherit;font-size:.88rem;line-height:1.6;color:var(--fg-mute)">${esc(c.transcript)||t("noTranscript")}</pre>`
+      : `<p class="note">${t("pickCall")}</p>`}</div>
+  </div>` : empty("noCallsH","noCallsP");
+  $$("#v-calls [data-rc]").forEach(r=>r.addEventListener("click",()=>{ pickedReal=Number(r.dataset.rc); vCalls(); }));
+};
+
+/* The agent's knowledge, script and rules are edited in /setup, and only
+   there, so the deployed agent and the console can never disagree. */
+vScripts=function(){ if(!REAL){ _vScripts(); return; } $("#v-scripts").innerHTML=empty("inSetupH","inSetupP","inSetupB"); };
+vKnowledge=function(){ if(!REAL){ _vKnowledge(); return; } $("#v-knowledge").innerHTML=empty("inSetupH","inSetupP","inSetupB"); };
+/* Not built yet. Say so rather than show sample rows to a paying customer. */
+vCampaigns=function(){ if(!REAL){ _vCampaigns(); return; } $("#v-campaigns").innerHTML=empty("soonH","soonP"); };
+vRecordings=function(){ if(!REAL){ _vRecordings(); return; } $("#v-recordings").innerHTML=empty("soonH","soonP"); };
+vRoutes=function(){ if(!REAL){ _vRoutes(); return; } $("#v-routes").innerHTML=empty("soonH","soonP"); };
+vNumbers=function(){ if(!REAL){ _vNumbers(); return; } $("#v-numbers").innerHTML=empty("inSetupH","inSetupP","inSetupB"); };
+
+
+/* ============================================================
+   BOOKINGS
+   ------------------------------------------------------------
+   A month grid beside the day it is showing. Not a scheduling
+   product: the agent creates the bookings, this is where the
+   owner reads them, confirms them, and subscribes to them from
+   whatever calendar they already use.
+   ============================================================ */
+let BOOK={rows:[],url:"",month:new Date(),day:new Date()};
+const dkey = d => new Date(d).toISOString().slice(0,10);
+const STATUS_T = {requested:"Requested",booked:"Booked",confirmed:"Confirmed",cancelled:"Cancelled",done:"Done",noshow:"No show"};
+
+async function loadBookings(){
+  try{
+    const from=new Date(BOOK.month.getFullYear(),BOOK.month.getMonth()-1,1).toISOString();
+    const to  =new Date(BOOK.month.getFullYear(),BOOK.month.getMonth()+2,0).toISOString();
+    const r=await fetch(`/api/me/bookings?from=${from}&to=${to}`);
+    if(!r.ok) return false;
+    const d=await r.json();
+    BOOK.rows=d.bookings||[]; BOOK.url=d.calendarUrl||"";
+    return true;
+  }catch(_){ return false; }
+}
+
+function vBookings(){
+  const el=$("#v-bookings"); if(!el) return;
+  if(!REAL){ el.innerHTML=empty("bkNoneH","bkNoneP"); return; }
+
+  const m=BOOK.month, y=m.getFullYear(), mo=m.getMonth();
+  const first=new Date(y,mo,1), start=new Date(first);
+  start.setDate(1-((first.getDay()+6)%7));            // weeks begin Monday
+  const byDay={};
+  BOOK.rows.forEach(b=>{ (byDay[dkey(b.starts_at)] ||= []).push(b); });
+
+  let cells="";
+  for(let i=0;i<42;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const k=dkey(d), n=(byDay[k]||[]).length;
+    const hasReq=(byDay[k]||[]).some(x=>x.outside_hours);
+    const cls=[ d.getMonth()!==mo?"out":"", k===dkey(new Date())?"today":"", k===dkey(BOOK.day)?"sel":"", hasReq?"req":"" ].filter(Boolean).join(" ");
+    cells+=`<button class="cal-d ${cls}" data-day="${k}"><span>${d.getDate()}</span>${n?`<i>${n}</i>`:""}</button>`;
+  }
+
+  const list=(byDay[dkey(BOOK.day)]||[]).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
+  const dayLabel=BOOK.day.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
+
+  el.innerHTML=`
+  <div class="cols">
+    <div class="card">
+      <div class="cal-top">
+        <button class="more" id="mPrev" aria-label="Previous month">‹</button>
+        <b>${m.toLocaleDateString(undefined,{month:"long",year:"numeric"})}</b>
+        <button class="more" id="mNext" aria-label="Next month">›</button>
+        <button class="btn ghost" id="mToday" style="margin-inline-start:auto">${t("bkToday")}</button>
+      </div>
+      <div class="cal-grid">${cells}</div>
+      ${(()=>{ const n=BOOK.rows.filter(x=>x.outside_hours).length;
+         return n? `<p class="oh-note">${t("bkOutsideNote").replace("{n}",n)}</p>` : ""; })()}
+      ${BOOK.url?`<div class="cal-sub">
+        <span>${t("bkSub")}</span>
+        <code id="calUrl">${esc(BOOK.url)}</code>
+        <button class="btn ghost" id="calCopy">${t("bkCopy")}</button>
+      </div>`:""}
+    </div>
+
+    <div class="card">
+      <h3>${esc(dayLabel)}</h3>
+      ${list.length? `<div class="daylist">${list.map(b=>`
+        <div class="bk" data-bk="${Number(b.id)}">
+          <span class="bt">${new Date(b.starts_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</span>
+          <span class="bb">
+            <span class="t1">${esc(b.name)||"—"}${b.party?` · ${Number(b.party)}`:""}${b.outside_hours?` <i class="oh">${t("bkOutside")}</i>`:""}</span>
+            <span class="t2">${esc(b.service)||""}${b.agent_name?` · ${esc(b.agent_name)}`:""}${b.phone?` · ${esc(b.phone)}`:""}</span>
+          </span>
+          <select class="bst" data-bkid="${Number(b.id)}">
+            ${Object.keys(STATUS_T).map(k=>`<option value="${k}"${b.status===k?" selected":""}>${STATUS_T[k]}</option>`).join("")}
+          </select>
+        </div>`).join("")}</div>`
+       : `<p class="note" style="margin-top:.8rem">${t("bkNoDay")}</p>`}
+    </div>
+  </div>`;
+
+  $("#mPrev").onclick=()=>{ BOOK.month=new Date(y,mo-1,1); loadBookings().then(vBookings); };
+  $("#mNext").onclick=()=>{ BOOK.month=new Date(y,mo+1,1); loadBookings().then(vBookings); };
+  $("#mToday").onclick=()=>{ BOOK.month=new Date(); BOOK.day=new Date(); loadBookings().then(vBookings); };
+  $$("#v-bookings .cal-d").forEach(b=>b.onclick=()=>{ BOOK.day=new Date(b.dataset.day+"T12:00:00"); vBookings(); });
+  const cp=$("#calCopy");
+  if(cp) cp.onclick=async()=>{ try{ await navigator.clipboard.writeText(BOOK.url); cp.textContent=t("bkCopied"); }catch(_){ } };
+  $$("#v-bookings .bst").forEach(sel=>sel.onchange=async()=>{
+    const id=sel.dataset.bkid, prev=BOOK.rows.find(x=>String(x.id)===String(id));
+    try{
+      const r=await fetch("/api/me/bookings/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({status:sel.value})});
+      if(!r.ok) throw 0;
+      if(prev) prev.status=sel.value;
+    }catch(_){ if(prev) sel.value=prev.status; }   // put it back rather than lie
+  });
+}
+
+/* ---- orders: what the agent took on the phone, and where it goes next ---- */
+const ORDER_T={new:"New",accepted:"Accepted",out:"Out for delivery",delivered:"Delivered",cancelled:"Cancelled"};
+let ORDERS=[];
+async function loadOrders(){
+  try{ const r=await fetch("/api/me/orders"); if(!r.ok) return false;
+       ORDERS=(await r.json()).orders||[]; return true; }catch(_){ return false; }
+}
+function vOrders(){
+  const el=$("#v-orders"); if(!el) return;
+  if(!REAL || !ORDERS.length){ el.innerHTML=empty("odNoneH","odNoneP"); return; }
+  el.innerHTML=`<div class="card"><div class="tw"><table>
+    <thead><tr><th>${t("bkWhen")}</th><th>${t("bkWho")}</th><th>${t("odItems")}</th><th>${t("odAddr")}</th><th>${t("bkStatus")}</th></tr></thead>
+    <tbody>${ORDERS.map(o=>`<tr>
+      <td class="mono">${esc(new Date(o.created_at).toLocaleString())}</td>
+      <td>${esc(o.name)||"—"}<br><span class="t2 mono">${esc(o.phone)}</span></td>
+      <td>${esc(o.items)||"—"}${o.total?`<br><span class="t2">${esc(o.total)}</span>`:""}</td>
+      <td>${esc(o.address)||"—"}</td>
+      <td><select class="bst" data-odid="${Number(o.id)}">
+        ${Object.keys(ORDER_T).map(k=>`<option value="${k}"${o.status===k?" selected":""}>${ORDER_T[k]}</option>`).join("")}
+      </select></td></tr>`).join("")}</tbody>
+  </table></div></div>`;
+  $$("#v-orders .bst").forEach(sel=>sel.onchange=async()=>{
+    const o=ORDERS.find(x=>String(x.id)===sel.dataset.odid);
+    try{
+      const r=await fetch("/api/me/orders/"+sel.dataset.odid,{method:"PATCH",
+        headers:{"Content-Type":"application/json"},body:JSON.stringify({status:sel.value})});
+      if(!r.ok) throw 0; if(o) o.status=sel.value;
+    }catch(_){ if(o) sel.value=o.status; }   // revert rather than show a state that did not save
+  });
+}
+
+(async()=>{
+  if(!window.NABRA_BOOT) return;
+  try{
+    const [c,a,l]=await Promise.all([fetch("/api/me/calls"),fetch("/api/me/agents"),fetch("/api/me/leads")]);
+    if(!c.ok||!a.ok||!l.ok) return;
+    REAL={calls:(await c.json()).calls||[],agents:(await a.json()).agents||[],leads:(await l.json()).leads||[]};
+    await loadBookings(); await loadOrders();
+    vOverview(); vAgents(); vLeads(); vCalls(); vBookings(); vOrders(); vScripts(); vKnowledge(); vCampaigns(); vRecordings(); vRoutes(); vNumbers();
+  }catch(_){}
+})();
+
+if(window.NABRA_BOOT){ try{
+  const b=window.NABRA_BOOT;
+  if(b.tenant){
+    $("#acctName").textContent = b.tenant.name || "";
+    $("#acctPlan").textContent = b.tenant.plan ? (b.tenant.plan.charAt(0).toUpperCase()+b.tenant.plan.slice(1)+" plan") : "";
+    if(b.tenant.plan)  ACCT.plan  = b.tenant.plan;
+    if(b.tenant.cycle) ACCT.cycle = b.tenant.cycle;
+    vBilling();
+    const av=document.querySelector(".acct .av");
+    if(av && b.tenant.name) av.textContent = b.tenant.name.trim().split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  }
+  if(b.lang) applyLang(b.lang);
+}catch(_){}}
+
+/* ============================================================
+   CONNECT YOUR ACCOUNT API
+   Replace the demo arrays above with live data:
+
+     const res  = await fetch("/api/overview", {credentials:"include"});
+     const data = await res.json();
+     CALLS.splice(0, CALLS.length, ...data.calls);
+     applyLang(L);   // re-renders every view
+
+   Everything else — navigation, filters, transcript viewer,
+   campaign start/pause, language and RTL — already works.
+   ============================================================ */
+</script>
+</body>
+</html>

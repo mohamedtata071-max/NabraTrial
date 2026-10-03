@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light only">
+<title>Set up your agent — NABRA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Chivo+Mono:wght@300;400;500&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: only light; forced-color-adjust:none;
+  --bone:#EEF2F9; --bone-hi:#FFFFFF; --paper:#DEE6F3;
+  --ink:#163466; --fg:#163466; --fg-mute:#4A5F86; --fg-faint:#8394B2;
+  --rule:rgba(22,52,102,.115); --rule-soft:rgba(22,52,102,.055);
+  --ember:#C08A2E; --ember-lit:#E3AA45; --ember-wash:rgba(192,138,46,.07);
+  --ok:#1B7A4A; --ok-wash:rgba(27,122,74,.08);
+  --display:'Plus Jakarta Sans',system-ui,sans-serif;
+  --body:'Plus Jakarta Sans',system-ui,sans-serif;
+  --mono:'Chivo Mono',ui-monospace,monospace;
+  --ar:'IBM Plex Sans Arabic',sans-serif;
+}
+/* Literal values, not variables, and !important: an in-app browser that
+   force-darkens the page will happily override a var but not this. */
+html{color-scheme:only light !important;background:#EEF2F9 !important;background-color:#EEF2F9 !important}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#EEF2F9 !important;background-color:#EEF2F9 !important;
+  color:#163466 !important;
+  font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p,label,b,small,span,div,td,th,li{-webkit-text-fill-color:inherit}
+
+@media (prefers-color-scheme:dark){
+  :root{
+    color-scheme:only light !important;
+    --bone:#EEF2F9;--bone-hi:#FFFFFF;--paper:#DEE6F3;
+    --ink:#163466;--fg:#163466;--fg-mute:#4A5F86;--fg-faint:#8394B2;
+    --rule:rgba(22,52,102,.115);--rule-soft:rgba(22,52,102,.055);
+  }
+  html,body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#163466 !important}
+  .top,.card,.phone,.route,.file,.purpose{background:#FFFFFF !important}
+  .drop,input,textarea,select{background:#EEF2F9 !important;color:#163466 !important}
+  h1,h2,h3,b,.brand{color:#163466 !important}
+  .sub,.hint,.kv span:first-child,small,.crumb{color:#4A5F86 !important}
+  /* the two places that are meant to stay dark keep light text on them */
+  .btn,.steps button[aria-selected="true"],.modes button[aria-pressed="true"],.msg.u{
+    background:#163466 !important;color:#FFFFFF !important}
+  .btn.ghost{background:transparent !important;color:#163466 !important}
+  .msg.a{background:#DEE6F3 !important;color:#163466 !important}
+}
+.shell{width:min(1180px,100% - 2rem);margin-inline:auto}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+
+/* top bar */
+.top{border-bottom:1px solid var(--rule);background:#FFFFFF;position:sticky;top:0;z-index:40}
+.top .shell{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:.85rem}
+.brand{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:1.3rem}
+.crumb{font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-faint)}
+
+/* stepper */
+.steps{display:flex;gap:0;border:1px solid var(--rule);margin-block:1.5rem;background:var(--bone-hi);overflow:hidden;border-radius:2px}
+.steps button{
+  flex:1;display:flex;align-items:center;gap:.6rem;padding:.85rem 1rem;background:transparent;
+  border:none;border-inline-end:1px solid var(--rule);cursor:pointer;text-align:start;
+  font-family:var(--body);font-size:.86rem;color:var(--fg-mute)}
+.steps button:last-child{border-inline-end:none}
+.steps button[aria-selected="true"]{background:#163466;color:#FFFFFF}
+.steps .num{width:22px;height:22px;border-radius:50%;border:1px solid currentColor;display:grid;place-items:center;font-size:.7rem;flex:none}
+.steps button[aria-selected="true"] .num{background:#FFFFFF;color:#163466;border-color:#FFFFFF}
+.steps .tick{color:var(--ok)}
+.steps button[aria-selected="true"] .tick{color:#8FE3B4}
+@media(max-width:720px){.steps button span.lbl{display:none}.steps button{justify-content:center}}
+
+/* panels */
+.panel{display:none;padding-bottom:4rem;background:#EEF2F9}
+.panel.on{display:block}
+h1{font-family:var(--display);font-weight:700;letter-spacing:-.025em;font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.12}
+.sub{margin-top:.5rem;color:var(--fg-mute);max-width:60ch}
+.cols{display:grid;gap:1.25rem;margin-top:1.6rem}
+@media(min-width:900px){.cols{grid-template-columns:1.15fr .85fr;align-items:start}}
+.card{background:#FFFFFF; border:1px solid var(--rule);padding:clamp(1.1rem,2.6vw,1.6rem);border-radius:2px}
+.card+.card{margin-top:1.1rem}
+.card h2{font-size:1.02rem;font-weight:600;margin-bottom:.2rem}
+.card .hint{color:var(--fg-mute);font-size:.88rem;margin-bottom:1rem}
+
+/* route choice */
+.routes{display:grid;gap:.7rem}
+.route{
+  display:grid;grid-template-columns:auto 1fr;gap:.85rem;align-items:start;
+  padding:.95rem 1.05rem;border:1px solid var(--rule);cursor:pointer;background:var(--bone-hi);border-radius:2px}
+.route input{margin-top:.28rem;accent-color:var(--ember)}
+.route b{font-size:.95rem}
+.route p{color:var(--fg-mute);font-size:.86rem;margin-top:.15rem}
+.route[data-sel="true"]{border-color:var(--ember);background:var(--ember-wash)}
+.tagline{display:inline-block;margin-top:.4rem;font-family:var(--mono);font-size:.58rem;letter-spacing:.09em;
+  text-transform:uppercase;padding:.16rem .48rem;border-radius:99px;background:var(--paper);color:var(--fg-mute)}
+
+/* forms */
+label{display:block;font-size:.8rem;font-weight:500;margin-bottom:.3rem;color:var(--fg)}
+input,textarea,select{
+  width:100%;font-family:var(--body);font-size:.92rem;color:var(--fg);background:var(--bone);
+  border:1px solid var(--rule);padding:.62rem .75rem;border-radius:2px}
+textarea{min-height:110px;resize:vertical;line-height:1.55}
+.field+.field{margin-top:.85rem}
+.two{display:grid;gap:.85rem}
+@media(min-width:620px){.two{grid-template-columns:1fr 1fr}}
+.mono{font-family:var(--mono);font-size:.85rem}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.68rem 1.3rem;border-radius:99px;
+  border:1px solid #163466;background:#163466;color:#FFFFFF;font-family:var(--body);font-size:.9rem;
+  font-weight:500;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:1.2rem}
+
+/* status */
+.status{margin-top:1.1rem;border:1px solid var(--rule);border-radius:2px;overflow:hidden}
+.status .r{display:flex;align-items:center;gap:.7rem;padding:.7rem .95rem;border-bottom:1px solid var(--rule-soft);font-size:.88rem}
+.status .r:last-child{border-bottom:none}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--fg-faint);flex:none}
+.r[data-s="run"] .dot{background:var(--ember-lit);animation:blink 1s infinite}
+.r[data-s="ok"] .dot{background:var(--ok)}
+.r[data-s="ok"]{color:var(--fg)}
+.r[data-s="idle"]{color:var(--fg-faint)}
+@keyframes blink{50%{opacity:.3}}
+
+/* side */
+.side .card{position:sticky;top:5rem}
+.kv{display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0;border-bottom:1px solid var(--rule-soft);font-size:.86rem}
+.kv:last-child{border-bottom:none}
+.kv span:first-child{color:var(--fg-mute)}
+.kv span:last-child{text-align:end;font-weight:500}
+
+/* chat */
+.phone{border:1px solid var(--rule);background:#FFFFFF;border-radius:2px;display:flex;flex-direction:column;height:min(66vh,560px)}
+.phone .hd{padding:.8rem 1rem;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:.7rem}
+.phone .hd .live{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.phone .hd b{font-size:.9rem}
+.phone .hd small{color:var(--fg-faint);font-size:.75rem}
+.log{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.7rem}
+.msg{max-width:82%;padding:.62rem .85rem;border-radius:12px;font-size:.92rem;line-height:1.5;white-space:pre-wrap}
+.msg.a{background:var(--paper);color:var(--fg);align-self:flex-start;border-bottom-left-radius:3px}
+.msg.u{background:#163466;color:#FFFFFF;align-self:flex-end;border-bottom-right-radius:3px}
+.msg.sys{align-self:center;background:transparent;color:var(--fg-faint);font-size:.78rem;text-align:center;max-width:100%}
+.msg[dir="rtl"]{font-family:var(--ar)}
+.typing{display:inline-flex;gap:3px}
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--fg-faint);animation:blink 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+.ask{border-top:1px solid var(--rule);padding:.7rem;display:flex;gap:.5rem}
+.ask input{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;padding:0 1rem 1rem}
+.chip{font-size:.78rem;padding:.35rem .7rem;border:1px solid var(--rule);border-radius:99px;background:var(--bone);cursor:pointer;color:var(--fg-mute)}
+.chip:hover{border-color:var(--ember);color:var(--ember)}
+
+/* captured */
+.cap{font-size:.88rem}
+.cap .empty{color:var(--fg-faint);font-size:.85rem}
+.savebar{margin-bottom:1rem;padding:.6rem .9rem;border:1px solid var(--rule);background:#FFFFFF;
+  font-size:.85rem;color:var(--fg-mute);display:flex;align-items:center;gap:.6rem}
+.savebar .dot{width:8px;height:8px;border-radius:50%;background:var(--fg-faint)}
+.savebar[data-s="saving"] .dot{background:var(--ember);animation:blink 1s infinite}
+.savebar[data-s="saved"] .dot{background:var(--ok)}
+.savebar[data-s="err"] .dot{background:var(--ember)}
+.autopick{display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;
+  padding:1rem 1.1rem;border:1px solid var(--ember);background:var(--ember-wash);border-radius:2px}
+.autopick b{font-size:.95rem;display:block}
+.autopick p{color:var(--fg-mute);font-size:.87rem;margin-top:.25rem;max-width:52ch}
+.autopick .btn{flex:none;padding:.45rem 1rem;font-size:.82rem}
+.ready{display:flex;align-items:baseline;gap:.8rem;margin-bottom:1rem}
+.ready .score{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:3rem;line-height:1}
+.ready .of{color:var(--fg-faint);font-size:.9rem}
+.bar{height:6px;background:var(--paper);border-radius:99px;overflow:hidden;margin-bottom:1.2rem}
+.bar i{display:block;height:100%;background:var(--ember);transition:width .5s var(--ease-out,ease)}
+.chk{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.chk div{background:#FFFFFF;padding:.7rem .9rem;font-size:.9rem;display:flex;gap:.6rem;align-items:flex-start}
+.chk .m{flex:none;width:16px}
+.chk .ok{color:var(--ok)}.chk .no{color:var(--ember)}
+
+/* upload */
+.drop{border:1px dashed var(--rule);border-radius:2px;padding:1.1rem;text-align:center;background:var(--bone);cursor:pointer;transition:border-color .2s,background .2s}
+.drop:hover,.drop.over{border-color:var(--ember);background:var(--ember-wash)}
+.drop b{display:block;font-size:.9rem}
+.drop small{color:var(--fg-mute);font-size:.8rem}
+.files{margin-top:.7rem;display:grid;gap:.4rem}
+.file{display:flex;align-items:center;gap:.6rem;padding:.5rem .7rem;border:1px solid var(--rule);border-radius:2px;font-size:.83rem;background:var(--bone-hi)}
+.file .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file .st{color:var(--fg-faint);font-size:.75rem;flex:none}
+.file .st.ok{color:var(--ok)}
+.file .st.run{color:var(--ember)}
+.file button{border:none;background:transparent;color:var(--fg-faint);cursor:pointer;font-size:1rem;line-height:1}
+
+/* purpose picker */
+.purposes{display:grid;gap:.5rem;grid-template-columns:1fr 1fr}
+@media(max-width:560px){.purposes{grid-template-columns:1fr}}
+.purpose{padding:.7rem .8rem;border:1px solid var(--rule);border-radius:2px;background:var(--bone-hi);cursor:pointer;text-align:start}
+.purpose b{display:block;font-size:.88rem}
+.purpose small{color:var(--fg-mute);font-size:.78rem}
+.purpose[aria-pressed="true"]{border-color:var(--ember);background:var(--ember-wash)}
+
+/* mode switch in step 3 */
+.modes{display:flex;margin-bottom:1rem}
+.modes button{flex:1;padding:.6rem 1rem;border:1px solid var(--rule);background:transparent;color:var(--fg-mute);
+  cursor:pointer;font-family:var(--body);font-size:.86rem}
+.modes button+button{border-inline-start:none}
+.modes button[aria-pressed="true"]{background:#163466;color:#FFFFFF;border-color:#163466}
+.err{margin-top:.8rem;padding:.7rem .9rem;background:var(--ember-wash);border-inline-start:2px solid var(--ember);font-size:.85rem}
+
+/* Text fill must follow each element's own colour. Setting it to a fixed value
+   on body inherits everywhere and repaints light text on dark buttons black,
+   which is invisible. currentColor keeps the forced-dark protection without
+   that side effect. */
+*,*::before,*::after{-webkit-text-fill-color:currentColor}
+
+/* The operator guide: numbered, readable, and deliberately only here */
+.guide{list-style:none;counter-reset:g;padding:0;margin:1.1rem 0 0;display:grid;gap:1.1rem}
+.guide li{counter-increment:g;display:grid;grid-template-columns:auto 1fr;gap:.9rem;align-items:start}
+.guide li::before{
+  content:counter(g);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  background:var(--ink);color:#fff;font-family:var(--mono);font-size:.74rem;flex:none}
+.guide b{display:block;font-size:.95rem;line-height:1.45;grid-column:2}
+.guide span{display:block;color:var(--fg-mute);font-size:.9rem;line-height:1.6;margin-top:.3rem;grid-column:2}
+.guide em{display:block;font-style:normal;margin-top:.55rem;padding:.6rem .8rem;background:var(--paper);
+  border-inline-start:2px solid var(--ember);font-size:.87rem;line-height:1.55;grid-column:2}
+.guide u{text-decoration:none;font-weight:600;color:var(--fg)}
+
+/* opening hours grid */
+.hours{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.hrow{display:grid;grid-template-columns:3.4rem auto 1fr;gap:.6rem;align-items:center;background:#fff;padding:.5rem .7rem}
+.hrow .hd{font-size:.82rem;font-weight:500}
+.hrow input[type=checkbox]{width:16px;height:16px;accent-color:var(--ember)}
+.hrow .times{display:flex;align-items:center;gap:.4rem;justify-content:flex-end}
+.hrow .times input{width:92px;text-align:center;padding:.3rem .4rem;font-family:var(--mono);font-size:.8rem}
+.hrow.closed .times{opacity:.35;pointer-events:none}
+.hrow .to{font-size:.76rem;color:var(--fg-faint)}
+
+.opt{display:flex;gap:.7rem;align-items:flex-start;padding:.75rem .9rem;border:1px solid var(--rule);
+  border-radius:9px;cursor:pointer;margin-top:.55rem;background:#fff}
+.opt input{margin-top:.15rem;width:16px;height:16px;accent-color:var(--ember);flex:none}
+.opt b{display:block;font-size:.93rem}
+.opt small{display:block;color:var(--fg-mute);font-size:.84rem;line-height:1.5;margin-top:.15rem}
+.opt:has(input:checked){border-color:var(--ember);background:var(--ember-wash)}
+
+/* a sub-panel belongs to the tick above it, so it is indented and only shown
+   when that tick is on */
+.sub{margin:.1rem 0 .2rem 1.4rem;padding-inline-start:1rem;border-inline-start:2px solid var(--rule)}
+html[dir="rtl"] .sub{margin:.1rem 1.4rem .2rem 0}
+.sub[hidden]{display:none}
+
+.top .shell{display:flex;align-items:center;gap:1rem}
+.top .brand{text-decoration:none;color:inherit}
+.backlink{margin-inline-start:auto;font-size:.84rem;color:var(--fg-mute);text-decoration:none;white-space:nowrap}
+.backlink:hover{color:var(--ember)}
+@media(max-width:560px){.backlink{font-size:.78rem}.top .crumb{display:none}}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="shell">
+  <a class="brand" href="/app">NABRA</a>
+  <span class="crumb">Set up your agent</span>
+  <a class="backlink" href="/app">&larr; Back to console</a>
+</div></div>
+
+<div class="shell">
+
+  <div class="steps" role="tablist">
+    <button role="tab" aria-selected="true" data-step="1"><span class="num">1</span><span class="lbl">Connect your number</span></button>
+    <button role="tab" aria-selected="false" data-step="2"><span class="num">2</span><span class="lbl">Teach the agent</span></button>
+    <button role="tab" aria-selected="false" data-step="3"><span class="num">3</span><span class="lbl">Test it live</span></button>
+    <button role="tab" aria-selected="false" data-step="4"><span class="num">4</span><span class="lbl">Deploy</span></button>
+  </div>
+  <div id="saveBar" class="savebar" hidden></div>
+
+  <!-- ============ STEP 1 ============ -->
+  <section class="panel on" data-panel="1">
+    <h1>Connect your number</h1>
+    <p class="sub">Your number stays in your name, with your operator. Pick how calls should reach the agent.</p>
+
+    <div class="cols">
+      <div>
+        <div class="card">
+          <h2 id="routeH">How should calls reach us?</h2>
+          <p class="hint" id="routeHint">You can change this later without touching your number.</p>
+          <div class="autopick" id="autoPick" hidden>
+            <div>
+              <b id="apTitle"></b>
+              <p id="apWhy"></p>
+            </div>
+            <button class="btn ghost" id="apChange">Change</button>
+          </div>
+          <div class="routes" id="routes">
+            <label class="route" data-sel="true">
+              <input type="radio" name="route" value="trunk" checked>
+              <div><b>SIP trunk from my operator</b>
+                <p>Inbound and outbound both run on your own number. No forwarding charges.</p>
+                <span class="tagline">recommended</span></div>
+            </label>
+            <label class="route">
+              <input type="radio" name="route" value="forward">
+              <div><b>Forward my existing line</b>
+                <p>Works today. Your operator bills you for the forwarded minutes.</p>
+                <span class="tagline">live in minutes</span></div>
+            </label>
+            <label class="route">
+              <input type="radio" name="route" value="web">
+              <div><b>A call link instead of a number</b>
+                <p>For Instagram, your website or a QR code. Nothing to connect.</p>
+                <span class="tagline">no number needed</span></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="card" id="trunkGuide">
+          <h2>How to get your trunk, step by step</h2>
+          <p class="hint">This is the part that is not on our public site. Follow it once and your line is done.</p>
+
+          <ol class="guide">
+            <li>
+              <b>Call your operator's business line and ask for a SIP trunk on your existing number.</b>
+              <span>Vodafone Business, Orange Business, Telecom Egypt (WE) and e&amp; all sell this as a standard
+              product. Ask for it by name. You keep the number: this is not a new line.</span>
+              <em>Say it like this: "I have a number with you and I want a SIP trunk on it, keeping the same number."</em>
+            </li>
+            <li>
+              <b>Tell them two things when they ask.</b>
+              <span>You want <u>IP authentication or registration credentials</u>, and you want the trunk to allow
+              <u>both inbound and outbound</u> on your existing number. Ask them to confirm the caller ID on
+              outbound calls will show your own number.</span>
+              <em>If they ask how many concurrent calls: start with two. You can raise it later, and it is what
+              you pay for.</em>
+            </li>
+            <li>
+              <b>They send you a server address, a username and a password.</b>
+              <span>Usually by email within a few working days. Paste the first two into the form beside this
+              guide. Keep the password with your own records; we do not store it.</span>
+            </li>
+            <li>
+              <b>Ask them to allow our media addresses.</b>
+              <span>Some operators lock a trunk to specific addresses. If yours does, send them the addresses
+              shown in your account under Numbers. Without this the trunk connects but no audio passes, which
+              is the single most common reason a first test call is silent.</span>
+            </li>
+            <li>
+              <b>Make one test call before you switch it on.</b>
+              <span>Ring your own number from a mobile and listen. If it rings but nobody answers, the trunk is
+              not registered. If it answers but is silent, it is the step above.</span>
+            </li>
+          </ol>
+
+          <div class="say" style="margin-top:1rem">
+            Stuck at any step? Send us the operator's reply exactly as they wrote it and we will tell you what
+            to say back. Most trunks are live within a week of the first call.
+          </div>
+        </div>
+
+        <div class="card" id="trunkCard">
+          <h2>Your trunk details</h2>
+          <p class="hint">Your operator sends these three things after you ask for a SIP trunk. Paste them exactly as written.</p>
+          <div class="field"><label for="num">Your business number</label>
+            <input id="num" class="mono" value="+20 2 3999 1200" placeholder="+20 ..."></div>
+          <div class="field"><label for="host">Server address</label>
+            <input id="host" class="mono" value="sip.te.eg" placeholder="sip.operator.eg"></div>
+          <div class="two" style="margin-top:.85rem">
+            <div><label for="user">Username</label><input id="user" class="mono" value="eg2039991200" placeholder="username"></div>
+            <div><label for="pass">Password</label><input id="pass" class="mono" type="password" value="••••••••••" placeholder="password"></div>
+          </div>
+          <div class="row">
+            <button class="btn" id="connect">Connect and verify</button>
+            <button class="btn ghost" id="reset">Clear</button>
+          </div>
+          <div class="status" id="status" hidden>
+            <div class="r" data-s="idle" data-k="reg"><span class="dot"></span><span>Registering with your operator</span></div>
+            <div class="r" data-s="idle" data-k="in"><span class="dot"></span><span>Test call in: your number reaches the agent</span></div>
+            <div class="r" data-s="idle" data-k="out"><span class="dot"></span><span>Test call out: your number shows as caller ID</span></div>
+            <div class="r" data-s="idle" data-k="rec"><span class="dot"></span><span>Ownership verified, line ready</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="card">
+          <h2>Line summary</h2>
+          <p class="hint">What your customers will experience.</p>
+          <div class="kv"><span>Number</span><span id="sNum">+20 2 3999 1200</span></div>
+          <div class="kv"><span>Route</span><span id="sRoute">SIP trunk</span></div>
+          <div class="kv"><span>Owner</span><span>You, with your operator</span></div>
+          <div class="kv"><span>Outbound caller ID</span><span id="sCid">Your own number</span></div>
+          <div class="kv"><span>Status</span><span id="sStat">Not connected</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 2 ============ -->
+  <section class="panel" data-panel="2">
+    <h1>Teach the agent</h1>
+    <p class="sub">Everything here goes into how it answers. Write it the way you would brief a new employee on their first day.</p>
+
+    <div class="cols">
+      <div>
+        <div class="card">
+          <h2>The business</h2>
+          <div class="two">
+            <div><label for="bName">Business name</label><input id="bName" value="Zooba Zamalek"></div>
+            <div><label for="bType">What you do</label><input id="bType" value="Egyptian street food restaurant"></div>
+          </div>
+          <div class="field"><label for="bHours">Opening hours</label>
+            <input id="bHours" value="Daily 9am to 2am. Kitchen closes 1:30am."></div>
+
+          <div class="field">
+            <label>When can the agent accept a booking?</label>
+            <p class="hint" style="margin:.2rem 0 .6rem">The agent offers the nearest time that works. If the caller still
+            wants a time you are closed, it records it as a request rather than a confirmed booking,
+            so you can see the demand without anyone turning up to a locked door.</p>
+            <div class="hours" id="hoursGrid"></div>
+            <div class="two" style="margin-top:.8rem">
+              <div><label for="cSeats">How many people can you seat at once?</label>
+                <input id="cSeats" type="number" min="0" placeholder="e.g. 40" value="40">
+                <p class="hint" style="margin-top:.3rem">Leave blank if there is no limit.</p></div>
+              <div><label for="cTables">How many tables, rooms or places?</label>
+                <input id="cTables" type="number" min="0" placeholder="e.g. 10" value="10">
+                <p class="hint" style="margin-top:.3rem">For a clinic, rooms. For a showroom, viewings at once.</p></div>
+            </div>
+            <div class="two" style="margin-top:.8rem">
+              <div><label for="cSlot">How long does a booking hold its place?</label>
+                <select id="cSlot">
+                  <option value="30">30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="60">1 hour</option>
+                  <option value="90" selected>90 minutes</option>
+                  <option value="120">2 hours</option>
+                </select></div>
+              <div><label for="hLast">Last booking before closing</label>
+                <select id="hLast">
+                  <option value="0">At closing time</option>
+                  <option value="30" selected>30 minutes before</option>
+                  <option value="60">1 hour before</option>
+                  <option value="90">90 minutes before</option>
+                </select></div>
+              <div><label for="hLead">Shortest notice</label>
+                <select id="hLead">
+                  <option value="0">Any time, even now</option>
+                  <option value="60" selected>1 hour ahead</option>
+                  <option value="180">3 hours ahead</option>
+                  <option value="1440">The day before</option>
+                </select></div>
+            </div>
+          </div>
+          <div class="field"><label for="bLang">Answer callers in</label>
+            <select id="bLang">
+              <option value="match">Whatever language the caller uses</option>
+              <option value="eg">Egyptian Arabic only</option>
+              <option value="ar">Modern Standard Arabic only</option>
+              <option value="en">English only</option>
+            </select></div>
+        </div>
+
+        <div class="card">
+          <h2>Greeting</h2>
+          <p class="hint">The first thing every caller hears.</p>
+          <textarea id="bGreet" style="min-height:70px">Zooba Zamalek, good evening. How can I help you?</textarea>
+        </div>
+
+        <div class="card">
+          <h2>What the agent needs to know</h2>
+          <p class="hint">Menu, prices, delivery areas, parking, policies. Anything a customer asks on the phone. Upload what you already have and we will read it out into words the agent can use, or type it yourself.</p>
+
+          <div class="drop" id="drop" tabindex="0" role="button">
+            <b>Upload your menu, price list or existing script</b>
+            <small>PDF, photo, or text. Drop it here or tap to choose.</small>
+            <input type="file" id="fileIn" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.md,.csv" hidden>
+          </div>
+          <div class="files" id="files"></div>
+          <p class="hint" style="margin:.8rem 0 .4rem">What the agent will use:</p>
+          <textarea id="bKnow" style="min-height:200px">DELIVERY: Zamalek, Mohandiseen, Downtown, Garden City. 45 to 60 minutes. Minimum order 150 EGP. Delivery fee 25 EGP.
+TABLES: We take reservations for 2 to 8 people. Larger groups need a manager to approve. Ground floor and terrace. Terrace is smoking, inside is not.
+POPULAR DISHES: Taameya sandwich 45, Koshary 70, Hawawshi 95, Molokhia with rice 110, Om Ali 60. Vegetarian options on every section of the menu.
+PAYMENT: Cash, card, Instapay. No cheques.
+PARKING: Valet on the corner of 26th July, 40 EGP.
+NOT AVAILABLE: We do not do catering for weddings. We have no branch in New Cairo, only Zamalek and Sheikh Zayed.</textarea>
+        </div>
+
+        <div class="card">
+          <h2>Rules</h2>
+          <p class="hint">The lines it must not cross.</p>
+          <textarea id="bRules" style="min-height:110px">Never invent a price or a dish that is not listed above.
+Never promise a delivery time faster than 45 minutes.
+If someone is angry or asks for the manager, take their number and say a manager will call back within the hour.
+Do not discuss other restaurants.</textarea>
+          <div class="field" style="margin-top:.9rem"><label for="bXfer">Transfer to a human on this number</label>
+            <input id="bXfer" class="mono" value="+20 100 555 8080"></div>
+        </div>
+
+        <div class="card">
+          <h2>Outbound calls</h2>
+          <p class="hint">When the agent rings your customers instead. Pick what the call is for and we will write the script, or paste your own.</p>
+
+          <div class="purposes" id="purposes">
+            <button class="purpose" data-p="qualify" aria-pressed="true">
+              <b>Qualify a lead</b><small>Find out if they are worth your time</small></button>
+            <button class="purpose" data-p="confirm" aria-pressed="false">
+              <b>Confirm a booking</b><small>Cut no-shows the day before</small></button>
+            <button class="purpose" data-p="followup" aria-pressed="false">
+              <b>Follow up a quote</b><small>Chase an enquiry that went quiet</small></button>
+            <button class="purpose" data-p="feedback" aria-pressed="false">
+              <b>Ask for feedback</b><small>After a visit or a delivery</small></button>
+          </div>
+
+          <div class="field" style="margin-top:.9rem"><label for="cGoal">What counts as a good call</label>
+            <input id="cGoal" placeholder="e.g. they book a table, or tell us when to call back"></div>
+          <div class="field"><label for="cAsk">Things you must find out</label>
+            <input id="cAsk" placeholder="e.g. how many people, which branch, what budget"></div>
+
+          <div class="row">
+            <button class="btn" id="genScript">Write the script for me</button>
+            <button class="btn ghost" id="clearScript">Clear</button>
+          </div>
+
+          <div class="field" style="margin-top:1rem"><label for="bScript">Outbound script</label>
+            <textarea id="bScript" style="min-height:180px" placeholder="Write it here, or press the button above and edit what comes back."></textarea></div>
+          <div id="genErr"></div>
+        </div>
+
+        <div class="card" id="optCard">
+          <h2>What should this agent handle?</h2>
+          <p class="hint">One agent handles both. It works out which the caller wants from what they say,
+          and asks if it is not obvious. Switch on what applies and the settings for it appear.</p>
+
+          <label class="opt"><input type="checkbox" id="oBook" checked>
+            <span><b>Take bookings</b><small>Tables, appointments, viewings. Uses the hours and capacity set above.</small></span></label>
+
+          <div id="bookOpts" class="sub">
+            <label class="opt"><input type="checkbox" id="oReview">
+              <span><b>I approve every booking myself</b><small>The agent still takes them in full, but nothing is
+              confirmed and no message is sent until you approve it in your dashboard. Use this if your diary is tight.</small></span></label>
+          </div>
+
+          <label class="opt"><input type="checkbox" id="oOrders">
+            <span><b>Take delivery and collection orders</b><small>The agent takes the items, the address and the
+            phone number, and the order lands in your dashboard.</small></span></label>
+
+          <div id="orderOpts" class="sub" hidden>
+            <div class="two">
+              <div><label for="oAreas">Areas you deliver to</label>
+                <input id="oAreas" placeholder="Zamalek, Mohandiseen, Downtown"></div>
+              <div><label for="oMin">Minimum order</label>
+                <input id="oMin" placeholder="150 EGP"></div>
+            </div>
+            <p class="hint" style="margin-top:.5rem">The agent declines addresses outside these areas politely and
+            offers collection, rather than taking an order you cannot deliver.</p>
+          </div>
+
+          <div class="field" style="margin-top:1rem">
+            <label for="oLinks">Links the agent can share</label>
+            <input id="oLinks" placeholder="Instagram, menu, location on Maps">
+            <p class="hint" style="margin-top:.3rem">The agent mentions these when a caller asks to see the menu,
+            the pictures or where you are.</p>
+          </div>
+        </div>
+
+        <div class="card" id="waCard">
+          <h2>Confirm bookings on WhatsApp</h2>
+          <p class="hint">Sent from <b>your own</b> WhatsApp Business number, so the guest sees your name, not ours.
+          Leave this blank and bookings still work; nobody simply gets a message.</p>
+
+          <div class="say" style="margin-bottom:1rem">
+            Meta requires three things before any business can message someone first: a WhatsApp Business
+            account, a phone number registered on it, and a message template they have approved. A booking
+            confirmation counts as a "utility" template, which is allowed in Egypt. Approval usually takes
+            a day or two.
+          </div>
+
+          <div class="field"><label for="waId">Phone number ID</label>
+            <input id="waId" class="mono" placeholder="From Meta Business, WhatsApp, API setup"></div>
+          <div class="two" style="margin-top:.85rem">
+            <div><label for="waTpl">Approved template name</label>
+              <input id="waTpl" class="mono" placeholder="booking_confirmation"></div>
+            <div><label for="waLang">Template language</label>
+              <select id="waLang">
+                <option value="ar">Arabic</option>
+                <option value="ar_EG">Egyptian Arabic</option>
+                <option value="en">English</option>
+                <option value="en_US">English (US)</option>
+              </select></div>
+          </div>
+          <div class="field"><label for="waTok">Permanent token</label>
+            <p class="hint" style="margin:.2rem 0 .4rem">Held on your account and used only to send your confirmations.
+            It is a credential: treat it like a password, and revoke it in Meta Business if you ever suspect it has leaked.</p>
+            <input id="waTok" class="mono" type="password" placeholder="Used only to send your own confirmations"></div>
+
+          <div class="say" style="margin-top:1rem">
+            Your template needs four variables in this order: name, date, time, number of people. For example:
+            "Hi {{1}}, your booking on {{2}} at {{3}} for {{4}} is confirmed."
+          </div>
+        </div>
+
+        <div class="row"><button class="btn" data-go="3">Save and test the agent</button></div>
+      </div>
+
+      <div class="side">
+        <div class="card">
+          <h2>What it will do without being told</h2>
+          <p class="hint">Built in, on every call.</p>
+          <div class="kv"><span>Bookings</span><span>Name, phone, time, party size</span></div>
+          <div class="kv"><span>Unknown questions</span><span>Says so, offers a callback</span></div>
+          <div class="kv"><span>Angry callers</span><span>Hands to a human</span></div>
+          <div class="kv"><span>Language</span><span>Switches to match the caller</span></div>
+          <div class="kv"><span>Every call</span><span>Recorded and transcribed</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 3 ============ -->
+  <section class="panel" data-panel="3">
+    <h1>Test it live</h1>
+    <p class="sub">The same agent that answers your phone, reading exactly what you wrote. Ask it anything a real customer would, in Arabic or English. Switch to outbound and you play the customer being called.</p>
+
+    <div class="cols">
+      <div>
+        <div class="modes" role="group" aria-label="Call direction">
+          <button data-mode="in" aria-pressed="true">A customer calls you</button>
+          <button data-mode="out" aria-pressed="false">The agent calls a customer</button>
+        </div>
+        <div class="phone">
+          <div class="hd"><span class="live"></span><b id="pName">Zooba Zamalek</b><small id="pNum">+20 2 3999 1200</small></div>
+          <div class="log" id="log"></div>
+          <div class="chips" id="chips"></div>
+          <div class="ask">
+            <input id="say" placeholder="Type what a caller would say…" autocomplete="off">
+            <button class="btn" id="send">Send</button>
+          </div>
+        </div>
+        <div class="row"><button class="btn ghost" id="restart">Start the call again</button></div>
+        <div id="err"></div>
+      </div>
+
+      <div class="side">
+        <div class="card">
+          <h2>What lands in your dashboard</h2>
+          <p class="hint">Filled in as the call happens, exactly as it would after a real one.</p>
+          <div class="cap" id="cap"><p class="empty">Nothing captured yet. Try booking a table.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ============ STEP 4 ============ -->
+  <section class="panel" data-panel="4">
+    <h1>Deploy</h1>
+    <p class="sub">Everything below has to be true before your agent can take a real call. Nothing here is guessed: it reflects what is actually saved on your account.</p>
+
+    <div class="cols">
+      <div>
+        <div class="card">
+          <div class="ready"><span class="score" id="rScore">—</span><span class="of">/ 100 ready</span></div>
+          <div class="bar"><i id="rBar" style="width:0%"></i></div>
+          <div class="chk" id="rList"></div>
+          <div class="row">
+            <button class="btn" id="deployBtn" disabled>Deploy agent</button>
+            <button class="btn ghost" id="pauseBtn" hidden>Pause agent</button>
+          </div>
+          <div id="depMsg"></div>
+        </div>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h2>What deploy does, honestly</h2>
+          <p class="hint">So there is no surprise.</p>
+          <div class="kv"><span>Call link</span><span>Live immediately</span></div>
+          <div class="kv"><span>SIP trunk</span><span>Queued for connection</span></div>
+          <div class="kv"><span>Forwarding</span><span>Queued for connection</span></div>
+          <div class="kv"><span>Your config</span><span>Saved and locked to live</span></div>
+          <p class="hint" style="margin-top:.9rem">Deploying does not create a phone line by itself. If you chose a trunk or forwarding, we queue it and it goes live once the line is connected.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const val = id => ($("#"+id) ? $("#"+id).value.trim() : "");
+
+/* ---------------- steps ---------------- */
+function go(n){
+  $$(".panel").forEach(p=>p.classList.toggle("on", p.dataset.panel===String(n)));
+  $$("[data-step]").forEach(b=>b.setAttribute("aria-selected", String(b.dataset.step===String(n))));
+  if(n===3) startCall();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+$$("[data-step]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.step)));
+$$("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+
+/* ---------------- step 1 ---------------- */
+const ROUTE_LABEL = {trunk:"SIP trunk", forward:"Forwarding", web:"Call link"};
+function syncRoute(){
+  const r = document.querySelector('input[name="route"]:checked').value;
+  $$(".route").forEach(l=> l.dataset.sel = String(l.querySelector("input").checked));
+  $("#trunkCard").hidden = (r!=="trunk");
+  $("#sRoute").textContent = ROUTE_LABEL[r];
+  $("#sCid").textContent = r==="web" ? "Not applicable" : "Your own number";
+  $("#sNum").textContent = r==="web" ? "A link, no number" : (val("num")||"—");
+}
+$$('input[name="route"]').forEach(i=>i.addEventListener("change",syncRoute));
+$("#num").addEventListener("input",syncRoute);
+
+/* ============================================================
+   AUTOMATIC ROUTE
+   ------------------------------------------------------------
+   An Egyptian business gets the SIP trunk chosen for it: it is
+   the only route that carries inbound AND outbound on their own
+   +20 number with no forwarding charges, so asking them to pick
+   is asking a question we already know the answer to.
+   Everyone else defaults to the call link, because we cannot
+   supply a line in their country. Either way the choice stays
+   one click away rather than being taken away.
+   ============================================================ */
+function looksEgyptian(){
+  const num = (val("num")||"").replace(/[^\d+]/g,"");
+  if(/^\+?20/.test(num)) return true;                                  // the number itself is decisive
+  const boot = window.NABRA_BOOT && window.NABRA_BOOT.tenant;
+  if(boot && (boot.lang==="eg" || boot.lang==="ar")) return true;
+  try{ if((Intl.DateTimeFormat().resolvedOptions().timeZone||"")==="Africa/Cairo") return true; }catch(_){}
+  const langs = (navigator.languages||[navigator.language||""]).join(",").toLowerCase();
+  if(/ar-eg|ar_eg/.test(langs)) return true;
+  return false;
+}
+
+let routeLocked=false;
+function applyAutoRoute(){
+  if(routeLocked) return;                       // never override a choice the customer made
+  const eg = looksEgyptian();
+  const pick = eg ? "trunk" : "web";
+  const r = document.querySelector(`input[name="route"][value="${pick}"]`);
+  if(r){ r.checked = true; syncRoute(); }
+  $("#apTitle").textContent = eg
+    ? "Set up for an Egyptian line: SIP trunk"
+    : "Set up for a call link";
+  $("#apWhy").textContent = eg
+    ? "Your calls stay on your own number, in and out, with no forwarding charges. Your operator gives you the details in step 2 of the guide."
+    : "We cannot supply a phone line in your country, so your agent answers over a link you can put on your website, your profile or a QR code. Nothing to connect.";
+  $("#autoPick").hidden = false;
+  $("#routes").hidden = true;
+  $("#routeH").textContent = "How calls reach us";
+  $("#routeHint").textContent = "Chosen for you. Change it whenever you like.";
+}
+$("#apChange").addEventListener("click", ()=>{
+  routeLocked = true;                            // from here the customer is driving
+  $("#autoPick").hidden = true;
+  $("#routes").hidden = false;
+  $("#routeH").textContent = "How should calls reach us?";
+  $("#routeHint").textContent = "You can change this later without touching your number.";
+});
+$("#num").addEventListener("input", ()=>{ if(!routeLocked) applyAutoRoute(); });
+applyAutoRoute();
+
+const setRow=(k,s)=>{ const r=document.querySelector(`[data-k="${k}"]`); if(r) r.dataset.s=s; };
+$("#connect").addEventListener("click", async ()=>{
+  const btn=$("#connect"); btn.disabled=true;
+  $("#status").hidden=false;
+  const seq=["reg","in","out","rec"];
+  seq.forEach(k=>setRow(k,"idle"));
+  $("#sStat").textContent="Verifying…";
+  for(const k of seq){
+    setRow(k,"run");
+    await new Promise(r=>setTimeout(r,900));
+    setRow(k,"ok");
+  }
+  $("#sStat").textContent="Connected";
+  document.querySelector('[data-step="1"] .num').innerHTML='<span class="tick">✓</span>';
+  btn.disabled=false; btn.textContent="Verified";
+});
+$("#reset").addEventListener("click",()=>{
+  ["num","host","user","pass"].forEach(id=>$("#"+id).value="");
+  $("#status").hidden=true; $("#sStat").textContent="Not connected"; syncRoute();
+});
+syncRoute();
+
+/* ---------------- shared: one call to the model ---------------- */
+async function claude(messages, system, maxTokens){
+  const res = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-6", max_tokens:maxTokens||1000, system:system, messages:messages})
+  });
+  if(!res.ok) throw new Error("Could not reach the agent ("+res.status+")");
+  const data = await res.json();
+  return (data.content||[]).map(c=>c.type==="text"?c.text:"").join("").trim();
+}
+
+/* ---------------- uploads: read a menu into words the agent can use ---------------- */
+const MEDIA = {pdf:"application/pdf", png:"image/png", jpg:"image/jpeg", jpeg:"image/jpeg", webp:"image/webp"};
+const b64 = file => new Promise((res,rej)=>{
+  const r=new FileReader();
+  r.onload=()=>res(String(r.result).split(",")[1]);
+  r.onerror=()=>rej(new Error("Could not read the file"));
+  r.readAsDataURL(file);
+});
+const asText = file => new Promise((res,rej)=>{
+  const r=new FileReader();
+  r.onload=()=>res(String(r.result));
+  r.onerror=()=>rej(new Error("Could not read the file"));
+  r.readAsText(file);
+});
+
+function fileRow(name){
+  const d=document.createElement("div");
+  d.className="file";
+  d.innerHTML=`<span class="nm"></span><span class="st run">reading…</span><button title="Remove">×</button>`;
+  d.querySelector(".nm").textContent=name;
+  d.querySelector("button").addEventListener("click",()=>d.remove());
+  $("#files").appendChild(d);
+  return d;
+}
+
+const EXTRACT_SYS = `You are preparing notes for a telephone agent working for an Egyptian business. Read what the user sends and rewrite it as plain, factual notes that agent can rely on while speaking to a caller.
+
+Rules:
+- Group related facts on their own lines with a short label in capitals, for example DELIVERY:, PRICES:, HOURS:, POLICIES:.
+- Keep every price, name, number, area and condition exactly as written. Never round, never invent, never fill a gap.
+- Drop marketing language, decoration and anything a caller would not ask about.
+- If the document is a script rather than a price list, keep its instructions but rewrite them as notes the agent can follow.
+- Write in the language the document uses. If it mixes Arabic and English, keep each fact in its original language.
+- Output the notes only. No preamble, no headings above the notes, no markdown.`;
+
+async function ingest(file){
+  const row=fileRow(file.name);
+  const st=row.querySelector(".st");
+  try{
+    const ext=(file.name.split(".").pop()||"").toLowerCase();
+    let content;
+    if(MEDIA[ext]){
+      const data=await b64(file);
+      const block = ext==="pdf"
+        ? {type:"document", source:{type:"base64", media_type:"application/pdf", data}}
+        : {type:"image",    source:{type:"base64", media_type:MEDIA[ext], data}};
+      content=[block,{type:"text",text:"Turn this into notes for the phone agent."}];
+    } else {
+      const txt=await asText(file);
+      content=[{type:"text",text:"Turn this into notes for the phone agent:\n\n"+txt}];
+    }
+    const notes=await claude([{role:"user",content}], EXTRACT_SYS, 1600);
+    const box=$("#bKnow");
+    box.value = (box.value.trim() ? box.value.trim()+"\n\n" : "") + notes;
+    box.scrollTop=box.scrollHeight;
+    st.textContent="added"; st.className="st ok";
+  }catch(e){
+    st.textContent="failed"; st.className="st";
+    $("#err") && ($("#err").innerHTML="");
+    row.title=e.message;
+  }
+}
+
+const drop=$("#drop"), fileIn=$("#fileIn");
+drop.addEventListener("click",()=>fileIn.click());
+drop.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fileIn.click(); }});
+fileIn.addEventListener("change",()=>{ [...fileIn.files].forEach(ingest); fileIn.value=""; });
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>{ [...(e.dataTransfer.files||[])].forEach(ingest); });
+
+/* ---------------- outbound: write the script ---------------- */
+let purpose="qualify";
+const PURPOSE_TEXT={
+  qualify:"qualifying a new lead: working out whether this person is a real prospect, what they actually need, and whether to pass them to a salesperson",
+  confirm:"confirming a booking that already exists, so the customer either confirms, moves it, or cancels, which reduces no-shows",
+  followup:"following up a quote or enquiry that went quiet, to find out where the customer stands and what the next step is",
+  feedback:"asking a recent customer how it went, capturing a short honest answer, and catching anyone unhappy before they post about it"
+};
+$$("#purposes .purpose").forEach(b=>b.addEventListener("click",()=>{
+  purpose=b.dataset.p;
+  $$("#purposes .purpose").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+}));
+
+$("#clearScript").addEventListener("click",()=>{ $("#bScript").value=""; $("#genErr").innerHTML=""; });
+$("#genScript").addEventListener("click", async ()=>{
+  const btn=$("#genScript"); btn.disabled=true; const was=btn.textContent; btn.textContent="Writing…";
+  $("#genErr").innerHTML="";
+  try{
+    const sys=`You write telephone scripts for AI agents making outbound calls on behalf of Egyptian businesses. You write for the ear, not the page: short spoken lines, no jargon, no markdown, nothing that sounds like a form being read out.
+
+Structure what you write as plain labelled sections, in this order and no others:
+OPENING - how the agent introduces itself and the business, and why it is calling, in two sentences at most. It must say who is calling within the first line.
+PERMISSION - one short question checking this is a good moment, and what to do if it is not.
+QUESTIONS - the questions to ask, one per line, in the order to ask them, each short enough to say out loud.
+IF INTERESTED - what to do when it is going well, ending in a concrete next step.
+IF NOT INTERESTED - how to close politely and quickly without pushing.
+IF NOT A GOOD TIME - how to arrange a better time.
+OBJECTIONS - the three most likely objections for this business, each with one short answer.
+CLOSING - how to end the call and what to confirm before hanging up.
+
+Rules: never invent a price, an offer, a date or a fact that the brief does not contain. Keep the whole script under 400 words. Write it in English unless the brief is in Arabic, in which case write it in the same Arabic the brief uses.`;
+    const brief=`Business: ${val("bName")||"a business"}, ${val("bType")||""}, in Egypt.
+Hours: ${val("bHours")||"not given"}.
+Purpose of the call: ${PURPOSE_TEXT[purpose]}.
+A good outcome is: ${val("cGoal")||"not specified, use your judgement for this purpose"}.
+Must find out: ${val("cAsk")||"whatever this purpose normally requires"}.
+Rules the owner set: ${val("bRules")||"none"}.
+Background facts the agent may use, do not go beyond these:
+${val("bKnow")||"(none provided)"}`;
+    $("#bScript").value = await claude([{role:"user",content:brief}], sys, 1500);
+  }catch(e){
+    $("#genErr").innerHTML=`<div class="err">${e.message}</div>`;
+  }
+  btn.disabled=false; btn.textContent=was;
+});
+
+/* ---------------- step 3: the agent ---------------- */
+let history=[], booted=false, busy=false, mode="in";
+
+
+/* ============================================================
+   OPENING HOURS
+   ------------------------------------------------------------
+   Two audiences for the same fact: the agent needs it in words,
+   the booking rule needs it in numbers. Both come from here.
+   ============================================================ */
+const DAYS=[["mon","Monday"],["tue","Tuesday"],["wed","Wednesday"],["thu","Thursday"],
+            ["fri","Friday"],["sat","Saturday"],["sun","Sunday"]];
+let HOURS={}; DAYS.forEach(([k])=>HOURS[k]={open:"09:00",close:"23:00",shut:false});
+
+function drawHours(){
+  const g=$("#hoursGrid"); if(!g) return;
+  g.innerHTML=DAYS.map(([k,label])=>`
+    <div class="hrow ${HOURS[k].shut?"closed":""}" data-day="${k}">
+      <span class="hd">${label.slice(0,3)}</span>
+      <input type="checkbox" ${HOURS[k].shut?"":"checked"} aria-label="${label} open">
+      <span class="times">
+        <input type="time" class="ho" value="${HOURS[k].open}" aria-label="${label} opens">
+        <span class="to">to</span>
+        <input type="time" class="hc" value="${HOURS[k].close}" aria-label="${label} closes">
+      </span>
+    </div>`).join("");
+  g.querySelectorAll(".hrow").forEach(row=>{
+    const k=row.dataset.day;
+    row.querySelector('input[type=checkbox]').addEventListener("change",e=>{
+      HOURS[k].shut=!e.target.checked; row.classList.toggle("closed",HOURS[k].shut); queueSave();
+    });
+    row.querySelector(".ho").addEventListener("change",e=>{ HOURS[k].open=e.target.value; queueSave(); });
+    row.querySelector(".hc").addEventListener("change",e=>{ HOURS[k].close=e.target.value; queueSave(); });
+  });
+}
+
+/* what this agent is actually for, in its own words */
+function jobSentence(){
+  const book=!!($("#oBook")||{}).checked, ord=!!($("#oOrders")||{}).checked;
+  const review=!!($("#oReview")||{}).checked;
+  const areas=val("oAreas"), min=val("oMin"), links=val("oLinks");
+  const out=[];
+
+  if(book && ord){
+    out.push("This one line handles both bookings and orders. Work out which the caller wants from what they say: "
+      + "a time, a day or a number of people means a booking; dishes, delivery or an address means an order. "
+      + "If it is genuinely unclear, ask once, plainly: are they after a table or an order. "
+      + "A caller may want both on the same call, which is fine: finish one, then handle the other.");
+  } else if(ord){
+    out.push("This line takes delivery and collection orders. You do not take bookings. "
+      + "If someone asks for a table or an appointment, say so plainly and offer to take an order instead.");
+  } else if(book){
+    out.push("This line takes bookings. You do not take food orders. "
+      + "If someone tries to order, say this line is for bookings, and still answer any question they have.");
+  } else {
+    /* Neither switched on: the agent answers and captures, nothing more. Saying
+       it takes bookings here would have it promise something nobody records. */
+    out.push("This line answers questions and takes messages. You do not take bookings and you do not take orders. "
+      + "If someone wants either, say that plainly, take their name and number so the business has it, and answer "
+      + "whatever else they ask.");
+  }
+
+  /* The menu is knowledge either way: a caller deciding whether to book asks
+     what is on it, and refusing to answer loses the booking. */
+  out.push("Whatever this line is for, answer questions about the menu, the prices and what you offer, using the "
+    + "notes you were given. Knowing the menu is not the same as taking an order.");
+
+  if(ord){
+    out.push("For an order, collect the items, the address, a phone number and the name, then read the whole order back before you finish.");
+    if(areas) out.push(`Delivery areas are: ${areas}. If the address is outside these, say plainly that it is outside the delivery area and offer collection instead. Do not accept it.`);
+    if(min)   out.push(`The minimum order is ${min}. If they are below it, say so and let them add to the order.`);
+  }
+  if(book && review){
+    out.push("IMPORTANT: bookings on this line are reviewed by the owner before they are confirmed. Take the booking "
+      + "in full, then say it is recorded and will be confirmed shortly. Never say it is confirmed, and never promise "
+      + "a specific time for the confirmation. This applies to bookings only: orders are not affected.");
+  }
+  if(links) out.push(`If a caller asks to see the menu, the photos or where you are, point them to: ${links}. Read a link out slowly, or offer to have it sent.`);
+  return out.join("\n");
+}
+
+/* capacity, in the agent's own words */
+function capacitySentence(){
+  const seats=parseInt(($("#cSeats")||{}).value||"0",10)||0;
+  const tables=parseInt(($("#cTables")||{}).value||"0",10)||0;
+  const slot=parseInt(($("#cSlot")||{}).value||"90",10);
+  if(!seats && !tables) return "There is no stated limit on how many bookings can overlap, so do not refuse on capacity.";
+  const bits=[];
+  if(seats) bits.push(`${seats} people can be seated at any one time`);
+  if(tables) bits.push(`there are ${tables} tables or places`);
+  return `${bits.join(", and ")}. A booking holds its place for about ${slot} minutes, so a slot frees up after that.`;
+}
+
+/* the same rule, written for the agent to follow out loud */
+function hoursSentence(){
+  const open=DAYS.filter(([k])=>!HOURS[k].shut);
+  if(!open.length) return "The business is marked closed every day, so do not take any booking.";
+  const shut=DAYS.filter(([k])=>HOURS[k].shut).map(([,l])=>l);
+  const same=open.every(([k])=>HOURS[k].open===HOURS[open[0][0]].open && HOURS[k].close===HOURS[open[0][0]].close);
+  const span=(k)=>`${HOURS[k].open} to ${HOURS[k].close}`;
+  const body = same
+    ? `Open ${span(open[0][0])}.`
+    : open.map(([k,l])=>`${l}: ${span(k)}`).join("; ") + ".";
+  const last=parseInt(($("#hLast")||{}).value||"30",10);
+  const lead=parseInt(($("#hLead")||{}).value||"60",10);
+  const leadTxt={0:"A booking can be for any time, including right now.",60:"The earliest booking is one hour from now.",
+                 180:"The earliest booking is three hours from now.",1440:"Bookings must be at least a day ahead."}[lead];
+  return [body,
+    shut.length?`Closed on ${shut.join(", ")}.`:"",
+    last?`The last booking of the day is ${last} minutes before closing.`:"The last booking may be at closing time.",
+    leadTxt].filter(Boolean).join(" ");
+}
+
+function buildSystemPrompt(){
+  const langRule={
+    match:"Reply in the same language and dialect the caller uses. If they speak Egyptian Arabic, reply in natural Egyptian Arabic, not formal Arabic. If they mix Arabic and English, mix naturally too.",
+    eg:"Always reply in natural spoken Egyptian Arabic.",
+    ar:"Always reply in Modern Standard Arabic.",
+    en:"Always reply in English."
+  }[val("bLang")||"match"];
+
+  const outbound = mode==="out";
+  const opening = outbound
+    ? `You are the phone agent making an OUTBOUND call on behalf of ${val("bName")||"this business"}, ${val("bType")||"a business"} in Egypt. You dialled them; they did not ask you to call. The person who answers may be busy, suspicious, or in the middle of something.
+
+THE SCRIPT YOU ARE WORKING TO:
+${val("bScript")||"(no script written, so introduce yourself, state why you are calling, and be brief)"}
+
+HOW TO USE THE SCRIPT: follow its order and its intent, but never read it out word for word. Adapt to what the person actually says. If they answer a question before you ask it, do not ask it again. If they want to end the call, thank them and end it immediately without a second attempt. Say who you are and why you are calling in your very first sentence, before anything else.`
+    : `You are the phone agent that answers calls for ${val("bName")||"this business"}, ${val("bType")||"a business"} in Egypt. You are speaking to a caller who rang you.
+
+`;
+
+  return `${opening}
+
+OPENING HOURS: ${val("bHours")||"not specified"}
+
+WHAT THIS LINE IS FOR:
+${jobSentence()}
+
+OPENING HOURS FOR BOOKINGS:
+${hoursSentence()}
+If someone asks for a time outside this, always offer the nearest time that does work first, before or
+after, because a confirmed booking is better for both of you. If they still want the original time, take
+it, but be straight with them: say the business is normally closed then, that you are recording it as a
+request rather than a confirmed booking, and that someone will come back to them if it can be done.
+Never describe an out-of-hours time as confirmed.
+
+CAPACITY, so you can say yes or no yourself without anyone calling back:
+${capacitySentence()}
+Always ask how many people before you confirm a time, because the answer decides whether it fits.
+If the time they want is full, say so plainly and offer the nearest time that has room, earlier or
+later the same day. Do not promise that somebody will check and ring back: you are the one checking.
+If they want a party larger than the whole place holds, say that directly and offer to take it as a
+request for the owner to look at.
+
+WHAT YOU KNOW ABOUT THE BUSINESS:
+${val("bKnow")||"(nothing provided)"}
+
+RULES THE OWNER SET, THESE OVERRIDE EVERYTHING:
+${val("bRules")||"(none)"}
+
+HUMAN TRANSFER NUMBER: ${val("bXfer")||"none"}
+
+LANGUAGE: ${langRule}
+
+HOW TO SPEAK ON THE PHONE:
+- Short spoken sentences. One or two at a time, the way a person actually talks on a call. Never a paragraph, never bullet points, never markdown.
+- Warm, quick, competent. An excellent receptionist, not a chatbot. No corporate filler.
+- Ask only one question at a time and wait.
+- Never say you are an AI unless directly asked, and if asked, say so simply and carry on helping.
+
+ANSWERING QUESTIONS:
+- Answer anything the caller asks using what you know above.
+- If a question is not covered by what you know, say plainly that you do not have that to hand, then offer the useful next step: take their number for a callback, or transfer them. Never guess a price, an address, a time or a policy. Inventing an answer is the worst thing you can do.
+- If the caller is unclear, ask a short clarifying question rather than assuming.
+- If they are angry, upset, or ask for a manager, apologise once, briefly, take their name and number and tell them a manager will call back.
+- Handle the awkward things a real caller does: changing their mind, asking three things at once, going quiet, asking something unrelated. Stay calm and keep the call moving.
+
+${outbound ? `ON THIS OUTBOUND CALL: your job is to reach the outcome the script is aiming at, and to record what you learn. Getting an honest "no" is a good call. Pressing someone who has said no is a bad one.` : ""}
+
+TAKING A BOOKING OR ORDER:
+- Collect what is needed, one question at a time: name, phone number, day and time, number of people, and anything specific to the request.
+- Read the details back once before confirming.
+
+AT THE END OF EVERY SINGLE REPLY, on a new line, output a state block exactly like this and nothing after it:
+<state>{"intent":"booking|order|enquiry|complaint|other","name":"","phone":"","when":"","people":"","summary":"one short line","needsHuman":false,"resolved":false}</state>
+Use empty strings for anything you do not yet know. The caller never sees this block.`;
+}
+
+function addMsg(text, who){
+  const d=document.createElement("div");
+  d.className="msg "+who;
+  if(/[\u0600-\u06FF]/.test(text)) d.dir="rtl";
+  d.textContent=text;
+  $("#log").appendChild(d);
+  $("#log").scrollTop=$("#log").scrollHeight;
+  return d;
+}
+function typing(){
+  const d=document.createElement("div");
+  d.className="msg a"; d.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';
+  $("#log").appendChild(d); $("#log").scrollTop=$("#log").scrollHeight; return d;
+}
+
+function renderCapture(st){
+  if(!st) return;
+  const rows=[
+    ["Intent", st.intent||""],["Name", st.name||""],["Phone", st.phone||""],
+    ["When", st.when||""],["People", st.people||""],["Summary", st.summary||""],
+    ["Needs a human", st.needsHuman?"Yes":"No"],["Resolved", st.resolved?"Yes":"Not yet"]
+  ].filter(r=>r[1]!=="");
+  $("#cap").innerHTML = rows.length
+    ? rows.map(r=>`<div class="kv"><span>${r[0]}</span><span>${String(r[1]).replace(/</g,"&lt;")}</span></div>`).join("")
+    : '<p class="empty">Nothing captured yet.</p>';
+}
+
+function splitState(text){
+  const m=text.match(/<state>([\s\S]*?)<\/state>/);
+  let st=null;
+  if(m){ try{ st=JSON.parse(m[1]); }catch(_){} }
+  return { reply:text.replace(/<state>[\s\S]*?<\/state>/,"").trim(), state:st };
+}
+
+async function ask(userText){
+  if(busy) return;
+  busy=true; $("#send").disabled=true;
+  if(userText){ addMsg(userText,"u"); history.push({role:"user",content:userText}); }
+  const t=typing();
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-6",
+        max_tokens:1000,
+        system:buildSystemPrompt(),
+        messages:history
+      })
+    });
+    if(!res.ok) throw new Error("The agent could not be reached ("+res.status+")");
+    const data=await res.json();
+    const raw=(data.content||[]).map(c=>c.type==="text"?c.text:"").join("").trim();
+    const {reply,state}=splitState(raw);
+    t.remove();
+    addMsg(reply||"…","a");
+    history.push({role:"assistant",content:raw});
+    renderCapture(state);
+    $("#err").innerHTML="";
+    if(typeof markTested==="function") markTested();
+  }catch(e){
+    t.remove();
+    $("#err").innerHTML=`<div class="err">${e.message}. Check your connection and try again.</div>`;
+  }
+  busy=false; $("#send").disabled=false; $("#say").focus();
+}
+
+const CHIPS={
+  in:["عايز أحجز ترابيزة لأربعة بكرة الساعة ٩","Do you deliver to Maadi?","How much is the koshary?","Can you do catering for a wedding?","I want to speak to the manager"],
+  out:["مين معايا؟","Yes, go ahead","I'm driving, call me later","Not interested, thanks","How did you get my number?"]
+};
+
+$$("[data-mode]").forEach(b=>b.addEventListener("click",()=>{
+  if(mode===b.dataset.mode) return;
+  mode=b.dataset.mode;
+  $$("[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===mode)));
+  booted=false; startCall();
+}));
+
+function startCall(){
+  $("#pName").textContent=val("bName")||"Your business";
+  $("#pNum").textContent = document.querySelector('input[name="route"]:checked').value==="web" ? "Web call" : (val("num")||"");
+  $("#say").placeholder = mode==="out" ? "Reply as the customer being called…" : "Type what a caller would say…";
+  if(booted) return;
+  booted=true;
+  history=[];
+  $("#log").innerHTML="";
+  $("#cap").innerHTML='<p class="empty">Nothing captured yet.</p>';
+  $("#chips").innerHTML=CHIPS[mode].map(c=>`<button class="chip">${c}</button>`).join("");
+  $$("#chips .chip").forEach(b=>b.addEventListener("click",()=>ask(b.textContent)));
+
+  if(mode==="out"){
+    /* the agent dialled, so the agent speaks first and the model writes that line */
+    addMsg("Dialling your customer…","sys");
+    addMsg("They picked up. You are the customer now.","sys");
+    history.push({role:"user",content:"[The customer has just answered the phone and said hello.]"});
+    ask(null);
+  } else {
+    addMsg("Call connected","sys");
+    const greet=val("bGreet")||"Hello, how can I help you?";
+    addMsg(greet,"a");
+    history.push({role:"assistant",content:greet});
+  }
+}
+$("#send").addEventListener("click",()=>{ const v=$("#say").value.trim(); if(v){ $("#say").value=""; ask(v);} });
+$("#say").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const v=$("#say").value.trim(); if(v){ $("#say").value=""; ask(v);} }});
+$("#restart").addEventListener("click",()=>{ booted=false; $("#cap").innerHTML='<p class="empty">Nothing captured yet.</p>'; startCall(); });
+
+/* ============================================================
+   PERSISTENCE
+   ------------------------------------------------------------
+   Served from the gateway at /setup, this saves to the customer's
+   own account. Opened as a plain file it still works end to end,
+   it just cannot save — and it says so rather than pretending.
+   ============================================================ */
+let agentId=null, saveTimer=null, online=true;
+
+function collect(){
+  const route=document.querySelector('input[name="route"]:checked').value;
+  return {
+    name: (val("bName")||"My agent")+" · "+({voice:"Voice",web:"Web"}[route==="web"?"web":"voice"]),
+    channel: route==="web" ? "web" : "voice",
+    direction: mode==="out" ? "outbound" : "inbound",
+    lang: val("bLang")||"match",
+    business:{ name:val("bName"), type:val("bType"), hours:val("bHours"), greeting:val("bGreet"),
+               open_hours:HOURS,
+               last_booking_min:parseInt(($("#hLast")||{}).value||"30",10),
+               lead_time_min:parseInt(($("#hLead")||{}).value||"60",10),
+               seats:parseInt(($("#cSeats")||{}).value||"0",10)||0,
+               tables:parseInt(($("#cTables")||{}).value||"0",10)||0,
+               slot_min:parseInt(($("#cSlot")||{}).value||"90",10),
+               take_bookings: !!($("#oBook")||{}).checked,
+               take_orders: !!($("#oOrders")||{}).checked,
+               review_bookings: !!($("#oReview")||{}).checked,
+               delivery_areas: val("oAreas"), min_order: val("oMin"), links: val("oLinks") },
+    knowledge: val("bKnow"),
+    rules: val("bRules"),
+    script: val("bScript"),
+    transfer_to: val("bXfer"),
+    /* the trunk password is deliberately not sent: it is the customer's
+       credential with their operator and we have no reason to hold it */
+    channel_cfg:{ route, number: val("num"), host: val("host"), user: val("user"),
+                  wa:{ phone_number_id: val("waId"), template: val("waTpl"),
+                       lang: ($("#waLang")||{}).value || "ar", token: val("waTok") } }
+  };
+}
+
+function bar(state, text){
+  const b=$("#saveBar"); if(!b) return;
+  b.hidden=false; b.dataset.s=state;
+  b.innerHTML='<span class="dot"></span><span>'+text+'</span>';
+}
+
+async function api(path, method, body){
+  const r=await fetch(path,{method:method||"GET",headers:{"Content-Type":"application/json"},
+    body: body?JSON.stringify(body):undefined});
+  if(r.status===401){ online=false; throw new Error("not signed in"); }
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||("Request failed ("+r.status+")"));
+  return d;
+}
+
+async function save(){
+  if(!online) return;
+  try{
+    bar("saving","Saving…");
+    const body=collect();
+    const d = agentId ? await api("/api/me/agents/"+agentId,"PATCH",body)
+                      : await api("/api/me/agents","POST",body);
+    agentId=d.agent.id;
+    paintReadiness(d.agent.readiness, d.agent.status);
+    bar("saved","Saved to your account");
+  }catch(e){
+    if(!online){ bar("err","Not signed in, so nothing is being saved. Everything else works."); return; }
+    bar("err", e.message);
+  }
+}
+const queueSave=()=>{ clearTimeout(saveTimer); saveTimer=setTimeout(save, 900); };
+["bName","bType","bHours","bLang","bGreet","bKnow","bRules","bScript","bXfer","num","host","user"]
+  .forEach(id=>{ const el=$("#"+id); if(el){ el.addEventListener("input",queueSave); el.addEventListener("change",queueSave); }});
+$$('input[name="route"]').forEach(i=>i.addEventListener("change",queueSave));
+drawHours();
+[["oOrders","orderOpts"],["oBook","bookOpts"]].forEach(([tick,panel])=>{
+  const t2=$("#"+tick), box=$("#"+panel);
+  if(t2&&box){ const sync=()=>{ box.hidden=!t2.checked; }; t2.addEventListener("change",sync); sync(); }
+});
+["hLast","hLead","cSeats","cTables","cSlot","waId","waTpl","waLang","waTok",
+  "oBook","oOrders","oReview","oAreas","oMin","oLinks"].forEach(id=>{
+  const el=$("#"+id); if(el){ el.addEventListener("change",queueSave); el.addEventListener("input",queueSave); }
+});
+
+function paintReadiness(r, status){
+  if(!r) return;
+  $("#rScore").textContent=r.score;
+  $("#rBar").style.width=r.score+"%";
+  const done=[["name","Named"],["business","Business details"],["greeting","Greeting"],["knowledge","Knowledge"],
+              ["rules","Rules"],["script","Outbound script"],["channel","Channel chosen"],["tested","Tested"]];
+  const missing={}; (r.outstanding||[]).forEach(o=>missing[o.k]=o.say);
+  $("#rList").innerHTML=done.map(([k,label])=> missing[k]
+    ? `<div><span class="m no">✕</span><span>${missing[k]}</span></div>`
+    : `<div><span class="m ok">✓</span><span>${label}</span></div>`).join("");
+  const btn=$("#deployBtn");
+  btn.disabled=!r.ready;
+  if(status==="live"){ btn.textContent="Deployed"; btn.disabled=true; $("#pauseBtn").hidden=false; }
+}
+
+$("#deployBtn").addEventListener("click", async ()=>{
+  const btn=$("#deployBtn"); btn.disabled=true; btn.textContent="Deploying…";
+  try{
+    await save();
+    const d=await api("/api/me/agents/"+agentId+"/deploy","POST",{});
+    paintReadiness(d.agent.readiness,"live");
+    $("#depMsg").innerHTML=`<div class="say" style="margin-top:1rem">Your agent is live. ${d.note}</div>`;
+  }catch(e){
+    btn.disabled=false; btn.textContent="Deploy agent";
+    $("#depMsg").innerHTML=`<div class="err">${e.message}</div>`;
+  }
+});
+$("#pauseBtn").addEventListener("click", async ()=>{
+  try{ const d=await api("/api/me/agents/"+agentId+"/pause","POST",{});
+    paintReadiness(d.agent.readiness,"paused");
+    $("#deployBtn").disabled=false; $("#deployBtn").textContent="Deploy agent"; $("#pauseBtn").hidden=true;
+  }catch(e){ $("#depMsg").innerHTML=`<div class="err">${e.message}</div>`; }
+});
+
+/* mark tested once a real exchange has happened */
+let markedTested=false;
+async function markTested(){
+  if(markedTested||!agentId||!online) return;
+  markedTested=true;
+  try{ const d=await api("/api/me/agents/"+agentId+"/tested","POST",{}); paintReadiness(d.agent.readiness,d.agent.status); }catch(_){}
+}
+
+/* load an existing agent if the customer already started one */
+(async function boot(){
+  try{
+    const d=await api("/api/me/agents");
+    const a=(d.agents||[])[0];
+    if(a){
+      agentId=a.id;
+      const b=a.business||{}, c=a.channel_cfg||{};
+      const set=(id,v)=>{ const el=$("#"+id); if(el&&v!=null&&v!=="") el.value=v; };
+      set("bName",b.name); set("bType",b.type); set("bHours",b.hours); set("bGreet",b.greeting);
+      set("bKnow",a.knowledge); set("bRules",a.rules); set("bScript",a.script);
+      if(b.open_hours){ HOURS=b.open_hours; drawHours();
+[["oOrders","orderOpts"],["oBook","bookOpts"]].forEach(([tick,panel])=>{
+  const t2=$("#"+tick), box=$("#"+panel);
+  if(t2&&box){ const sync=()=>{ box.hidden=!t2.checked; }; t2.addEventListener("change",sync); sync(); }
+}); }
+      if(b.last_booking_min!=null && $("#hLast")) $("#hLast").value=String(b.last_booking_min);
+      if(b.lead_time_min!=null && $("#hLead")) $("#hLead").value=String(b.lead_time_min);
+      if(b.seats!=null && $("#cSeats")) $("#cSeats").value=String(b.seats||"");
+      if(b.tables!=null && $("#cTables")) $("#cTables").value=String(b.tables||"");
+      if(b.slot_min!=null && $("#cSlot")) $("#cSlot").value=String(b.slot_min);
+      if($("#oBook")) $("#oBook").checked = b.take_bookings !== false;
+      if($("#oOrders")) $("#oOrders").checked = !!b.take_orders;
+      if($("#oReview")) $("#oReview").checked = !!b.review_bookings;
+      set("oAreas",b.delivery_areas); set("oMin",b.min_order); set("oLinks",b.links);
+      if($("#orderOpts")) $("#orderOpts").hidden = !($("#oOrders")||{}).checked;
+      set("bXfer",a.transfer_to); set("bLang",a.lang);
+      set("num",c.number); set("host",c.host); set("user",c.user);
+      if(c.wa){ set("waId",c.wa.phone_number_id); set("waTpl",c.wa.template);
+                if($("#waLang") && c.wa.lang) $("#waLang").value=c.wa.lang; }
+      if(c.route){
+        const r=document.querySelector(`input[name="route"][value="${c.route}"]`);
+        if(r){ r.checked=true; routeLocked=true; $("#autoPick").hidden=true; $("#routes").hidden=false; syncRoute(); }
+      } else { applyAutoRoute(); }
+      paintReadiness(a.readiness, a.status);
+      bar("saved","Loaded your saved agent");
+    } else {
+      bar("saved","Signed in. Changes save automatically.");
+    }
+  }catch(e){
+    online=false;
+    bar("err","Preview mode: not signed in, so nothing is saved. Every other feature works.");
+    paintReadiness({score:0,ready:false,outstanding:[
+      {k:"name",say:"Sign in to save and deploy"},{k:"business",say:"Business details"},
+      {k:"greeting",say:"Greeting"},{k:"knowledge",say:"Knowledge"},{k:"rules",say:"Rules"},
+      {k:"script",say:"Outbound script"},{k:"channel",say:"Channel"},{k:"tested",say:"Tested"}]});
+  }
+})();
+</script>
+</body>
+</html>

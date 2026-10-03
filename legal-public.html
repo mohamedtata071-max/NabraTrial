@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" id="root">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light only">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<meta name="description" content="NABRA — Privacy Policy, Terms of Service, and Acceptable Use Policy.">
+<title>NABRA — Privacy · Terms · Acceptable Use</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Chivo+Mono:wght@300;400;500&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light only;
+--bone:#EEF2F9;--paper:#DEE6F3;--fg:#163466;--mute:#5F6166;--faint:#8B8D92;
+--rule:rgba(22,52,102,.13);--soft:rgba(22,52,102,.055);--ember:#C08A2E;
+--ser:'Plus Jakarta Sans',system-ui,sans-serif;--body:'Plus Jakarta Sans',sans-serif;--mono:'Chivo Mono',monospace;--ar:'Noto Naskh Arabic',serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#FFFFFF !important;background-image:linear-gradient(#FFFFFF,#FFFFFF) !important}
+body{background:#FFFFFF !important;background-image:linear-gradient(#FFFFFF,#FFFFFF) !important;color:#163466 !important;
+font-family:var(--body);font-size:15.5px;line-height:1.7;-webkit-font-smoothing:antialiased}
+html[dir="rtl"] body{font-family:var(--ar);font-size:16px}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:var(--ember)}
+.lbl{font-family:var(--mono);font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+html[dir="rtl"] .lbl{font-family:var(--ar);letter-spacing:0;font-size:.72rem}
+.top{position:sticky;top:0;z-index:40;background:#FFFFFF;background-image:linear-gradient(#FFFFFF,#FFFFFF);
+border-bottom:1px solid var(--rule);padding:.85rem clamp(1rem,4vw,2rem);display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.mk{font-family:var(--ser);font-size:1.25rem;display:flex;align-items:center;gap:.5rem;text-decoration:none;color:#163466}
+.mk i{width:5px;height:5px;border-radius:50%;background:var(--ember)}
+.tabs{display:flex;gap:.3rem;flex-wrap:wrap}
+.tabs a{border:1px solid var(--rule);border-radius:999px;padding:.35rem .85rem;font-size:.8rem;color:var(--mute);text-decoration:none;background:#fff}
+.tabs a:hover{border-color:#163466;color:#163466}
+.lang{margin-inline-start:auto;display:flex;gap:.25rem}
+.lang button{border:1px solid var(--rule);border-radius:999px;padding:.32rem .7rem;font-size:.76rem;color:var(--mute)}
+.lang button[aria-pressed="true"]{background:#163466;color:#fff;border-color:#163466}
+.wrap{max-width:780px;margin:0 auto;padding:clamp(1.4rem,4vw,2.6rem) clamp(1rem,4vw,1.6rem) 5rem}
+.notice{border:1px solid var(--rule);border-inline-start:3px solid var(--ember);background:#FAF0EA;background-image:linear-gradient(#FAF0EA,#FAF0EA);
+border-radius:12px;padding:.9rem 1.1rem;font-size:.86rem;margin-bottom:2rem}
+h1{font-family:var(--ser);font-weight:700;letter-spacing:-.025em;font-size:clamp(1.7rem,4.5vw,2.3rem);line-height:1.2;margin:2.6rem 0 .3rem;letter-spacing:-.01em}
+html[dir="rtl"] h1{font-family:var(--ar);font-weight:600}
+h2{font-size:1rem;font-weight:600;margin:1.8rem 0 .5rem}
+p,li{margin-bottom:.8rem;max-width:72ch;color:#26282B}
+ul{padding-inline-start:1.2rem}
+li{margin-bottom:.45rem}
+.docmeta{font-family:var(--mono);font-size:.68rem;color:var(--faint);margin-bottom:1rem}
+html[dir="rtl"] .docmeta{font-family:var(--ar);font-size:.78rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin:.8rem 0 1.2rem}
+th{font-family:var(--mono);font-size:.56rem;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);text-align:start;padding:.45rem .5rem;border-bottom:1px solid var(--rule);font-weight:400}
+html[dir="rtl"] th{font-family:var(--ar);letter-spacing:0;font-size:.72rem}
+td{padding:.55rem .5rem;border-bottom:1px solid var(--soft);vertical-align:top}
+.ph{background:#FFF3CD;padding:.05em .3em;border-radius:4px;font-family:var(--mono);font-size:.85em}
+hr{border:none;border-top:1px solid var(--rule);margin:3rem 0}
+.foot{border-top:1px solid var(--rule);padding:1.4rem;text-align:center;font-size:.8rem;color:var(--faint)}
+[data-l]{display:none}
+html[data-lang="en"] [data-l="en"]{display:revert}
+html[data-lang="ar"] [data-l="ar"]{display:revert}
+
+/* ==== FORCED-DARK HARDENING ====================================
+   Some in-app browsers (notably iOS) repaint pages that theme via
+   CSS variables. Literal values plus !important cannot be reached
+   that way, so the page stays light wherever it is opened. */
+html{color-scheme:only light !important;background:#EEF2F9 !important;background-color:#EEF2F9 !important}
+body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#163466 !important}
+@media (prefers-color-scheme:dark){
+  :root{color-scheme:only light !important}
+  html,body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#163466 !important}
+}
+@media (prefers-color-scheme:dark){
+  h1,h2,h3{color:#163466 !important}
+  p,li{color:#163466 !important}
+}
+
+/* Text fill must follow each element's own colour. Setting it to a fixed value
+   on body inherits everywhere and repaints light text on dark buttons black,
+   which is invisible. currentColor keeps the forced-dark protection without
+   that side effect. */
+*,*::before,*::after{-webkit-text-fill-color:currentColor}
+
+.lg-login{font-size:.85rem;color:var(--fg-mute);text-decoration:none;margin-inline-end:1rem}
+.lg-login:hover{color:var(--ember)}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="mk" href="/">نبرة NABRA <i></i></a>
+  <nav class="tabs">
+    <a href="#privacy"><span data-l="en">Privacy</span><span data-l="ar">الخصوصية</span></a>
+    <a href="#terms"><span data-l="en">Terms</span><span data-l="ar">الشروط</span></a>
+    <a href="#aup"><span data-l="en">Acceptable Use</span><span data-l="ar">الاستخدام المقبول</span></a>
+  </nav>
+  <span class="lang">
+    <button data-lang-btn="en">English</button>
+    <button data-lang-btn="ar">العربية</button>
+  </span>
+</header>
+
+<main class="wrap">
+
+<div class="notice">
+  <span data-l="en"><b>Draft — version 1.0.</b> These documents are pending review by a lawyer qualified in Egypt. Where the Arabic and English differ, the <b>Arabic prevails</b> before any Egyptian authority or court. Highlighted fields are completed before these terms take effect.</span>
+  <span data-l="ar"><b>مسودة — الإصدار ١٫٠.</b> هذه المستندات قيد المراجعة من محامٍ مؤهل في مصر. وعند الاختلاف بين النسختين العربية والإنجليزية، <b>تسود العربية</b> أمام أي جهة أو محكمة مصرية. وتُستكمل الحقول المظللة قبل سريان هذه الشروط.</span>
+</div>
+
+<!-- ================= PRIVACY ================= -->
+<section id="privacy">
+<span class="lbl" data-l="en">Document · Privacy</span><span class="lbl" data-l="ar">مستند · الخصوصية</span>
+<h1><span data-l="en">Privacy Policy</span><span data-l="ar">سياسة الخصوصية</span></h1>
+<p class="docmeta"><span data-l="en">Last updated: <span class="ph">[DATE]</span></span><span data-l="ar">آخر تحديث: <span class="ph">[التاريخ]</span></span></p>
+
+<div data-l="en">
+<h2>1. Who we are</h2>
+<p><span class="ph">[FULL REGISTERED NAME]</span>, registered in the Arab Republic of Egypt under commercial register number <span class="ph">[NUMBER]</span>, at <span class="ph">[ADDRESS]</span>, is the controller of the personal data described in this policy. Our Data Protection Officer can be reached at <span class="ph">[EMAIL]</span>.</p>
+<h2>2. Two different roles</h2>
+<p>We handle personal data in two distinct capacities, and your rights differ depending on which applies.</p>
+<ul>
+<li><b>As controller</b> — for our own customers and website visitors. We decide why and how that data is processed.</li>
+<li><b>As processor</b> — for the calls our customers' agents handle. The customer decides what happens on those calls and for how long the data is kept. If you were called by an agent, or you called a business using our service, that business is the controller and you should address your request to them. We will help them respond.</li>
+</ul>
+<h2>3. What we collect and why</h2>
+<table>
+<tr><th>Data</th><th>Why</th><th>Basis</th></tr>
+<tr><td>Name, business email, phone, company</td><td>Creating and administering your account</td><td>Performance of a contract</td></tr>
+<tr><td>Billing details</td><td>Taking payment and issuing tax invoices</td><td>Contract and legal obligation</td></tr>
+<tr><td>Call transcripts and metadata</td><td>Operating the agent our customer configured</td><td>On the customer's instructions, as processor</td></tr>
+<tr><td>Call recordings</td><td>Only where every party to the call has consented</td><td>Consent</td></tr>
+<tr><td>Website usage data</td><td>Keeping the site secure and understanding how it performs</td><td>Legitimate interest</td></tr>
+</table>
+<h2>4. The microphone demo on this website</h2>
+<p>The demo runs inside your browser. Your speech is converted to text by your own browser, and neither the audio nor the transcript is sent to us or stored. Closing the microphone ends it. This is a different thing from a live call handled by an agent, which is described above.</p>
+<h2>5. Call recording</h2>
+<p>Egyptian law requires the consent of every party to a telephone call before it may be recorded. Recording is therefore switched off by default. Where a customer enables it, the agent states at the beginning of the call that it is being recorded and the caller may refuse. If the caller refuses, the call continues and no recording is kept.</p>
+<h2>6. How long we keep things</h2>
+<p>Account data for the term of the contract and five years afterwards, to meet commercial and tax record requirements. Call data for the period the customer sets, ninety days by default. Consent records for longer than the audio they relate to, because they are the evidence that the recording was lawful. Website data for twenty-six months.</p>
+<h2>7. Sharing and transfers</h2>
+<p>We share personal data only with suppliers who process it on our behalf under written agreements, and where the law requires disclosure to a competent authority. We do not sell personal data. We do not use the voices or conversations of callers to train models. Where processing takes place outside Egypt, we do so on the basis described at <span class="ph">[PERMIT REFERENCE OR MECHANISM]</span>.</p>
+<h2>8. Your rights</h2>
+<p>You may ask us to tell you what data we hold about you, correct it, delete it, restrict how it is used, provide it in a portable form, or withdraw a consent you gave. Write to <span class="ph">[EMAIL]</span>. We respond within the period the Law prescribes. If you are not satisfied you may complain to the Personal Data Protection Centre.</p>
+<h2>9. Changes</h2>
+<p>We will post any change here and, where the change is material, tell account holders directly before it takes effect.</p>
+</div>
+
+<div data-l="ar">
+<h2>١. من نحن</h2>
+<p>شركة <span class="ph">[الاسم المسجل بالكامل]</span>، المسجلة بجمهورية مصر العربية تحت رقم سجل تجاري <span class="ph">[الرقم]</span>، وعنوانها <span class="ph">[العنوان]</span>، هي المتحكم في البيانات الشخصية الموصوفة في هذه السياسة. ويمكن التواصل مع مسؤول حماية البيانات على <span class="ph">[البريد الإلكتروني]</span>.</p>
+<h2>٢. صفتان مختلفتان</h2>
+<p>نتعامل مع البيانات الشخصية بصفتين متمايزتين، وتختلف حقوقك بحسب أيهما ينطبق.</p>
+<ul>
+<li><b>بصفتنا متحكماً</b> — تجاه عملائنا وزوار موقعنا، حيث نحدد أغراض المعالجة ووسائلها.</li>
+<li><b>بصفتنا معالجاً</b> — تجاه المكالمات التي يديرها وكلاء عملائنا. فالعميل هو من يحدد ما يجري في تلك المكالمات ومدة الاحتفاظ بالبيانات. وإذا اتصل بك وكيل، أو اتصلت أنت بشركة تستخدم خدمتنا، فتلك الشركة هي المتحكم وإليها يوجه طلبك، ونحن نعاونها على الرد.</li>
+</ul>
+<h2>٣. ما نجمعه ولماذا</h2>
+<table>
+<tr><th>البيانات</th><th>الغرض</th><th>السند</th></tr>
+<tr><td>الاسم والبريد المهني والهاتف والشركة</td><td>إنشاء الحساب وإدارته</td><td>تنفيذ عقد</td></tr>
+<tr><td>بيانات الفوترة</td><td>تحصيل المقابل وإصدار الفواتير الضريبية</td><td>عقد والتزام قانوني</td></tr>
+<tr><td>نصوص المكالمات وبياناتها الوصفية</td><td>تشغيل الوكيل الذي ضبطه عميلنا</td><td>تعليمات العميل بصفتنا معالجاً</td></tr>
+<tr><td>تسجيلات المكالمات</td><td>فقط حيث وافق جميع أطراف المكالمة</td><td>الموافقة</td></tr>
+<tr><td>بيانات استخدام الموقع</td><td>تأمين الموقع وفهم أدائه</td><td>مصلحة مشروعة</td></tr>
+</table>
+<h2>٤. التجربة الصوتية على هذا الموقع</h2>
+<p>تعمل التجربة داخل متصفحك، ويحول كلامك إلى نص بواسطة متصفحك نفسه، ولا يرسل الصوت ولا النص إلينا ولا يخزن. وينتهي الأمر بإغلاق الميكروفون. وهذا يختلف عن المكالمة الفعلية التي يديرها وكيل والموصوفة أعلاه.</p>
+<h2>٥. تسجيل المكالمات</h2>
+<p>يشترط القانون المصري موافقة جميع أطراف المكالمة الهاتفية قبل تسجيلها، ولذلك يأتي التسجيل معطلاً افتراضياً. وحين يفعّله العميل، يوضح الوكيل في بداية المكالمة أنها تسجل ويجوز للمتصل الرفض، وعندئذ تستمر المكالمة ولا يحتفظ بأي تسجيل.</p>
+<h2>٦. مدد الاحتفاظ</h2>
+<p>بيانات الحساب طوال مدة التعاقد وخمس سنوات بعدها استيفاءً لمتطلبات السجلات التجارية والضريبية. وبيانات المكالمات للمدة التي يحددها العميل، وافتراضها تسعون يوماً. وسجلات الموافقة لمدة أطول من الصوت المتعلق بها لأنها دليل مشروعية التسجيل. وبيانات الموقع ستة وعشرون شهراً.</p>
+<h2>٧. المشاركة والنقل</h2>
+<p>لا نشارك البيانات الشخصية إلا مع موردين يعالجونها نيابة عنا بموجب اتفاقات مكتوبة، وحيث يوجب القانون الإفصاح لجهة مختصة. ولا نبيع البيانات الشخصية، ولا نستخدم أصوات المتصلين أو محادثاتهم في تدريب النماذج. وحيث تجري المعالجة خارج مصر، فذلك استناداً إلى <span class="ph">[التصريح أو الآلية]</span>.</p>
+<h2>٨. حقوقك</h2>
+<p>لك أن تطلب معرفة ما نحتفظ به عنك من بيانات، أو تصحيحه، أو حذفه، أو تقييد استخدامه، أو تسلمه في صورة قابلة للنقل، أو سحب موافقة سبق أن منحتها. والمراسلة على <span class="ph">[البريد الإلكتروني]</span>، ونرد خلال المدة المقررة قانوناً. وإن لم تكن راضياً فلك التقدم بشكوى إلى مركز حماية البيانات الشخصية.</p>
+<h2>٩. التعديلات</h2>
+<p>ننشر أي تعديل هنا، ونخطر أصحاب الحسابات مباشرة بالتعديلات الجوهرية قبل سريانها.</p>
+</div>
+</section>
+
+<hr>
+
+<!-- ================= TERMS ================= -->
+<section id="terms">
+<span class="lbl" data-l="en">Document · Terms</span><span class="lbl" data-l="ar">مستند · الشروط</span>
+<h1><span data-l="en">Terms of Service</span><span data-l="ar">الشروط والأحكام</span></h1>
+<p class="docmeta"><span data-l="en">Version <span class="ph">[VERSION]</span>, in force from <span class="ph">[DATE]</span></span><span data-l="ar">الإصدار <span class="ph">[رقم الإصدار]</span>، نافذ من <span class="ph">[التاريخ]</span></span></p>
+
+<div data-l="en">
+<h2>1. Parties and acceptance</h2>
+<p>These terms govern the supply of the service by <span class="ph">[FULL REGISTERED NAME]</span> to the customer who accepts them at the point of purchase. Acceptance is recorded with the version of these terms in force at that moment.</p>
+<h2>2. The service</h2>
+<p>An artificial intelligence voice agent that handles inbound and outbound telephone calls, produces transcripts, and delivers outcomes to systems the customer nominates.</p>
+<h2>3. Pricing in US dollars, invoicing in Egyptian pounds</h2>
+<p>List prices are denominated in US dollars. Invoices are issued in Egyptian pounds converted at our published billing rate, being the Central Bank of Egypt sell rate plus a fixed margin covering settlement and currency risk. The billing rate does not follow the daily rate and is adjusted only when it diverges materially from it.</p>
+<h2>4. Sharp movements in the exchange rate</h2>
+<p>Ordinary movement is absorbed by the margin within the billing rate and the customer's price is unaffected. Where the Egyptian pound is devalued, or moves by more than that margin, the price in Egyptian pounds is adjusted. Written notice is given before an adjusted price applies. No adjustment applies to an invoice already issued. A customer who does not accept an adjustment may terminate before it takes effect with nothing further to pay. This clause does not apply to customers invoiced in US dollars.</p>
+<h2>5. Annual plans and severe devaluation</h2>
+<p>An annual plan is paid once in Egyptian pounds for twelve months of service, while the cost of supplying that service is incurred in US dollars throughout the year. Accordingly, where the Central Bank of Egypt sell rate rises more than <span class="ph">[THRESHOLD, e.g. 15]</span> per cent above the billing rate that applied on the day the annual plan was paid, we may adjust the Egyptian pound value of the unexpired part of that plan so as to restore the US dollar value of the service originally purchased, subject to all of the following. Written notice is given not less than thirty days before the adjustment takes effect. The adjustment applies only to months not yet delivered and never retrospectively. It may not be applied more than <span class="ph">[FREQUENCY, e.g. twice]</span> in any twelve month period. A customer who does not accept the adjustment may terminate on the date it would take effect and receive a refund, in Egyptian pounds, of the months not yet delivered at the price originally paid. This clause does not apply to customers invoiced in US dollars, nor to monthly plans, which are governed by clause 4.</p>
+<h2>6. Billing, renewal, termination</h2>
+<p>Plans are billed monthly in advance to the payment method on file and renew automatically until cancelled; annual plans are billed once for the year. Cancellation stops the next renewal; the current period runs to its end and is not refunded pro rata. Usage above included minutes is billed in arrears at the plan's overage rate. Value added tax is added where applicable.</p>
+<h2>7. Telephone numbers</h2>
+<p>A number the customer already holds may be connected by forwarding, by SIP routing, or by porting. Connecting a number does not transfer ownership of it. Numbers supplied by us are provisioned on a licensed Egyptian operator with the customer as subscriber of record, and the customer may port any number away at any time without obstruction or delay. Number charges are billed monthly with the plan.</p>
+<h2>8. Call recording</h2>
+<p>Recording is disabled by default. Where the customer enables it, the agent obtains the consent of the parties at the start of each call. The customer is responsible for the lawfulness of recording on its account and for setting a retention period.</p>
+<h2>9. Customer data</h2>
+<p>Call data, transcripts, recordings, scripts and contact lists belong to the customer. We process them to provide the service and for no other purpose. We do not sell customer data and do not use the voices or conversations of callers to train models. Data is exported on request in a portable format and deleted on termination according to the schedule in the Data Processing Agreement.</p>
+<h2>10. Customer obligations</h2>
+<p>The customer is responsible for having a lawful basis to call the numbers it uploads, for honouring requests not to be contacted, and for the accuracy of the agent script. Calls that are deceptive or harassing, or made to numbers the customer has no right to contact, are grounds for immediate suspension. The service must not be used for emergency calls and is not a substitute for any emergency line.</p>
+<h2>11. Availability and limits of the technology</h2>
+<p>We aim for continuous availability and publish incident history; enterprise agreements carry a specific service level with credits. Voice artificial intelligence is probabilistic: it will occasionally mishear and may misunderstand. It should not be relied upon, unaccompanied, for decisions carrying legal, medical or financial consequence for the caller. Handover to a person is provided for that reason and we recommend configuring it.</p>
+<h2>12. Liability</h2>
+<p>Neither party excludes liability for anything that cannot lawfully be excluded. Subject to that, our aggregate liability is limited to the fees paid in the twelve months preceding the claim, and we are not liable for loss of profit, revenue or anticipated savings.</p>
+<h2>13. Suspension</h2>
+<p>We may suspend an account for non-payment after notice, for breach of clause 10, or where required by a competent authority. Suspension for non-payment does not delete customer data during the grace period stated in the account.</p>
+<h2>14. Changes to these terms</h2>
+<p>We may amend these terms on notice. Material changes take effect at the next renewal, and a customer who does not accept them may terminate before that date.</p>
+<h2>15. Governing law</h2>
+<p>These terms are governed by the laws of the Arab Republic of Egypt and the courts of Cairo have jurisdiction. Personal data is processed in accordance with Law No. 151 of 2020 and its Executive Regulations.</p>
+</div>
+
+<div data-l="ar">
+<h2>١. الأطراف والقبول</h2>
+<p>تحكم هذه الشروط تقديم الخدمة من شركة <span class="ph">[الاسم المسجل بالكامل]</span> إلى العميل الذي يقبلها عند الشراء. ويقيد القبول مقروناً بإصدار الشروط النافذ في تلك اللحظة.</p>
+<h2>٢. الخدمة</h2>
+<p>وكيل صوتي يعمل بالذكاء الاصطناعي يتولى المكالمات الهاتفية الواردة والصادرة، وينتج نصوصاً مفرغة، ويسلم النتائج إلى الأنظمة التي يحددها العميل.</p>
+<h2>٣. التسعير بالدولار والفوترة بالجنيه</h2>
+<p>الأسعار المعلنة مقومة بالدولار الأمريكي، وتصدر الفواتير بالجنيه المصري محولة على سعر الفوترة المعلن لدينا، وهو سعر البيع المعلن من البنك المركزي المصري مضافاً إليه هامش ثابت يغطي التسوية ومخاطر العملة. ولا يتبع سعر الفوترة السعر اليومي، ولا يعدل إلا عند ابتعاده الجوهري عنه.</p>
+<h2>٤. التحركات الحادة في سعر الصرف</h2>
+<p>تستوعب الهوامش المضمنة في سعر الفوترة التحركات المعتادة، ولا يتأثر سعر العميل. أما عند خفض قيمة الجنيه المصري أو تحركه بما يجاوز ذلك الهامش، فيعدل السعر بالجنيه. ويخطر العميل كتابةً قبل سريان السعر المعدل، ولا يسري التعديل على فاتورة صدرت بالفعل. وللعميل الذي لا يقبل التعديل إنهاء التعاقد قبل سريانه دون أي مستحقات إضافية. ولا يسري هذا البند على العملاء الذين تصدر فواتيرهم بالدولار.</p>
+<h2>٥. الخطط السنوية والخفض الحاد لقيمة العملة</h2>
+<p>تدفع الخطة السنوية مرة واحدة بالجنيه المصري مقابل اثني عشر شهراً من الخدمة، بينما تتحمل الشركة تكلفة تقديم تلك الخدمة بالدولار الأمريكي على مدار العام. وعليه، إذا ارتفع سعر بيع الدولار المعلن من البنك المركزي المصري بما يجاوز <span class="ph">[النسبة، مثلاً ١٥]</span> بالمائة فوق سعر الفوترة الساري يوم سداد الخطة السنوية، جاز للشركة تعديل القيمة بالجنيه المصري للجزء غير المنقضي من تلك الخطة بما يعيد القيمة الدولارية للخدمة المشتراة أصلاً، وذلك بمراعاة جميع الضوابط الآتية. يخطر العميل كتابةً قبل سريان التعديل بما لا يقل عن ثلاثين يوماً. ولا يسري التعديل إلا على الأشهر التي لم تقدم بعد، ولا يطبق بأثر رجعي بحال. ولا يجوز تطبيقه أكثر من <span class="ph">[العدد، مثلاً مرتين]</span> خلال أي اثني عشر شهراً. وللعميل الذي لا يقبل التعديل إنهاء التعاقد في تاريخ سريانه واسترداد قيمة الأشهر التي لم تقدم بعد بالجنيه المصري بالسعر المدفوع أصلاً. ولا يسري هذا البند على العملاء الذين تصدر فواتيرهم بالدولار، ولا على الخطط الشهرية التي يحكمها البند الرابع.</p>
+<h2>٦. الفوترة والتجديد والإنهاء</h2>
+<p>تحصل الخطط شهرياً ومقدماً على وسيلة الدفع المسجلة وتتجدد تلقائياً حتى الإلغاء، أما الخطط السنوية فتحصل مرة واحدة عن العام. ويوقف الإلغاء التجديدَ التالي، بينما تستمر الفترة الحالية حتى نهايتها ولا ترد بالتناسب. وتحتسب الدقائق الزائدة عن المشمولة لاحقاً بسعر التجاوز المقرر للخطة. وتضاف ضريبة القيمة المضافة عند الاقتضاء.</p>
+<h2>٧. أرقام الهاتف</h2>
+<p>يجوز ربط رقم يملكه العميل بالفعل عن طريق التحويل أو توجيه SIP أو النقل، ولا يترتب على الربط نقل ملكية الرقم. أما الأرقام التي نوفرها فتخصص لدى مشغل مصري مرخص ويكون العميل هو المشترك المسجل، وله نقل أي رقم بعيداً عنا في أي وقت دون عرقلة أو تأخير. وتحتسب رسوم الأرقام شهرياً مع الخطة.</p>
+<h2>٨. تسجيل المكالمات</h2>
+<p>التسجيل معطل افتراضياً، وحين يفعله العميل يحصل الوكيل على موافقة الأطراف في بداية كل مكالمة. ويظل العميل مسؤولاً عن مشروعية التسجيل على حسابه وعن تحديد مدة الاحتفاظ.</p>
+<h2>٩. بيانات العميل</h2>
+<p>بيانات المكالمات ونصوصها وتسجيلاتها وسكريبتات العميل وقوائم اتصاله ملك له، ونعالجها لتقديم الخدمة دون غيرها. ولا نبيع بيانات العملاء ولا نستخدم أصوات المتصلين أو محادثاتهم في تدريب النماذج. وتصدر البيانات عند الطلب بصيغة قابلة للنقل، وتحذف عند الإنهاء وفق الجدول المبين في اتفاقية معالجة البيانات.</p>
+<h2>١٠. التزامات العميل</h2>
+<p>يسأل العميل عن وجود سند قانوني للاتصال بالأرقام التي يرفعها، وعن احترام طلبات عدم الاتصال، وعن صحة ما يقوله سكريبت الوكيل. والمكالمات المضللة أو المضايقة أو الموجهة إلى أرقام لا يحق له الاتصال بها سبب للإيقاف الفوري. ولا يجوز استخدام الخدمة لمكالمات الطوارئ وهي ليست بديلاً عن أي خط طوارئ.</p>
+<h2>١١. الإتاحة وحدود التقنية</h2>
+<p>نستهدف الإتاحة المستمرة وننشر سجل الأعطال، وتتضمن اتفاقيات المؤسسات مستوى خدمة محدداً مع تعويضات. والذكاء الاصطناعي الصوتي احتمالي بطبيعته، وقد يخطئ في السمع أو الفهم أحياناً، ولا ينبغي الاعتماد عليه وحده في قرارات ذات أثر قانوني أو طبي أو مالي على المتصل. ولهذا السبب أتيح التحويل إلى موظف وننصح بتفعيله.</p>
+<h2>١٢. المسؤولية</h2>
+<p>لا يستبعد أي طرف مسؤوليته عما لا يجوز استبعاده قانوناً. وفيما عدا ذلك تقتصر مسؤوليتنا الإجمالية على الرسوم المدفوعة خلال اثني عشر شهراً السابقة على المطالبة، ولا نسأل عن فوات الربح أو الإيراد أو الوفورات المتوقعة.</p>
+<h2>١٣. الإيقاف</h2>
+<p>يجوز لنا إيقاف الحساب لعدم السداد بعد الإخطار، أو لمخالفة البند العاشر، أو بناءً على طلب جهة مختصة. ولا يترتب على الإيقاف لعدم السداد حذف بيانات العميل خلال مهلة السماح المقررة في الحساب.</p>
+<h2>١٤. تعديل الشروط</h2>
+<p>يجوز لنا تعديل هذه الشروط بإخطار، وتسري التعديلات الجوهرية اعتباراً من التجديد التالي، وللعميل الذي لا يقبلها إنهاء التعاقد قبل ذلك التاريخ.</p>
+<h2>١٥. القانون الواجب التطبيق</h2>
+<p>تخضع هذه الشروط لقوانين جمهورية مصر العربية وتختص محاكم القاهرة بنظر أي نزاع. وتعالج البيانات الشخصية وفقاً للقانون رقم ١٥١ لسنة ٢٠٢٠ ولائحته التنفيذية.</p>
+</div>
+</section>
+
+<hr>
+
+<!-- ================= AUP ================= -->
+<section id="aup">
+<span class="lbl" data-l="en">Document · Acceptable Use</span><span class="lbl" data-l="ar">مستند · الاستخدام المقبول</span>
+<h1><span data-l="en">Acceptable Use Policy</span><span data-l="ar">سياسة الاستخدام المقبول</span></h1>
+
+<div data-l="en">
+<h2>1. Lawful basis to call</h2>
+<p>The customer must have a lawful basis to contact every number it uploads, must be able to demonstrate it on request, and must not upload numbers obtained from a third party without the right to use them.</p>
+<h2>2. Requests not to be contacted</h2>
+<p>A request not to be called must be honoured immediately and permanently, across every campaign on the account.</p>
+<h2>3. Calling hours</h2>
+<p>Outbound calling is confined to reasonable hours in the recipient's local time. The default window is <span class="ph">[10:00 to 20:00]</span> Cairo time and must not be circumvented.</p>
+<h2>4. Honest identification</h2>
+<p>The agent must identify the business it is calling on behalf of, must not present a misleading calling number, and must not impersonate a public authority, a bank, or any person or organisation the customer is not.</p>
+<h2>5. Prohibited uses</h2>
+<ul>
+<li>Harassment, threats, or repeated calling of a person who has asked not to be contacted.</li>
+<li>Fraud, deception, or any attempt to obtain payment details or credentials by pretext.</li>
+<li>Calls promoting anything unlawful in Egypt.</li>
+<li>Circumventing telecommunications licensing, including routing calls through equipment intended to bypass licensed interconnection.</li>
+<li>Emergency, medical or safety-critical use without a person in the loop.</li>
+</ul>
+<h2>6. Enforcement</h2>
+<p>We may suspend an account immediately where we reasonably believe this policy is being breached, and will tell the customer why. Serious or repeated breach is grounds for termination without refund.</p>
+</div>
+
+<div data-l="ar">
+<h2>١. السند القانوني للاتصال</h2>
+<p>يجب أن يكون لدى العميل سند قانوني للاتصال بكل رقم يرفعه، وأن يكون قادراً على إثباته عند الطلب، وألا يرفع أرقاماً حصل عليها من الغير دون حق في استخدامها.</p>
+<h2>٢. طلبات عدم الاتصال</h2>
+<p>يجب احترام طلب عدم الاتصال فوراً وبصفة دائمة وعلى مستوى جميع الحملات في الحساب.</p>
+<h2>٣. أوقات الاتصال</h2>
+<p>تقتصر المكالمات الصادرة على أوقات معقولة بتوقيت المتلقي، والنافذة الافتراضية من <span class="ph">[١٠:٠٠ إلى ٢٠:٠٠]</span> بتوقيت القاهرة ولا يجوز الالتفاف عليها.</p>
+<h2>٤. الإفصاح الصادق عن الهوية</h2>
+<p>يجب أن يفصح الوكيل عن الجهة التي يتصل نيابة عنها، وألا يعرض رقماً مضللاً، وألا ينتحل صفة جهة حكومية أو مصرف أو أي شخص أو كيان ليس هو العميل.</p>
+<h2>٥. الاستخدامات المحظورة</h2>
+<ul>
+<li>المضايقة أو التهديد أو تكرار الاتصال بمن طلب عدم الاتصال به.</li>
+<li>الاحتيال أو التضليل أو محاولة الحصول على بيانات دفع أو بيانات دخول بذريعة كاذبة.</li>
+<li>المكالمات التي تروج لما هو غير مشروع في مصر.</li>
+<li>الالتفاف على تراخيص الاتصالات، ويشمل ذلك توجيه المكالمات عبر أجهزة يقصد بها تجاوز الربط البيني المرخص.</li>
+<li>الاستخدام في حالات الطوارئ أو الاستخدامات الطبية أو الحرجة دون تدخل بشري.</li>
+</ul>
+<h2>٦. الإنفاذ</h2>
+<p>يجوز لنا إيقاف الحساب فوراً متى قام لدينا اعتقاد معقول بمخالفة هذه السياسة، مع إخطار العميل بالسبب. والمخالفة الجسيمة أو المتكررة سبب للإنهاء دون رد المقابل.</p>
+</div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span data-l="en">© 2026 NABRA · Cairo — <a href="/login" class="lg-login">Log in</a>
+      <a href="/">back to the site</a></span>
+  <span data-l="ar">© ٢٠٢٦ نبرة · القاهرة — <a href="/">العودة إلى الموقع</a></span>
+</footer>
+
+<script>
+const root=document.documentElement;
+function setLang(l){
+  root.setAttribute("data-lang",l);
+  root.setAttribute("lang",l);
+  root.setAttribute("dir",l==="ar"?"rtl":"ltr");
+  document.querySelectorAll("[data-lang-btn]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.langBtn===l)));
+  try{ localStorage.setItem("nabra_legal_lang",l); }catch(_){}
+}
+document.querySelectorAll("[data-lang-btn]").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.langBtn)));
+let saved="ar"; try{ saved=localStorage.getItem("nabra_legal_lang")||"ar"; }catch(_){}
+setLang(saved);
+</script>
+</body>
+</html>

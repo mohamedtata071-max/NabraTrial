@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light only">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>Operations — NABRA (internal)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23B8501C'/%3E%3Cpath d='M16 8a2.6 2.6 0 0 0-2.6 2.6v5.6a2.6 2.6 0 0 0 5.2 0v-5.6A2.6 2.6 0 0 0 16 8z' fill='%23FCFCFB'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Chivo+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bone:#EEF2F9;--bone-hi:#FFFFFF;--paper:#DEE6F3;--armor:linear-gradient(#FFFFFF,#FFFFFF);
+  --fg:#163466;--fg-mute:#4A5F86;--fg-faint:#8394B2;
+  --rule:rgba(22,52,102,.115);--rule-soft:rgba(22,52,102,.055);
+  --ember:#C08A2E;--ember-wash:rgba(192,138,46,.07);
+  --ok:#2E7D4F;--ok-wash:rgba(46,125,79,.08);
+  --display:'Plus Jakarta Sans',system-ui,sans-serif;--body:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'Chivo Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{color-scheme:light only}
+/* forced-light armor: paint html/body opaquely; the white gradient survives
+   forced-dark engines that rewrite background-color but not background-image */
+html{background:#FFFFFF !important;background-image:linear-gradient(#FFFFFF,#FFFFFF) !important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+body{background:#EEF2F9 !important;background-image:linear-gradient(#EEF2F9,#EEF2F9) !important;color:#163466 !important;font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px;border-radius:4px}
+.mono{font-family:var(--mono)}
+.lbl{font-family:var(--mono);font-size:.58rem;letter-spacing:.17em;text-transform:uppercase;color:var(--fg-faint)}
+.ser{font-family:var(--display);font-weight:700;letter-spacing:-.025em;letter-spacing:-.01em}
+
+/* the ribbon that makes this unmistakably internal */
+.ribbon{background:var(--ember);color:#fff;font-family:var(--mono);font-size:.6rem;letter-spacing:.22em;
+  text-transform:uppercase;text-align:center;padding:.35rem;position:sticky;top:0;z-index:60}
+
+.top{border-bottom:1px solid var(--rule);background:var(--bone-hi);background-image:var(--armor);padding:.9rem clamp(1rem,3vw,2rem);
+  display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;position:sticky;top:24px;z-index:50}
+.top .mk{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:1.3rem;display:flex;align-items:center;gap:.5rem}
+.top .mk i{width:5px;height:5px;border-radius:50%;background:var(--ember)}
+.tabs{display:flex;gap:.25rem;margin-inline-start:.5rem;flex-wrap:wrap}
+.tabs button{padding:.45rem .85rem;border-radius:9px;font-size:.85rem;color:var(--fg-mute);transition:all .25s}
+.tabs button:hover{background:var(--paper);color:var(--fg)}
+.tabs button[aria-current="true"]{background:var(--fg);color:#fff}
+.top .who{margin-inline-start:auto;font-size:.8rem;color:var(--fg-mute)}
+.top .who a{color:var(--ember)}
+
+.wrap{padding:clamp(1.1rem,3vw,2rem);max-width:1240px;margin:0 auto}
+.view{display:none;animation:fade .4s var(--ease)}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.grid{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:14px;overflow:hidden}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:980px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.g4{grid-template-columns:1fr}}
+.stat{background:var(--bone-hi);background-image:var(--armor);padding:1.15rem 1.2rem;display:flex;flex-direction:column;gap:.35rem;min-height:112px}
+.stat .v{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:2rem;line-height:1}
+.stat .d{font-size:.76rem;color:var(--fg-mute)}
+
+.card{background:var(--bone-hi);background-image:var(--armor);border:1px solid var(--rule);border-radius:14px;padding:1.2rem 1.25rem;margin-top:1rem}
+.card h3{font-size:.92rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.card h3 .more{margin-inline-start:auto;font-size:.75rem;color:var(--fg-mute);font-weight:400}
+
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{font-family:var(--mono);font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;color:var(--fg-faint);
+  text-align:left;padding:.55rem .6rem;border-bottom:1px solid var(--rule);white-space:nowrap;font-weight:400}
+td{padding:.75rem .6rem;border-bottom:1px solid var(--rule-soft);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .2s}
+tbody tr:hover{background:var(--paper)}
+td.num{font-family:var(--mono);font-size:.78rem;color:var(--fg-mute);white-space:nowrap}
+.tw{overflow-x:auto}
+
+.tag{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:.2rem .45rem;border-radius:4px;border:1px solid var(--rule);color:var(--fg-mute);white-space:nowrap}
+.tag.on{border-color:rgba(46,125,79,.4);color:var(--ok);background:var(--ok-wash)}
+.tag.hot{border-color:rgba(192,138,46,.4);color:var(--ember);background:var(--ember-wash)}
+.tag.dim{color:var(--fg-faint)}
+
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;border-radius:999px;
+  border:1px solid var(--fg);background:var(--fg);color:#fff;font-size:.78rem;font-weight:500;transition:transform .25s var(--ease)}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--rule)}
+.btn.ghost:hover{border-color:var(--fg)}
+.btn.warn{background:var(--ember);border-color:var(--ember)}
+
+.rowline{display:flex;align-items:center;gap:.8rem;padding:.72rem 0;border-bottom:1px solid var(--rule-soft)}
+.rowline:last-child{border-bottom:none}
+.rowline .t1{display:block;font-size:.85rem;font-weight:500;line-height:1.4}
+.rowline .t2{display:block;font-size:.74rem;color:var(--fg-faint);line-height:1.4;margin-top:.1rem}
+.rowline .end{margin-inline-start:auto;text-align:right}
+
+.fld label{display:block;font-family:var(--mono);font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--fg-faint);margin:.7rem 0 .3rem}
+.fld input{width:100%;background:var(--bone);border:1px solid var(--rule);border-radius:9px;padding:.55rem .8rem;font:inherit;font-size:.85rem}
+.fld input:focus{outline:none;border-color:var(--fg)}
+
+.note{font-size:.74rem;color:var(--fg-faint);margin-top:1rem;line-height:1.6}
+.demo{display:none}
+body[data-demo="1"] .demo{display:inline-flex}
+
+/* deployment checklist */
+.dep-sum{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.dep-bar{flex:1;min-width:180px;height:6px;background:var(--paper);border-radius:3px;overflow:hidden}
+.dep-bar i{display:block;height:100%;background:var(--ember);border-radius:3px;transition:width .6s var(--ease)}
+.svc{border:1px solid var(--rule);border-radius:14px;background:var(--bone-hi);background-image:var(--armor);margin-top:1rem;overflow:hidden}
+.svc>summary{list-style:none;cursor:pointer;padding:1rem 1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;transition:background .2s}
+.svc>summary::-webkit-details-marker{display:none}
+.svc>summary:hover{background:var(--paper)}
+.svc>summary .ttl{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:1.15rem}
+.svc>summary .why{font-size:.76rem;color:var(--fg-mute)}
+.svc>summary .end{margin-inline-start:auto;display:flex;align-items:center;gap:.6rem}
+.svc .bd{padding:0 1.2rem 1.2rem;border-top:1px solid var(--rule-soft)}
+.svc .cols2{display:grid;grid-template-columns:1fr 1fr;gap:0 2rem}
+@media(max-width:820px){.svc .cols2{grid-template-columns:1fr}}
+.chk{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem 0;font-size:.85rem;line-height:1.5;cursor:pointer;border-bottom:1px solid var(--rule-soft)}
+.chk:last-child{border-bottom:none}
+.chk input{accent-color:var(--ember);margin-top:.25rem;flex:none}
+.chk.done span{color:var(--fg-faint);text-decoration:line-through;text-decoration-color:var(--rule)}
+.cred{display:grid;grid-template-columns:150px 1fr auto;gap:.5rem;align-items:center;padding:.32rem 0}
+@media(max-width:600px){.cred{grid-template-columns:1fr;gap:.2rem}}
+.cred label{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-faint)}
+.cred input{background:var(--bone);border:1px solid var(--rule);border-radius:8px;padding:.42rem .6rem;font-family:var(--mono);font-size:.76rem;min-width:0}
+.cred input:focus{outline:none;border-color:var(--fg)}
+.cred .acts{display:flex;gap:.25rem}
+.cred .acts button{border:1px solid var(--rule);border-radius:7px;width:28px;height:28px;font-size:.7rem;color:var(--fg-mute)}
+.cred .acts button:hover{border-color:var(--fg);color:var(--fg)}
+.dep-note{font-size:.74rem;color:var(--fg-faint);line-height:1.6;margin-top:.8rem}
+.cred .where{grid-column:1/-1;font-size:.66rem;color:var(--fg-faint);margin-top:-.15rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.cred .where .tag{font-size:.52rem;padding:.12rem .35rem}
+.applyrow{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;border-top:1px solid var(--rule-soft);margin-top:.9rem;padding-top:.9rem}
+.applyrow .t2{font-size:.74rem;color:var(--fg-faint);line-height:1.5}
+
+@media (prefers-color-scheme: dark){
+  html,body{background:#FFFFFF !important;color:#163466 !important}
+  .card,.stat,.svc,.top,.drawer{background:#FFFFFF !important;color:#163466 !important}
+}
+.toast{position:fixed;bottom:1.2rem;left:50%;transform:translate(-50%,20px);background:var(--fg);color:#fff;
+  padding:.6rem 1.1rem;border-radius:999px;font-size:.82rem;opacity:0;pointer-events:none;transition:all .35s var(--ease);z-index:90}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.drawer{position:fixed;inset-block:0;right:0;width:min(430px,100vw);background:var(--bone-hi);background-image:var(--armor);border-left:1px solid var(--rule);
+  box-shadow:-30px 0 60px rgba(22,52,102,.08);transform:translateX(100%);transition:transform .4s var(--ease);z-index:70;
+  padding:1.4rem;overflow-y:auto}
+.drawer.open{transform:none}
+.scrim{position:fixed;inset:0;background:rgba(22,52,102,.24);opacity:0;pointer-events:none;transition:opacity .3s;z-index:65}
+.scrim.open{opacity:1;pointer-events:auto}
+
+/* ==== FORCED-DARK HARDENING ====================================
+   Some in-app browsers (notably iOS) repaint pages that theme via
+   CSS variables. Literal values plus !important cannot be reached
+   that way, so the page stays light wherever it is opened. */
+html{color-scheme:only light !important;background:#EEF2F9 !important;background-color:#EEF2F9 !important}
+body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#163466 !important}
+@media (prefers-color-scheme:dark){
+  :root{color-scheme:only light !important}
+  html,body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#163466 !important}
+}
+@media (prefers-color-scheme:dark){
+  .card,table,.stat{background:#FFFFFF !important}
+  h1,h2,h3,.v{color:#163466 !important}
+  .note,.lbl,thead th{color:#4A5F86 !important}
+  .btn{background:#163466 !important;color:#FFFFFF !important}
+}
+
+/* Text fill must follow each element's own colour. Setting it to a fixed value
+   on body inherits everywhere and repaints light text on dark buttons black,
+   which is invisible. currentColor keeps the forced-dark protection without
+   that side effect. */
+*,*::before,*::after{-webkit-text-fill-color:currentColor}
+
+.adm-link{font-size:.82rem;color:var(--fg-mute);text-decoration:none;margin-inline-end:.9rem}
+.adm-link:hover{color:var(--ember)}
+</style>
+</head>
+<body>
+<div class="ribbon">Internal · NABRA operations · not customer-facing</div>
+<header class="top">
+  <span class="mk">نبرة NABRA <i></i></span>
+  <nav class="tabs" id="tabs"></nav>
+  <span class="who"><span id="whoName">—</span> · <a href="/" class="adm-link">Site</a>
+      <a href="/app" class="adm-link">Console</a>
+      <a href="/logout">Sign out</a> <span class="tag hot demo" style="margin-inline-start:.6rem">demo data — open through the gateway for live data</span></span>
+</header>
+
+<main class="wrap">
+  <section class="view on" data-view="overview" id="v-overview"></section>
+  <section class="view" data-view="customers" id="v-customers"></section>
+  <section class="view" data-view="provisioning" id="v-provisioning"></section>
+  <section class="view" data-view="billing" id="v-billing"></section>
+  <section class="view" data-view="activity" id="v-activity"></section>
+  <section class="view" data-view="deploy" id="v-deploy"></section>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer"></aside>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function toast(m){const el=$("#toast");el.textContent=m;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2400);}
+
+/* ---------------- data layer: live gateway with demo fallback ---------------- */
+let LIVE=false;
+const DEMO={
+ stats:{tenants:[{status:"active",plan:"growth",cycle:"monthly",n:7},{status:"active",plan:"growth",cycle:"annual",n:2},{status:"active",plan:"starter",cycle:"monthly",n:6},{status:"pending",plan:"growth",cycle:"monthly",n:2},{status:"suspended",plan:"starter",cycle:"monthly",n:1}],
+        minutes:14830,calls24h:412,provisioningOpen:3},
+ tenants:[
+  {id:12,name:"مطعم قصر الكبابجي",email:"owner@kababgy.example",plan:"growth",cycle:"monthly",status:"active",minutes_used:2140,vapi_assistant_ids:["asst_a1"],created_at:"2026-07-02"},
+  {id:11,name:"عيادات د. سلمى",email:"clinic@salma.example",plan:"growth",cycle:"annual",status:"active",minutes_used:1730,vapi_assistant_ids:["asst_b7"],created_at:"2026-07-06"},
+  {id:10,name:"Delta Developments",email:"sales@delta.example",plan:"enterprise",cycle:"annual",status:"active",minutes_used:6420,vapi_assistant_ids:["asst_c2","asst_c3"],created_at:"2026-07-11"},
+  {id:9,name:"صالون لمسة",email:"hala@lamsa.example",plan:"starter",cycle:"monthly",status:"active",minutes_used:410,vapi_assistant_ids:[],created_at:"2026-07-19"},
+  {id:8,name:"AutoCare Nasr City",email:"info@autocare.example",plan:"starter",cycle:"monthly",status:"pending",minutes_used:0,vapi_assistant_ids:[],created_at:"2026-08-09"},
+  {id:7,name:"متجر نايس",email:"orders@nice.example",plan:"growth",cycle:"monthly",status:"suspended",minutes_used:980,vapi_assistant_ids:["asst_d9"],created_at:"2026-06-14"}
+ ],
+ provisioning:[
+  {id:31,tenant:"AutoCare Nasr City",kind:"number_buy",detail:"Cairo landline 02",status:"queued",created_at:"2026-08-09"},
+  {id:30,tenant:"صالون لمسة",kind:"number_connect",detail:"Forwarding from 010 •••• 4471",status:"in_progress",created_at:"2026-08-08"},
+  {id:29,tenant:"Delta Developments",kind:"port",detail:"Hotline 19xxx — operator paperwork",status:"in_progress",created_at:"2026-08-01"}
+ ],
+ events:[
+  {kind:"payment_success",tenant:"عيادات د. سلمى",at:"09:41",detail:"order 88123 · EGP 6,540"},
+  {kind:"signup",tenant:"AutoCare Nasr City",at:"08:12",detail:"growth · monthly"},
+  {kind:"status_change",tenant:"متجر نايس",at:"yesterday",detail:"suspended — unpaid invoice"},
+  {kind:"impersonated",tenant:"مطعم قصر الكبابجي",at:"yesterday",detail:"by you"}
+ ],
+ fx:{date:"today",cbe:{sell:49.72},bufferPct:7,billingRate:53.20,changePct:0.21,stale:false}
+};
+async function api(path,opts){
+  try{
+    const r=await fetch(path,Object.assign({headers:{"Content-Type":"application/json"}},opts||{}));
+    if(!r.ok) throw 0;
+    LIVE=true; document.body.dataset.demo="";
+    return await r.json();
+  }catch(_){ document.body.dataset.demo="1"; return null; }
+}
+
+/* ---------------- shell ---------------- */
+const TABS=[["overview","Overview"],["customers","Customers"],["provisioning","Provisioning"],["billing","Billing & FX"],["activity","Activity"],["deploy","Deployment"]];
+let view="overview";
+function renderTabs(){
+  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button data-v="${k}" aria-current="${k===view}">${l}</button>`).join("");
+  $$("#tabs button").forEach(b=>b.addEventListener("click",()=>{view=b.dataset.v;
+    $$(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===view));renderTabs();RENDER[view]();}));
+}
+
+/* ---------------- overview ---------------- */
+async function vOverview(){
+  const s=(await api("/api/admin/stats"))||DEMO.stats;
+  const ev=(await api("/api/admin/events"))?.events||DEMO.events;
+  const act=s.tenants.filter(t=>t.status==="active").reduce((a,t)=>a+t.n,0);
+  const pend=s.tenants.filter(t=>t.status==="pending").reduce((a,t)=>a+t.n,0);
+  const susp=s.tenants.filter(t=>t.status==="suspended").reduce((a,t)=>a+t.n,0);
+  const PRICE={starter:49,growth:129,enterprise:399}, YR_FREE=2; /* lockstep with gateway PLAN_USD / ANNUAL_MONTHS_FREE */
+  const mrr=s.tenants.filter(t=>t.status==="active").reduce((a,t)=>a+(PRICE[t.plan]||0)*(t.cycle==="annual"?(12-YR_FREE)/12:1)*t.n,0);
+  $("#v-overview").innerHTML=`
+  <div class="grid g4">
+    <div class="stat"><span class="lbl">Active customers</span><span class="v">${act}</span><span class="d">${pend} pending · ${susp} suspended</span></div>
+    <div class="stat"><span class="lbl">MRR (USD list)</span><span class="v">$${Math.round(mrr).toLocaleString()}</span><span class="d">invoiced in EGP at the billing rate</span></div>
+    <div class="stat"><span class="lbl">Minutes used</span><span class="v">${(s.minutes||0).toLocaleString()}</span><span class="d">all customers, this cycle</span></div>
+    <div class="stat"><span class="lbl">Calls · 24h</span><span class="v">${(s.calls24h||0).toLocaleString()}</span><span class="d">${s.provisioningOpen||0} provisioning tasks open</span></div>
+  </div>
+  <div class="card">
+    <h3>Latest activity <span class="more">signups, payments, status changes</span></h3>
+    ${ev.slice(0,8).map(e=>`
+      <div class="rowline">
+        <span class="tag ${e.kind==="payment_success"?"on":e.kind==="status_change"?"hot":"dim"}">${e.kind.replace(/_/g," ")}</span>
+        <span><span class="t1">${esc(e.tenant||"—")}</span><span class="t2">${esc(typeof e.detail==="string"?e.detail:JSON.stringify(e.detail||""))}</span></span>
+        <span class="end t2 mono">${esc(e.at||"")}</span>
+      </div>`).join("")||`<p class="t2">Nothing yet.</p>`}
+  </div>
+  <p class="note">Served through the gateway at /admin, every number on this page is live from Postgres. Opened as a bare file, it shows demo data.</p>`;
+}
+
+/* ---------------- customers ---------------- */
+let TEN=[];
+async function vCustomers(){
+  TEN=(await api("/api/admin/tenants"))?.tenants||DEMO.tenants;
+  $("#v-customers").innerHTML=`
+  <div class="card" style="margin-top:0">
+    <h3>Customers <span class="more">click a row for details, assistant mapping and actions</span></h3>
+    <div class="tw"><table>
+      <thead><tr><th>Business</th><th>Plan</th><th>Status</th><th>Minutes</th><th>Assistants</th><th>Joined</th><th></th></tr></thead>
+      <tbody>${TEN.map(t=>`
+        <tr data-t="${t.id}" style="cursor:pointer">
+          <td><span style="font-weight:500">${esc(t.name)}</span><br><span class="t2 mono">${esc(t.email)}</span></td>
+          <td><span class="tag">${esc(t.plan)}${t.cycle==="annual"?" · yr":""}</span></td>
+          <td><span class="tag ${t.status==="active"?"on":t.status==="suspended"?"hot":"dim"}">${esc(t.status)}</span></td>
+          <td class="num">${(t.minutes_used||0).toLocaleString()}</td>
+          <td class="num">${(t.vapi_assistant_ids||[]).length||"—"}</td>
+          <td class="num">${String(t.created_at).slice(0,10)}</td>
+          <td style="text-align:right"><button class="btn ghost" data-open="${t.id}">Open console</button></td>
+        </tr>`).join("")}</tbody>
+    </table></div>
+  </div>`;
+  $$("[data-t]").forEach(r=>r.addEventListener("click",e=>{ if(e.target.closest("[data-open]"))return; openDrawer(+r.dataset.t); }));
+  $$("[data-open]").forEach(b=>b.addEventListener("click",()=>impersonate(+b.dataset.open)));
+}
+async function impersonate(id){
+  const r=await api("/api/admin/impersonate/"+id,{method:"POST"});
+  if(r&&r.redirect){ location.href=r.redirect; } else { toast("Demo mode — served live, this opens the customer's own console"); }
+}
+function openDrawer(id){
+  const t=TEN.find(x=>x.id===id); if(!t) return;
+  $("#drawer").innerHTML=`
+    <span class="lbl">Customer</span>
+    <h2 class="ser" style="font-size:1.5rem;margin:.2rem 0 .1rem">${esc(t.name)}</h2>
+    <p class="t2 mono" style="color:var(--fg-faint);font-size:.78rem">${esc(t.email)}</p>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.9rem 0 1.1rem">
+      <span class="tag">${esc(t.plan)} · ${esc(t.cycle)}</span>
+      <span class="tag ${t.status==="active"?"on":t.status==="suspended"?"hot":"dim"}">${t.status}</span>
+      <span class="tag dim">${(t.minutes_used||0).toLocaleString()} min</span>
+    </div>
+    <div class="fld"><label>Vapi assistant IDs — comma separated. This mapping routes end-of-call webhooks to this customer.</label>
+      <input id="asstIds" class="mono" style="font-size:.78rem" value="${esc((t.vapi_assistant_ids||[]).join(", "))}" placeholder="asst_…, asst_…">
+    </div>
+    <button class="btn" id="saveAsst" style="margin-top:.7rem">Save mapping</button>
+    <div style="border-top:1px solid var(--rule);margin:1.3rem 0;padding-top:1.2rem;display:flex;gap:.5rem;flex-wrap:wrap">
+      ${t.status!=="active"?`<button class="btn" data-st="active">Activate</button>`:""}
+      ${t.status!=="suspended"?`<button class="btn warn" data-st="suspended">Suspend</button>`:""}
+      <button class="btn ghost" id="dImp">Open their console</button>
+      <button class="btn ghost" id="dClose">Close</button>
+    </div>
+    <p class="note">Activate: use after a manual payment or to end a suspension. Suspend: stops logins immediately; nothing is deleted, and their data stays on the retention schedule.</p>`;
+  $("#drawer").classList.add("open"); $("#scrim").classList.add("open");
+  $("#dClose").addEventListener("click",closeDrawer);
+  $("#dImp").addEventListener("click",()=>impersonate(t.id));
+  $("#saveAsst").addEventListener("click",async()=>{
+    const ids=$("#asstIds").value.split(",").map(s=>s.trim()).filter(Boolean);
+    const r=await api(`/api/admin/tenants/${t.id}/assistants`,{method:"POST",body:JSON.stringify({ids})});
+    t.vapi_assistant_ids=ids; toast(r?"Mapping saved":"Demo mode — saved locally"); vCustomers();
+  });
+  $$("#drawer [data-st]").forEach(b=>b.addEventListener("click",async()=>{
+    const r=await api(`/api/admin/tenants/${t.id}/status`,{method:"POST",body:JSON.stringify({status:b.dataset.st})});
+    t.status=b.dataset.st; toast(r?"Status updated":"Demo mode — updated locally"); closeDrawer(); vCustomers();
+  }));
+}
+function closeDrawer(){ $("#drawer").classList.remove("open"); $("#scrim").classList.remove("open"); }
+$("#scrim").addEventListener("click",closeDrawer);
+
+/* ---------------- provisioning ---------------- */
+async function vProvisioning(){
+  const items=(await api("/api/admin/provisioning"))?.items||DEMO.provisioning;
+  $("#v-provisioning").innerHTML=`
+  <div class="card" style="margin-top:0">
+    <h3>Number provisioning <span class="more">everything a customer is waiting on</span></h3>
+    <div class="tw"><table>
+      <thead><tr><th>Customer</th><th>Task</th><th>Detail</th><th>Status</th><th>Opened</th><th></th></tr></thead>
+      <tbody>${items.map(p=>`
+        <tr>
+          <td style="font-weight:500">${esc(p.tenant)}</td>
+          <td><span class="tag">${p.kind.replace(/_/g," ")}</span></td>
+          <td class="t2">${esc(p.detail||"")}</td>
+          <td><span class="tag ${p.status==="done"?"on":p.status==="in_progress"?"":"dim"}">${p.status.replace(/_/g," ")}</span></td>
+          <td class="num">${String(p.created_at).slice(0,10)}</td>
+          <td style="text-align:right">${p.status!=="done"?`<button class="btn ghost" data-p="${p.id}" data-next="${p.status==="queued"?"in_progress":"done"}">${p.status==="queued"?"Start":"Mark done"}</button>`:""}</td>
+        </tr>`).join("")||`<tr><td colspan="6" class="t2">Nothing queued.</td></tr>`}</tbody>
+    </table></div>
+    <p class="note">number_buy: provision on the carrier, then attach it in Vapi and mark done. number_connect: verify ownership (the two-code check), confirm forwarding lands, mark done. port: track the operator paperwork — hotlines take weeks.</p>
+  </div>`;
+  $$("[data-p]").forEach(b=>b.addEventListener("click",async()=>{
+    const r=await api(`/api/admin/provisioning/${b.dataset.p}/status`,{method:"POST",body:JSON.stringify({status:b.dataset.next})});
+    toast(r?"Updated":"Demo mode"); vProvisioning();
+  }));
+}
+
+/* ---------------- billing & fx ---------------- */
+async function vBilling(){
+  const fx=(await api("/api/fx/current"))||DEMO.fx;
+  const drift=fx.driftFromBilling!=null?fx.driftFromBilling:((fx.cbe.sell*(1+fx.bufferPct/100)-fx.billingRate)/fx.billingRate*100);
+  $("#v-billing").innerHTML=`
+  <div class="grid g4">
+    <div class="stat"><span class="lbl">CBE sell · USD/EGP</span><span class="v">${fx.cbe.sell.toFixed(2)}</span><span class="d">${fx.stale?"carried forward (weekend/holiday)":"today's published rate"}</span></div>
+    <div class="stat"><span class="lbl">Billing rate</span><span class="v">${(+fx.billingRate).toFixed(2)}</span><span class="d">CBE sell + ${fx.bufferPct}% buffer, sticky</span></div>
+    <div class="stat"><span class="lbl">Daily move</span><span class="v">${(fx.changePct>=0?"+":"")+(+fx.changePct).toFixed(2)}%</span><span class="d">alerts fire at 1.5 / 3 / 7%</span></div>
+    <div class="stat"><span class="lbl">Drift from billing</span><span class="v">${(+drift).toFixed(2)}%</span><span class="d">reprices when |drift| ≥ 2%</span></div>
+  </div>
+  <div class="card">
+    <h3>What the plans invoice at today</h3>
+    <div class="tw"><table>
+      <thead><tr><th>Plan</th><th>Monthly USD</th><th>Monthly EGP (+VAT)</th><th>Yearly USD</th><th>Yearly EGP (+VAT)</th></tr></thead>
+      <tbody>${[["Starter",49],["Growth",129],["Enterprise",399]].map(([n,u])=>{
+        const YR_FREE=2, y=u*(12-YR_FREE);
+        const egp=Math.ceil(u*fx.billingRate/5)*5, vat=Math.round(egp*1.14);
+        const egpY=Math.ceil(y*fx.billingRate/5)*5, vatY=Math.round(egpY*1.14);
+        return `<tr><td style="font-weight:500">${n}</td><td class="num">$${u}</td><td class="num">EGP ${egp.toLocaleString()} <span style="opacity:.55">(${vat.toLocaleString()})</span></td><td class="num">$${y.toLocaleString()}</td><td class="num">EGP ${egpY.toLocaleString()} <span style="opacity:.55">(${vatY.toLocaleString()})</span></td></tr>`;}).join("")}</tbody>
+    </table></div>
+    <p class="note">Yearly bundle = pay 10 months, get 12 (2 months free). Numbers come from the FX engine through the gateway (/api/fx/current). The full monitor — history, alerts, manual pin — lives in the internal console (internal-console.html).</p>
+  </div>`;
+}
+
+/* ---------------- activity ---------------- */
+async function vActivity(){
+  const ev=(await api("/api/admin/events"))?.events||DEMO.events;
+  $("#v-activity").innerHTML=`
+  <div class="card" style="margin-top:0">
+    <h3>Audit trail <span class="more">every signup, payment, suspension and impersonation is recorded</span></h3>
+    ${ev.map(e=>`
+      <div class="rowline">
+        <span class="tag ${e.kind==="payment_success"?"on":e.kind==="status_change"||e.kind==="impersonated"?"hot":"dim"}">${e.kind.replace(/_/g," ")}</span>
+        <span><span class="t1">${esc(e.tenant||"—")}</span><span class="t2">${esc(typeof e.detail==="string"?e.detail:JSON.stringify(e.detail||""))}</span></span>
+        <span class="end t2 mono">${esc(e.at||"")}</span>
+      </div>`).join("")}
+  </div>`;
+}
+
+/* ================= DEPLOYMENT CHECKLIST =================
+   Every account, key and password for the launch, next to its steps.
+   Saved in THIS browser (localStorage when available). Use Export for a
+   backup file — and keep that file somewhere safe. */
+const DEP=[
+ {k:"domain",t:"Domain & DNS",why:"nabra.yourdomain.com — the one address everything lives on",
+  cred:[["registrar","Registrar","text","e.g. Namecheap / GoDaddy"],["email","Account email","text",""],["pass","Account password","secret",""],["domain","Domain","text","nabra.example.com"]],
+  steps:[["buy","Domain bought and renewing automatically"],["cname","CNAME added pointing at Railway"],["https","HTTPS live — padlock on the real domain"]]},
+ {k:"github",t:"GitHub",why:"the repo Railway deploys from — all 7 files in one folder",
+  cred:[["email","Email","text",""],["pass","Password","secret",""],["repo","Repo URL","text","github.com/you/nabra"]],
+  steps:[["repo","Private repo created"],["push","gateway, fx-service, 3 HTMLs, package.json pushed"],["twofa","2FA enabled on the account"]]},
+ {k:"neon",t:"Neon — Postgres",why:"the database: tenants, calls, provisioning, audit trail",
+  cred:[["email","Email","text",""],["pass","Password","secret",""],["conn","Connection string","secret","postgres://…"]],
+  steps:[["proj","Project created"],["conn","Connection string copied into Railway as DATABASE_URL"],["backup","Point-in-time restore confirmed on the plan tier"]]},
+ {k:"railway",t:"Railway",why:"hosting — two services from one repo",
+  cred:[["email","Email","text",""],["pass","Password","secret",""],["proj","Project name","text",""]],
+  steps:[["gw","Gateway service deployed (start: node gateway.js)"],["fx","FX service deployed (start: node fx-service.js)"],["env","All env vars from the guide's table set"],["dom","Custom domain attached to the gateway service"],["health","/health returns ok on both services"]]},
+ {k:"secrets",t:"Gateway secrets",why:"the values only you should ever hold",
+  cred:[["session","SESSION_SECRET","secret","long random hex — Generate →","env"],["aemail","ADMIN_EMAIL","text","you@nabra…","env"],["apass","ADMIN_PASSWORD","secret","","env"],["vtoken","VAPI_WEBHOOK_TOKEN","secret","random — Generate →","VAPI_WEBHOOK_TOKEN"]],
+  steps:[["gen","Secrets generated (never the dev defaults)"],["set","All four saved into Railway variables"],["rot","Admin password changed after first login"],["safe","Copies of these live in a password manager, not only here"]]},
+ {k:"openai",t:"OpenAI — the chat model",why:"the brain behind every conversation",
+  cred:[["email","Email","text",""],["pass","Password","secret",""],["key","API key","secret","sk-…","vapi"]],
+  steps:[["key","API key created"],["billing","Billing + monthly usage limit set"],["invapi","Key added in Vapi so assistants can use the model"]]},
+ {k:"eleven",t:"ElevenLabs — the voices",why:"Hazem, Fatima and Tim",
+  cred:[["email","Email","text",""],["pass","Password","secret",""],["key","API key","secret","","vapi"],["hazem","Voice ID — Hazem","text",""],["fatima","Voice ID — Fatima","text",""],["tim","Voice ID — Tim","text",""]],
+  steps:[["sub","API subscription active (required for the sync)"],["key","API key pasted in Vapi → Settings → Integrations → ElevenLabs"],["sync","Voice library synced — voices selectable on assistants"]]},
+ {k:"vapi",t:"Vapi — the voice platform",why:"assistants, numbers, and the webhook into your database",
+  cred:[["email","Email","text",""],["pass","Password","secret",""],["key","API key (server-side only)","secret",""],["asst","Assistant IDs","text","asst_…, asst_…"]],
+  steps:[["org","Organisation created"],["el","ElevenLabs connected (see above)"],["asst","First assistant built — script from the console's library as system prompt"],["stt","Transcriber set to Arabic and A/B-tested with REAL Masri calls"],["url","Server URL set: https://…/api/vapi/webhook"],["tok","Header credential x-nabra-token = VAPI_WEBHOOK_TOKEN"],["eocr","end-of-call-report enabled in server messages"],["map","Assistant IDs mapped to the customer in Customers tab"],["test","Test call made — appears in the calls table"]]},
+ {k:"twilio",t:"Twilio — numbers (optional)",why:"imported numbers until the Egyptian carrier lands",
+  cred:[["email","Email","text",""],["pass","Password","secret",""],["sid","Account SID","secret",""],["auth","Auth token","secret",""],["nums","Numbers held","text","+20…, +1…"]],
+  steps:[["buy","Number bought"],["import","Imported into Vapi (Phone Numbers → Import, Twilio credentials)"],["attach","Assistant attached for inbound"]]},
+ {k:"carrier",t:"Egyptian carrier — SIP (later)",why:"the licensed-operator architecture from the manual",
+  cred:[["contact","Carrier contact","text","name + phone"],["acct","Account / trunk ref","text",""],["uri","Termination SIP URI","text",""],["sipuser","SIP username","secret",""],["sippass","SIP password","secret",""]],
+  steps:[["opinion","Lawyer's NTRA opinion received (legal pack Doc 09) BEFORE signing"],["agree","Commercial agreement signed — carrier of record stays the operator"],["trunk","SIP trunk credential created in Vapi"],["did","Egyptian DIDs linked to the credential"],["inb","Inbound routing tested from a real Egyptian line"]]},
+ {k:"paymob",t:"Paymob — cards (when ready)",why:"USD-listed, EGP-charged — your edge, automated",
+  cred:[["email","Email","text",""],["pass","Password","secret",""],["key","API key","secret","","PAYMOB_API_KEY"],["integ","Integration ID","text","","PAYMOB_INTEGRATION_ID"],["iframe","Iframe ID","text","","PAYMOB_IFRAME_ID"],["hmac","HMAC secret","secret","","PAYMOB_HMAC"]],
+  steps:[["kyc","Merchant KYC complete"],["integ","Online card integration + iframe created"],["cb","Transaction-processed callback set to /api/pay/webhook"],["env","Four PAYMOB_* vars in Railway, PAYMENTS_MODE=paymob"],["testtx","Test card charged and account auto-activated"]]},
+ {k:"fx",t:"FX engine",why:"CBE sell + 7% — the billing rate that protects your margin",
+  cred:[["hook","Alert webhook URL","text","Slack / Telegram hook"]],
+  steps:[["live","/api/fx/current returns today's rate through the gateway"],["sync","Manual POST /api/fx/sync tested once"],["alert","A test alert reached you (temporarily lower the watch threshold)"]]},
+ {k:"legal",t:"Legal pack",why:"nine documents; the Arabic versions govern",
+  cred:[["lawyer","Lawyer / firm","text",""],["lphone","Contact","text",""]],
+  steps:[["sent","Pack sent for review"],["doc09","Doc 09 (NTRA opinion request) sent — the cheapest, most important one"],["fields","Every highlighted [FIELD] filled in"],["signoff","Written sign-off received"],["site","Privacy Policy + ToS linked in the site footer"]]}
+];
+const DKEY="nabra_deploy_v1";
+let DMEM={};
+function dLoad(){ try{ return JSON.parse(localStorage.getItem(DKEY))||{}; }catch(_){ return DMEM; } }
+function dSave(d){ DMEM=d; try{ localStorage.setItem(DKEY,JSON.stringify(d)); }catch(_){} }
+function dCount(d){ let done=0,all=0; DEP.forEach(s=>s.steps.forEach(([k])=>{ all++; if(d[s.k+".s."+k]) done++; })); return {done,all}; }
+function svcState(s,d){ const dn=s.steps.filter(([k])=>d[s.k+".s."+k]).length;
+  return dn===0?["dim","not started"]:dn===s.steps.length?["on","done"]:["hot",dn+" / "+s.steps.length]; }
+
+let SRV={};                      /* what the gateway says is applied, keyed by config name */
+async function loadSrv(){ const r=await api("/api/admin/config"); SRV=(r&&r.config)||{}; }
+function vDeploy(){
+  const d=dLoad(); const {done,all}=dCount(d);
+  $("#v-deploy").innerHTML=`
+  <div class="card" style="margin-top:0">
+    <div class="dep-sum">
+      <span class="ser" style="font-size:1.5rem">${done} <span style="color:var(--fg-faint);font-size:1rem">of ${all} steps done</span></span>
+      <span class="dep-bar"><i style="width:${all?Math.round(done/all*100):0}%"></i></span>
+      <button class="btn ghost" id="depExp">Export backup</button>
+      <button class="btn ghost" id="depImp">Import</button>
+      <input type="file" id="depFile" accept="application/json" style="display:none">
+    </div>
+    <p class="dep-note">Everything you type here is saved <b>in this browser only</b> — nothing is sent anywhere. Export a backup file after each session and keep it (and the real secrets) in a password manager too. Losing this browser must never mean losing a key.</p>
+  </div>
+  ${DEP.map(s=>{
+    const st=svcState(s,d);
+    return `<details class="svc" ${st[1]!=="done"&&st[0]!=="dim"?"open":""}>
+      <summary><span class="ttl">${s.t}</span><span class="why">${s.why}</span>
+        <span class="end"><span class="tag ${st[0]}">${st[1]}</span></span></summary>
+      <div class="bd"><div class="cols2">
+        <div style="padding-top:.9rem">
+          <span class="lbl">Steps</span>
+          ${s.steps.map(([k,l])=>{ const id=s.k+".s."+k, on=!!d[id];
+            return `<label class="chk ${on?"done":""}"><input type="checkbox" data-dc="${id}" ${on?"checked":""}><span>${l}</span></label>`;}).join("")}
+        </div>
+        <div style="padding-top:.9rem">
+          <span class="lbl">Accounts & keys</span>
+          ${s.cred.map(([k,l,ty,ph,dest])=>{ const id=s.k+".c."+k, v=d[id]||"";
+            const gen=(l==="SESSION_SECRET"||l==="VAPI_WEBHOOK_TOKEN");
+            const srv = dest&&dest!=="env"&&dest!=="vapi" ? dest : null;
+            const st = srv && SRV[srv];
+            return `<div class="cred"><label>${l}</label>
+              <input data-df="${id}" type="${ty==="secret"?"password":"text"}" value="${esc(v)}" placeholder="${esc(ph)}" autocomplete="off" spellcheck="false">
+              <span class="acts">
+                ${ty==="secret"?`<button data-eye="${id}" title="show / hide">👁</button>`:""}
+                <button data-cp="${id}" title="copy">⧉</button>
+                ${gen?`<button data-gen="${id}" title="generate a strong value">⚡</button>`:""}
+              </span>
+              ${srv?`<span class="where">${st&&st.set?`<span class="tag on">on server ✓ ${esc(st.hint||"")}${st.source==="env"?" (env)":""}</span>`:`<span class="tag dim">not on server yet</span>`}<span>Apply sends this to the gateway — live immediately, no redeploy.</span></span>`
+              :dest==="vapi"?`<span class="where"><span class="tag hot">→ Vapi dashboard</span><span>Pasted in Vapi's own settings — another company's site, Apply can't reach it. The checkbox on the left is your record.</span></span>`
+              :dest==="env"?`<span class="where"><span class="tag dim">→ Railway env</span><span>Bootstrap secret — set as a Railway variable, never stored in the database.</span></span>`:""}
+            </div>`;}).join("")}
+          ${s.cred.some(c=>c[4]&&c[4]!=="env"&&c[4]!=="vapi")?`
+          <div class="applyrow">
+            <button class="btn" data-apply-svc="${s.k}">Apply to server</button>
+            ${s.k==="paymob"?`<label class="chk" style="border:none;padding:0"><input type="checkbox" id="pmSwitch"><span style="font-size:.78rem">also switch PAYMENTS_MODE to <b>paymob</b> now (real cards from the next signup)</span></label>`:""}
+            <span class="t2" style="flex-basis:100%">Sends only the marked fields above to the gateway's config table. Works when this panel is opened through /admin.</span>
+          </div>`:""}
+        </div>
+      </div></div>
+    </details>`;}).join("")}
+  <p class="note">The order that works: Domain → GitHub → Neon → Railway → Secrets → OpenAI → ElevenLabs → Vapi → numbers → FX → legal → (Paymob when cards). Full instructions for every step are in DEPLOY.html.</p>`;
+
+  $$("[data-dc]").forEach(c=>c.addEventListener("change",()=>{
+    const d=dLoad(); d[c.dataset.dc]=c.checked?1:0; dSave(d); vDeploy();
+  }));
+  $$("[data-df]").forEach(i=>{
+    i.addEventListener("change",()=>{ const d=dLoad(); d[i.dataset.df]=i.value; dSave(d); });
+  });
+  $$("[data-eye]").forEach(b=>b.addEventListener("click",()=>{
+    const i=$(`[data-df="${b.dataset.eye}"]`); i.type=i.type==="password"?"text":"password";
+  }));
+  $$("[data-cp]").forEach(b=>b.addEventListener("click",async()=>{
+    const i=$(`[data-df="${b.dataset.cp}"]`);
+    try{ await navigator.clipboard.writeText(i.value); toast("Copied"); }
+    catch(_){ i.type="text"; i.select(); toast("Select and copy"); }
+  }));
+  $$("[data-apply-svc]").forEach(b=>b.addEventListener("click",async()=>{
+    const svc=DEP.find(x=>x.k===b.dataset.applySvc); const d=dLoad(); const payload={};
+    let missing=[];
+    svc.cred.forEach(([k,l,ty,ph,dest])=>{
+      if(dest&&dest!=="env"&&dest!=="vapi"){
+        const v=(d[svc.k+".c."+k]||"").trim();
+        if(v) payload[dest]=v; else missing.push(l);
+      }
+    });
+    if(svc.k==="paymob"&&document.getElementById("pmSwitch")&&document.getElementById("pmSwitch").checked)
+      payload.PAYMENTS_MODE="paymob";
+    if(!Object.keys(payload).length){ toast("Nothing filled in to apply"); return; }
+    const r=await api("/api/admin/config",{method:"POST",body:JSON.stringify(payload)});
+    if(r&&r.applied){ await loadSrv();
+      toast("Applied: "+r.applied.join(", ")+(missing.length?" — still empty: "+missing.join(", "):"")); vDeploy(); }
+    else toast("Could not reach the gateway — open this panel at /admin to apply");
+  }));
+  $$("[data-gen]").forEach(b=>b.addEventListener("click",()=>{
+    const bytes=new Uint8Array(32); crypto.getRandomValues(bytes);
+    const v=[...bytes].map(x=>x.toString(16).padStart(2,"0")).join("");
+    const i=$(`[data-df="${b.dataset.gen}"]`); i.value=v;
+    const d=dLoad(); d[b.dataset.gen]=v; dSave(d); toast("Generated — copy it into Railway too");
+  }));
+  $("#depExp").addEventListener("click",()=>{
+    const blob=new Blob([JSON.stringify(dLoad(),null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="nabra-deployment-"+new Date().toISOString().slice(0,10)+".json"; a.click();
+    toast("Backup downloaded — store it safely");
+  });
+  $("#depImp").addEventListener("click",()=>$("#depFile").click());
+  $("#depFile").addEventListener("change",e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{ try{ dSave(Object.assign(dLoad(),JSON.parse(r.result))); toast("Imported"); vDeploy(); }
+      catch(_){ toast("That file didn't parse"); } };
+    r.readAsText(f);
+  });
+}
+
+const esc=s=>String(s??"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const RENDER={overview:vOverview,customers:vCustomers,provisioning:vProvisioning,billing:vBilling,activity:vActivity,deploy:async()=>{await loadSrv();vDeploy();}};
+
+/* boot */
+if(window.NABRA_BOOT&&window.NABRA_BOOT.admin){ $("#whoName").textContent=window.NABRA_BOOT.admin.name||window.NABRA_BOOT.admin.email; }
+renderTabs(); vOverview();
+</script>
+</body>
+</html>

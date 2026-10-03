@@ -1,0 +1,23 @@
+# secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# runtime data
+fx-history.json
+*.log
+
+# dependencies and build noise
+node_modules/
+npm-debug.log*
+.npm/
+.cache/
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
