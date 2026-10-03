@@ -94,6 +94,10 @@ const q = (text, params) => pool.query(text, params);
    SCHEMA — created on boot, safe to re-run
    ============================================================ */
 async function migrate() {
+  // PostgreSQL provides gen_random_bytes() through the pgcrypto extension.
+  // Enable it automatically so fresh Railway databases can migrate without manual SQL.
+  await q(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
+
   await q(`
   CREATE TABLE IF NOT EXISTS tenants(
     id            SERIAL PRIMARY KEY,
