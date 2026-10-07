@@ -14,7 +14,8 @@
   --bone:#EEF2F9; --bone-hi:#FFFFFF; --paper:#DEE6F3;
   --ink:#163466; --fg:#163466; --fg-mute:#4A5F86; --fg-faint:#8394B2;
   --rule:rgba(22,52,102,.115); --rule-soft:rgba(22,52,102,.055);
-  --ember:#C08A2E; --ember-lit:#E3AA45; --ember-wash:rgba(192,138,46,.07);
+  --ember:#1E4FD8;
+  --ember-mid:#2F6BFF; --ember-lit:#7FA8FF; --ember-wash:rgba(47,107,255,.07);
   --ok:#1B7A4A; --ok-wash:rgba(27,122,74,.08);
   --display:'Plus Jakarta Sans',system-ui,sans-serif;
   --body:'Plus Jakarta Sans',system-ui,sans-serif;
@@ -248,11 +249,83 @@ textarea{min-height:110px;resize:vertical;line-height:1.55}
 html[dir="rtl"] .sub{margin:.1rem 1.4rem .2rem 0}
 .sub[hidden]{display:none}
 
+/* delivery zones: an area can stand alone with one fee, or hold zones that
+   each carry their own. The nesting is one level deep on purpose. */
+.zone{border:1px solid var(--rule);border-radius:3px;background:var(--bone-hi);
+      padding:.7rem .75rem;margin-bottom:.55rem}
+.zrow{display:grid;grid-template-columns:minmax(0,1fr) 6.5rem 2.1rem;gap:.45rem;align-items:center}
+.zrow input{margin:0}
+.zsubs{margin-top:.5rem;padding-inline-start:.8rem;border-inline-start:2px solid var(--rule-soft)}
+.zsubs .zrow{margin-top:.4rem}
+.zx{width:2.1rem;height:2.4rem;flex:none;border:1px solid var(--rule);background:transparent;
+    border-radius:3px;color:var(--fg-faint);cursor:pointer;font-size:1.05rem;line-height:1;
+    display:inline-flex;align-items:center;justify-content:center}
+.zx:hover{border-color:#A32018;color:#A32018}
+.zx:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.zin{background:transparent;border:0;padding:.4rem 0;margin-top:.4rem;cursor:pointer;
+     font:inherit;font-size:.82rem;color:var(--ember)}
+.zin:hover{text-decoration:underline}
+.zempty{color:var(--fg-faint);font-size:.87rem;margin:.1rem 0 .6rem}
+.zhead{font-family:var(--mono);font-size:.58rem;letter-spacing:.11em;text-transform:uppercase;
+       color:var(--fg-faint);margin:0 .75rem .35rem}
+.btn.zone-add{padding:.5rem 1rem;font-size:.85rem}
+@media(max-width:560px){.zrow{grid-template-columns:minmax(0,1fr) 4.6rem 2.1rem}}
+
+/* what is set, what is missing, what could be added */
+.gset{margin-top:1.05rem}
+.gset:first-child{margin-top:.2rem}
+.ghead{font-family:var(--mono);font-size:.6rem;letter-spacing:.11em;text-transform:uppercase;
+       color:var(--fg-mute);display:flex;align-items:center;gap:.45rem;margin-bottom:.45rem}
+.gcount{font-family:var(--body);letter-spacing:0;font-size:.72rem;color:var(--fg-faint)}
+.gitem{display:flex;gap:.6rem;align-items:flex-start;width:100%;text-align:start;
+       background:transparent;border:0;border-top:1px solid var(--rule-soft);
+       padding:.5rem .1rem;font:inherit;font-size:.88rem;color:var(--fg);cursor:pointer;line-height:1.45}
+.gitem:first-of-type{border-top:0}
+.gitem:hover .gt{color:var(--ember)}
+.gitem:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.gitem[disabled]{cursor:default}
+.gm{flex:none;width:1.1rem;font-size:.78rem;line-height:1.6;text-align:center}
+.gm.yes{color:var(--ok)}
+.gm.no{color:#A32018}
+.gm.add{color:var(--ember)}
+.gt b{display:block;font-weight:500}
+.gt small{display:block;color:var(--fg-mute);font-size:.82rem;margin-top:.05rem}
+.gok{color:var(--ok);font-size:.88rem;padding:.4rem 0}
+
 .top .shell{display:flex;align-items:center;gap:1rem}
 .top .brand{text-decoration:none;color:inherit}
 .backlink{margin-inline-start:auto;font-size:.84rem;color:var(--fg-mute);text-decoration:none;white-space:nowrap}
 .backlink:hover{color:var(--ember)}
 @media(max-width:560px){.backlink{font-size:.78rem}.top .crumb{display:none}}
+
+/* call setups */
+.routing{margin:1rem 0 1.2rem}
+.rk{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-mute)}
+.rmodes{display:grid;gap:.5rem;margin-top:.5rem}
+@media(min-width:720px){.rmodes{grid-template-columns:repeat(3,1fr)}}
+.rmodes label{display:flex;gap:.6rem;align-items:flex-start;padding:.7rem .85rem;border:1px solid var(--rule);
+  border-radius:9px;cursor:pointer;background:#fff}
+/* flex:none matters here. Without it the radio keeps its default flex-shrink,
+   takes over half the row on a phone, and squeezes the label into a column one
+   word wide. The same pattern in .opt already sets it. */
+.rmodes input{margin-top:.2rem;accent-color:var(--ember-mid);flex:none;width:16px;height:16px}
+.rmodes label>span{min-width:0;flex:1 1 auto}
+.rmodes b{display:block;font-size:.9rem}
+.rmodes small{display:block;color:var(--fg-mute);font-size:.8rem;line-height:1.45}
+.rmodes label:has(input:checked){border-color:var(--ember-mid);background:var(--ember-wash)}
+.setuplist{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;
+  overflow:hidden;margin-bottom:.9rem}
+.srow{background:#fff;padding:.85rem 1rem;display:grid;grid-template-columns:auto 1fr auto;gap:.9rem;align-items:center}
+.skey{width:26px;height:26px;border-radius:7px;background:var(--ink);color:#fff;display:grid;place-items:center;
+  font-family:var(--mono);font-size:.72rem}
+.sname{font-size:.95rem;font-weight:500}
+.sdesc{font-size:.82rem;color:var(--fg-mute);margin-top:.1rem}
+.sact{display:flex;gap:.5rem;align-items:center}
+.sact button{border:1px solid var(--rule);background:#fff;border-radius:7px;padding:.28rem .55rem;
+  font-size:.76rem;cursor:pointer;font-family:var(--body);color:var(--fg-mute)}
+.sact button:hover{border-color:var(--ember-mid);color:var(--ember)}
+.srow.off{opacity:.55}
+.srow.off .skey{background:var(--fg-faint)}
 </style>
 </head>
 <body>
@@ -281,35 +354,10 @@ html[dir="rtl"] .sub{margin:.1rem 1.4rem .2rem 0}
     <div class="cols">
       <div>
         <div class="card">
-          <h2 id="routeH">How should calls reach us?</h2>
-          <p class="hint" id="routeHint">You can change this later without touching your number.</p>
-          <div class="autopick" id="autoPick" hidden>
-            <div>
-              <b id="apTitle"></b>
-              <p id="apWhy"></p>
-            </div>
-            <button class="btn ghost" id="apChange">Change</button>
-          </div>
-          <div class="routes" id="routes">
-            <label class="route" data-sel="true">
-              <input type="radio" name="route" value="trunk" checked>
-              <div><b>SIP trunk from my operator</b>
-                <p>Inbound and outbound both run on your own number. No forwarding charges.</p>
-                <span class="tagline">recommended</span></div>
-            </label>
-            <label class="route">
-              <input type="radio" name="route" value="forward">
-              <div><b>Forward my existing line</b>
-                <p>Works today. Your operator bills you for the forwarded minutes.</p>
-                <span class="tagline">live in minutes</span></div>
-            </label>
-            <label class="route">
-              <input type="radio" name="route" value="web">
-              <div><b>A call link instead of a number</b>
-                <p>For Instagram, your website or a QR code. Nothing to connect.</p>
-                <span class="tagline">no number needed</span></div>
-            </label>
-          </div>
+          <h2 id="routeH">How calls reach us</h2>
+          <p class="hint">Over a SIP trunk on the number you already own. Your calls stay on your own
+          number, in and out, and there are no per-minute forwarding charges from your operator. It is
+          the only route we connect, so there is nothing to choose here. The steps are below.</p>
         </div>
 
         <div class="card" id="trunkGuide">
@@ -474,7 +522,7 @@ html[dir="rtl"] .sub{margin:.1rem 1.4rem .2rem 0}
           </div>
           <div class="files" id="files"></div>
           <p class="hint" style="margin:.8rem 0 .4rem">What the agent will use:</p>
-          <textarea id="bKnow" style="min-height:200px">DELIVERY: Zamalek, Mohandiseen, Downtown, Garden City. 45 to 60 minutes. Minimum order 150 EGP. Delivery fee 25 EGP.
+          <textarea id="bKnow" style="min-height:200px">DELIVERY: 45 to 60 minutes. Where we deliver and what each area costs is set in the delivery zones below, so it is not repeated here.
 TABLES: We take reservations for 2 to 8 people. Larger groups need a manager to approve. Ground floor and terrace. Terrace is smoking, inside is not.
 POPULAR DISHES: Taameya sandwich 45, Koshary 70, Hawawshi 95, Molokhia with rice 110, Om Ali 60. Vegetarian options on every section of the menu.
 PAYMENT: Cash, card, Instapay. No cheques.
@@ -523,6 +571,25 @@ Do not discuss other restaurants.</textarea>
           <div id="genErr"></div>
         </div>
 
+        <div class="card" id="setupsCard">
+          <h2>Call setups</h2>
+          <p class="hint">One number, several jobs. Each setup is a different conversation: Customer service,
+          Sales, Reservations. Callers reach the right one by saying what they want, by pressing a key, or both.</p>
+
+          <div class="routing">
+            <span class="rk">How callers reach the right setup</span>
+            <div class="rmodes" role="radiogroup">
+              <label><input type="radio" name="rmode" value="hybrid" checked><span><b>Both</b><small>They can say it or press a key</small></span></label>
+              <label><input type="radio" name="rmode" value="ai"><span><b>Just ask</b><small>The agent works it out from what they say</small></span></label>
+              <label><input type="radio" name="rmode" value="dtmf"><span><b>Press a key</b><small>A short menu, 1, 2, 3</small></span></label>
+            </div>
+          </div>
+
+          <div id="setupList" class="setuplist"></div>
+          <button class="btn ghost" id="addSetup" type="button">+ Add a setup</button>
+          <p class="hint" id="setupNote" style="margin-top:.7rem"></p>
+        </div>
+
         <div class="card" id="optCard">
           <h2>What should this agent handle?</h2>
           <p class="hint">One agent handles both. It works out which the caller wants from what they say,
@@ -542,14 +609,23 @@ Do not discuss other restaurants.</textarea>
             phone number, and the order lands in your dashboard.</small></span></label>
 
           <div id="orderOpts" class="sub" hidden>
-            <div class="two">
-              <div><label for="oAreas">Areas you deliver to</label>
-                <input id="oAreas" placeholder="Zamalek, Mohandiseen, Downtown"></div>
+            <label>Delivery zones, and what each one costs</label>
+            <p class="hint" style="margin:.2rem 0 .8rem">Add every area you deliver to and the fee for each. If an
+            area splits into zones — New Cairo into Zone 1, Zone 2, Zone 3 — add those inside it, and each one
+            carries its own fee. The agent asks which zone the caller is in, quotes that fee out loud, and declines
+            any address that is not on this list.</p>
+
+            <div class="zrow zhead" aria-hidden="true"><span>Area or zone</span><span>Fee, EGP</span><span></span></div>
+            <div id="zoneList"></div>
+            <button class="btn ghost zone-add" id="addZone" type="button">+ Add an area</button>
+
+            <div class="two" style="margin-top:1.1rem">
               <div><label for="oMin">Minimum order</label>
                 <input id="oMin" placeholder="150 EGP"></div>
+              <div></div>
             </div>
-            <p class="hint" style="margin-top:.5rem">The agent declines addresses outside these areas politely and
-            offers collection, rather than taking an order you cannot deliver.</p>
+            <p class="hint" style="margin-top:.5rem">Leave the list empty and the agent takes an address anywhere
+            without quoting a fee, which is usually not what you want.</p>
           </div>
 
           <div class="field" style="margin-top:1rem">
@@ -658,21 +734,30 @@ Do not discuss other restaurants.</textarea>
           <div class="bar"><i id="rBar" style="width:0%"></i></div>
           <div class="chk" id="rList"></div>
           <div class="row">
+            <button class="btn btn-ember" id="saveBtn">Save agent</button>
             <button class="btn" id="deployBtn" disabled>Deploy agent</button>
             <button class="btn ghost" id="pauseBtn" hidden>Pause agent</button>
           </div>
           <div id="depMsg"></div>
+        </div>
+
+        <div class="card" id="gapsCard" style="margin-top:1rem">
+          <h2>What this agent has, and what it is missing</h2>
+          <p class="hint">Worked out from what you have actually filled in, and from what you have told this agent
+          to do. Click any line to go straight to it.</p>
+          <div id="gapsBody"></div>
         </div>
       </div>
       <div class="side">
         <div class="card">
           <h2>What deploy does, honestly</h2>
           <p class="hint">So there is no surprise.</p>
-          <div class="kv"><span>Call link</span><span>Live immediately</span></div>
-          <div class="kv"><span>SIP trunk</span><span>Queued for connection</span></div>
-          <div class="kv"><span>Forwarding</span><span>Queued for connection</span></div>
           <div class="kv"><span>Your config</span><span>Saved and locked to live</span></div>
-          <p class="hint" style="margin-top:.9rem">Deploying does not create a phone line by itself. If you chose a trunk or forwarding, we queue it and it goes live once the line is connected.</p>
+          <div class="kv"><span>SIP trunk</span><span>Queued for connection</span></div>
+          <div class="kv"><span>Browser test</span><span>Works straight away</span></div>
+          <p class="hint" style="margin-top:.9rem">Deploying does not create a phone line by itself. Your trunk is queued and the
+          agent goes live on the number once your operator has connected it. You can test the agent in the browser before
+          and after that, which is a separate thing from your real line.</p>
         </div>
       </div>
     </div>
@@ -695,67 +780,23 @@ $$("[data-step]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.step)))
 $$("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
 
 /* ---------------- step 1 ---------------- */
-const ROUTE_LABEL = {trunk:"SIP trunk", forward:"Forwarding", web:"Call link"};
+/* A SIP trunk on the customer's own number is the only route we connect, so
+   there is no longer a choice to make, auto-pick, or restore from a saved
+   agent. Forwarding and the call link were both removed: forwarding cannot
+   carry outbound on the customer's own number and bills them per minute, and
+   a call link is not a phone line at all. Browser testing is a separate thing
+   and is untouched. */
+const ROUTE = "trunk";
+const ROUTE_LABEL = { trunk: "SIP trunk" };
 function syncRoute(){
-  const r = document.querySelector('input[name="route"]:checked').value;
-  $$(".route").forEach(l=> l.dataset.sel = String(l.querySelector("input").checked));
-  $("#trunkCard").hidden = (r!=="trunk");
-  $("#sRoute").textContent = ROUTE_LABEL[r];
-  $("#sCid").textContent = r==="web" ? "Not applicable" : "Your own number";
-  $("#sNum").textContent = r==="web" ? "A link, no number" : (val("num")||"—");
+  const trunk=$("#trunkCard"); if(trunk) trunk.hidden=false;
+  const r=$("#sRoute"); if(r) r.textContent=ROUTE_LABEL[ROUTE];
+  const c=$("#sCid");   if(c) c.textContent="Your own number";
+  const n=$("#sNum");   if(n) n.textContent=val("num")||"—";
 }
-$$('input[name="route"]').forEach(i=>i.addEventListener("change",syncRoute));
 $("#num").addEventListener("input",syncRoute);
 
-/* ============================================================
-   AUTOMATIC ROUTE
-   ------------------------------------------------------------
-   An Egyptian business gets the SIP trunk chosen for it: it is
-   the only route that carries inbound AND outbound on their own
-   +20 number with no forwarding charges, so asking them to pick
-   is asking a question we already know the answer to.
-   Everyone else defaults to the call link, because we cannot
-   supply a line in their country. Either way the choice stays
-   one click away rather than being taken away.
-   ============================================================ */
-function looksEgyptian(){
-  const num = (val("num")||"").replace(/[^\d+]/g,"");
-  if(/^\+?20/.test(num)) return true;                                  // the number itself is decisive
-  const boot = window.NABRA_BOOT && window.NABRA_BOOT.tenant;
-  if(boot && (boot.lang==="eg" || boot.lang==="ar")) return true;
-  try{ if((Intl.DateTimeFormat().resolvedOptions().timeZone||"")==="Africa/Cairo") return true; }catch(_){}
-  const langs = (navigator.languages||[navigator.language||""]).join(",").toLowerCase();
-  if(/ar-eg|ar_eg/.test(langs)) return true;
-  return false;
-}
-
-let routeLocked=false;
-function applyAutoRoute(){
-  if(routeLocked) return;                       // never override a choice the customer made
-  const eg = looksEgyptian();
-  const pick = eg ? "trunk" : "web";
-  const r = document.querySelector(`input[name="route"][value="${pick}"]`);
-  if(r){ r.checked = true; syncRoute(); }
-  $("#apTitle").textContent = eg
-    ? "Set up for an Egyptian line: SIP trunk"
-    : "Set up for a call link";
-  $("#apWhy").textContent = eg
-    ? "Your calls stay on your own number, in and out, with no forwarding charges. Your operator gives you the details in step 2 of the guide."
-    : "We cannot supply a phone line in your country, so your agent answers over a link you can put on your website, your profile or a QR code. Nothing to connect.";
-  $("#autoPick").hidden = false;
-  $("#routes").hidden = true;
-  $("#routeH").textContent = "How calls reach us";
-  $("#routeHint").textContent = "Chosen for you. Change it whenever you like.";
-}
-$("#apChange").addEventListener("click", ()=>{
-  routeLocked = true;                            // from here the customer is driving
-  $("#autoPick").hidden = true;
-  $("#routes").hidden = false;
-  $("#routeH").textContent = "How should calls reach us?";
-  $("#routeHint").textContent = "You can change this later without touching your number.";
-});
-$("#num").addEventListener("input", ()=>{ if(!routeLocked) applyAutoRoute(); });
-applyAutoRoute();
+syncRoute();
 
 const setRow=(k,s)=>{ const r=document.querySelector(`[data-k="${k}"]`); if(r) r.dataset.s=s; };
 $("#connect").addEventListener("click", async ()=>{
@@ -943,11 +984,177 @@ function drawHours(){
   });
 }
 
+/* ============================================================
+   DELIVERY ZONES
+   ------------------------------------------------------------
+   An area either stands on its own with one fee, or splits into
+   zones that each carry their own — New Cairo into Zone 1, 2, 3.
+   One level of nesting, deliberately: two levels is a map, not
+   a form, and nobody fills it in.
+
+   Kept as a list in memory and written to business.delivery_zones.
+   The old flat "areas" text field is still written alongside it,
+   derived, so anything reading that keeps working.
+   ============================================================ */
+/* The page ships with a worked example, like every other field on it, so a
+   first-time visitor can see what a nested area looks like rather than an
+   empty box. boot() clears it the moment a real saved agent is loaded: showing
+   a customer delivery areas they never entered would be inventing their data. */
+let ZONES = [
+  { name:"New Cairo", fee:"", subs:[ {name:"Zone 1 · Rehab",   fee:"25"},
+                                     {name:"Zone 2 · Katameya", fee:"35"},
+                                     {name:"Zone 3 · Madinaty", fee:"50"} ] },
+  { name:"Zamalek",     fee:"20", subs:[] },
+  { name:"Mohandiseen", fee:"30", subs:[] }
+];
+const escZ = v => String(v==null?"":v).replace(/[&<>"']/g,
+  c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* JSONB holds whatever was last written to it, including shapes from an
+   older version of this page, so nothing from the server is trusted raw */
+function normZones(raw){
+  if(!Array.isArray(raw)) return [];
+  return raw.map(z=>({
+    name: typeof (z&&z.name)==="string" ? z.name : "",
+    fee:  (z&&z.fee)==null ? "" : String(z.fee),
+    subs: Array.isArray(z&&z.subs) ? z.subs.map(s=>({
+            name: typeof (s&&s.name)==="string" ? s.name : "",
+            fee:  (s&&s.fee)==null ? "" : String(s.fee)
+          })).filter(s=>s.name||s.fee) : []
+  })).filter(z=>z.name||z.fee||z.subs.length);
+}
+
+/* what actually gets saved and read out: blank rows are noise, not data */
+function zonesClean(){
+  return ZONES.map(z=>({
+    name:(z.name||"").trim(),
+    fee:String(z.fee==null?"":z.fee).trim(),
+    subs:(z.subs||[]).map(s=>({ name:(s.name||"").trim(), fee:String(s.fee==null?"":s.fee).trim() }))
+                     .filter(s=>s.name)
+  })).filter(z=>z.name);
+}
+const zoneNames = () => zonesClean().map(z=>z.name).join(", ");
+
+function drawZones(){
+  const box=$("#zoneList"); if(!box) return;
+  if(!ZONES.length){
+    box.innerHTML = `<p class="zempty">No areas yet. Add the first one and the agent starts quoting a fee for it.</p>`;
+    return;
+  }
+  box.innerHTML = ZONES.map((z,i)=>{
+    const nested = z.subs.length > 0;
+    const subs = nested ? `<div class="zsubs">${z.subs.map((s,j)=>`
+          <div class="zrow" data-j="${j}">
+            <input class="sn" value="${escZ(s.name)}" placeholder="Zone, e.g. Zone 1" aria-label="Zone name">
+            <input class="sf" value="${escZ(s.fee)}" placeholder="Fee" inputmode="decimal" aria-label="Delivery fee for this zone">
+            <button class="zx sdel" type="button" aria-label="Remove ${escZ(s.name)||"this zone"}">&times;</button>
+          </div>`).join("")}</div>` : ``;
+    return `<div class="zone" data-i="${i}">
+        <div class="zrow">
+          <input class="zn" value="${escZ(z.name)}" placeholder="Area, e.g. New Cairo" aria-label="Area name">
+          <input class="zf" value="${escZ(z.fee)}" placeholder="${nested?"Base fee":"Fee"}" inputmode="decimal"
+                 aria-label="${nested?"Fallback fee for zones with no fee of their own":"Delivery fee for this area"}">
+          <button class="zx zdel" type="button" aria-label="Remove ${escZ(z.name)||"this area"}">&times;</button>
+        </div>
+        ${subs}
+        <button class="zin zsub" type="button">+ Add a zone inside ${escZ((z.name||"").trim())||"this area"}</button>
+      </div>`;
+  }).join("");
+}
+
+function bindZones(){
+  const box=$("#zoneList"), add=$("#addZone");
+  if(!box) return;
+
+  /* typing only touches the model. Redrawing on every keystroke would take the
+     cursor out of the field the moment the first letter landed. */
+  box.addEventListener("input", e=>{
+    const t=e.target, zEl=t.closest(".zone"); if(!zEl) return;
+    const z=ZONES[+zEl.dataset.i]; if(!z) return;
+    if(t.classList.contains("zn")){
+      z.name=t.value;
+      const label=zEl.querySelector(".zsub");
+      if(label) label.textContent = "+ Add a zone inside " + ((z.name||"").trim() || "this area");
+      const del=zEl.querySelector(".zdel");
+      if(del) del.setAttribute("aria-label","Remove "+((z.name||"").trim()||"this area"));
+    }
+    else if(t.classList.contains("zf")) z.fee=t.value;
+    else{
+      const row=t.closest(".zrow"), s=row && z.subs[+row.dataset.j];
+      if(!s) return;
+      if(t.classList.contains("sn")) s.name=t.value;
+      else if(t.classList.contains("sf")) s.fee=t.value;
+      else return;
+    }
+    queueSave(); paintGaps();
+  });
+
+  /* adding and removing changes the shape, so here a redraw is the point */
+  box.addEventListener("click", e=>{
+    const btn=e.target.closest("button"); if(!btn || !box.contains(btn)) return;
+    const zEl=btn.closest(".zone"); if(!zEl) return;
+    const i=+zEl.dataset.i; if(!ZONES[i]) return;
+    let focus=null;
+    if(btn.classList.contains("zdel")) ZONES.splice(i,1);
+    else if(btn.classList.contains("sdel")){
+      const row=btn.closest(".zrow"); if(!row) return;
+      ZONES[i].subs.splice(+row.dataset.j,1);
+    }
+    else if(btn.classList.contains("zsub")){
+      ZONES[i].subs.push({name:"",fee:""});
+      focus=`.zone[data-i="${i}"] .zsubs .zrow:last-child .sn`;
+    }
+    else return;
+    drawZones(); queueSave(); paintGaps();
+    if(focus){ const el=$("#zoneList "+focus); if(el) el.focus(); }
+  });
+
+  if(add) add.addEventListener("click", ()=>{
+    ZONES.push({name:"",fee:"",subs:[]});
+    drawZones(); queueSave(); paintGaps();
+    const all=$$("#zoneList .zn"); if(all.length) all[all.length-1].focus();
+  });
+}
+
+/* a bare number is a price in EGP; anything the owner typed in words is left alone */
+const feeTxt = v => /^[\d][\d.,\s]*$/.test(String(v).trim())
+  ? String(v).trim().replace(/\s+/g,"") + " EGP" : String(v).trim();
+
+/* the zones, written for the agent to follow out loud */
+function zoneSentence(){
+  const live=zonesClean();
+  if(!live.length) return "";
+  const lines=live.map(z=>{
+    if(z.subs.length){
+      const inner=z.subs.map(s=>{
+        const f=s.fee || z.fee;   /* the area fee is the fallback for a zone with none */
+        return f ? `${s.name} ${feeTxt(f)}` : `${s.name} (no fee set)`;
+      }).join(", ");
+      return `- ${z.name} — ${inner}`;
+    }
+    return `- ${z.name} ${z.fee ? feeTxt(z.fee) : "(no fee set)"}`;
+  });
+  const nested=live.some(z=>z.subs.length);
+  const out=[
+    "You deliver to these areas only, and this is what delivery costs in each:",
+    lines.join("\n"),
+    "Ask which area the address is in before you quote anything."
+  ];
+  if(nested) out.push("Where an area is split into zones, ask which zone they are in. If they do not know, "
+    + "ask for the compound, the street or the nearest landmark and work it out yourself. If you still cannot "
+    + "tell, quote the highest fee in that area and say it may come down once the address is checked.");
+  out.push("Say the delivery fee out loud before you take the order, and include it again in the total when you "
+    + "read the order back. If the address is not in one of these areas, say plainly that it is outside the "
+    + "delivery area, offer collection instead, and do not take the order. Never invent a fee for an area that "
+    + "is not on this list, and never guess at an area you were not given.");
+  return out.join("\n");
+}
+
 /* what this agent is actually for, in its own words */
 function jobSentence(){
   const book=!!($("#oBook")||{}).checked, ord=!!($("#oOrders")||{}).checked;
   const review=!!($("#oReview")||{}).checked;
-  const areas=val("oAreas"), min=val("oMin"), links=val("oLinks");
+  const zones=zoneSentence(), min=val("oMin"), links=val("oLinks");
   const out=[];
 
   if(book && ord){
@@ -976,7 +1183,9 @@ function jobSentence(){
 
   if(ord){
     out.push("For an order, collect the items, the address, a phone number and the name, then read the whole order back before you finish.");
-    if(areas) out.push(`Delivery areas are: ${areas}. If the address is outside these, say plainly that it is outside the delivery area and offer collection instead. Do not accept it.`);
+    if(zones) out.push(zones);
+    else out.push("No delivery areas have been set, so do not quote a delivery fee. Take the address as given and "
+      + "say the fee will be confirmed, rather than naming a number you were not told.");
     if(min)   out.push(`The minimum order is ${min}. If they are below it, say so and let them add to the order.`);
   }
   if(book && review){
@@ -1178,7 +1387,7 @@ $$("[data-mode]").forEach(b=>b.addEventListener("click",()=>{
 
 function startCall(){
   $("#pName").textContent=val("bName")||"Your business";
-  $("#pNum").textContent = document.querySelector('input[name="route"]:checked').value==="web" ? "Web call" : (val("num")||"");
+  $("#pNum").textContent = val("num")||"";
   $("#say").placeholder = mode==="out" ? "Reply as the customer being called…" : "Type what a caller would say…";
   if(booted) return;
   booted=true;
@@ -1215,10 +1424,9 @@ $("#restart").addEventListener("click",()=>{ booted=false; $("#cap").innerHTML='
 let agentId=null, saveTimer=null, online=true;
 
 function collect(){
-  const route=document.querySelector('input[name="route"]:checked').value;
   return {
-    name: (val("bName")||"My agent")+" · "+({voice:"Voice",web:"Web"}[route==="web"?"web":"voice"]),
-    channel: route==="web" ? "web" : "voice",
+    name: (val("bName")||"My agent")+" · Voice",
+    channel: "voice",
     direction: mode==="out" ? "outbound" : "inbound",
     lang: val("bLang")||"match",
     business:{ name:val("bName"), type:val("bType"), hours:val("bHours"), greeting:val("bGreet"),
@@ -1231,18 +1439,115 @@ function collect(){
                take_bookings: !!($("#oBook")||{}).checked,
                take_orders: !!($("#oOrders")||{}).checked,
                review_bookings: !!($("#oReview")||{}).checked,
-               delivery_areas: val("oAreas"), min_order: val("oMin"), links: val("oLinks") },
+               delivery_zones: zonesClean(),
+               /* the old flat field, derived, so anything still reading it keeps working */
+               delivery_areas: zoneNames(),
+               min_order: val("oMin"), links: val("oLinks") },
     knowledge: val("bKnow"),
     rules: val("bRules"),
     script: val("bScript"),
     transfer_to: val("bXfer"),
     /* the trunk password is deliberately not sent: it is the customer's
        credential with their operator and we have no reason to hold it */
-    channel_cfg:{ route, number: val("num"), host: val("host"), user: val("user"),
+    channel_cfg:{ route: ROUTE, number: val("num"), host: val("host"), user: val("user"),
                   wa:{ phone_number_id: val("waId"), template: val("waTpl"),
                        lang: ($("#waLang")||{}).value || "ar", token: val("waTok") } }
   };
 }
+
+
+/* ============================================================
+   CALL SETUPS
+   ------------------------------------------------------------
+   One agent, one number, several conversations. The list is
+   always what the server returned: if a setup is not saved, it
+   is not shown, so nobody configures something that does not
+   exist.
+   ============================================================ */
+let SETUPS=[], ROUTING={mode:"hybrid"}, VOICELIST=[];
+/* this page has no shared esc(), and setup names are customer input that ends
+   up in innerHTML, so it gets its own */
+const escS = v => String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function loadSetups(){
+  if(!online || !agentId) return;
+  try{
+    const d=await api("/api/me/agents/"+agentId+"/setups");
+    SETUPS=d.setups||[]; ROUTING=d.routing||{mode:"hybrid"};
+    const v=await api("/api/voices"); VOICELIST=v.voices||[];
+  }catch(_){ SETUPS=[]; }
+  paintSetups();
+  paintGaps();   /* the setup count is one of the lines it shows */
+}
+
+function paintSetups(){
+  const list=$("#setupList"), note=$("#setupNote"); if(!list) return;
+  const mode=(ROUTING.mode||"hybrid");
+  const r=document.querySelector(`input[name="rmode"][value="${mode}"]`); if(r) r.checked=true;
+
+  if(!online){ list.innerHTML=`<div class="srow"><span class="skey">1</span><span><span class="sname">Main line</span><span class="sdesc">Sign in and your setups appear here.</span></span><span></span></div>`; return; }
+  if(!SETUPS.length){ list.innerHTML=`<div class="srow"><span class="skey">+</span><span><span class="sname">No setups yet</span><span class="sdesc">Save the agent first, then add the conversations it should handle.</span></span><span></span></div>`; return; }
+
+  list.innerHTML=SETUPS.map((s,i)=>`
+    <div class="srow ${s.active?"":"off"}" data-sid="${Number(s.id)}">
+      <span class="skey">${escS(s.dtmf_key||String(i+1))}</span>
+      <span>
+        <span class="sname">${escS(s.name)}</span>
+        <span class="sdesc">${escS(s.description)||"&nbsp;"}</span>
+      </span>
+      <span class="sact">
+        <button data-act="rename">Rename</button>
+        <button data-act="toggle">${s.active?"Pause":"Activate"}</button>
+        ${SETUPS.length>1?'<button data-act="del">Delete</button>':""}
+      </span>
+    </div>`).join("");
+
+  note.textContent = mode==="dtmf"
+    ? "Callers hear a short menu and press a key."
+    : mode==="ai" ? "Callers just say what they need and the agent picks the right setup."
+                  : "Callers can say what they need, or press a key if they prefer.";
+
+  list.querySelectorAll(".srow").forEach(row=>{
+    const id=row.dataset.sid;
+    row.querySelectorAll("[data-act]").forEach(btn=>btn.onclick=async()=>{
+      const s=SETUPS.find(x=>String(x.id)===id); if(!s) return;
+      try{
+        if(btn.dataset.act==="toggle"){
+          const d=await api("/api/me/setups/"+id,"PATCH",{active:!s.active}); s.active=d.setup.active;
+        } else if(btn.dataset.act==="rename"){
+          const name=prompt("What should this setup be called?", s.name); if(!name) return;
+          const d=await api("/api/me/setups/"+id,"PATCH",{name}); s.name=d.setup.name;
+        } else {
+          if(!confirm(`Delete "${s.name}"? Its calls stay in your records.`)) return;
+          await api("/api/me/setups/"+id,"DELETE"); SETUPS=SETUPS.filter(x=>String(x.id)!==id);
+        }
+        paintSetups();
+      }catch(e){ bar("err", e.message); }
+    });
+  });
+}
+
+(function(){
+  const add=$("#addSetup");
+  if(add) add.onclick=async()=>{
+    if(!online){ bar("err","Sign in to add setups."); return; }
+    if(!agentId){ bar("err","Save the agent first, then add setups to it."); return; }
+    const name=prompt("What is this setup for? For example Sales, or Reservations.");
+    if(!name) return;
+    try{
+      const d=await api("/api/me/agents/"+agentId+"/setups","POST",
+        {name, dtmf_key:String(SETUPS.length+1)});
+      SETUPS.push(d.setup); paintSetups(); bar("saved","Setup added");
+    }catch(e){ bar("err", e.message); }
+  };
+  document.querySelectorAll('input[name="rmode"]').forEach(r=>r.addEventListener("change", async()=>{
+    if(!online || !agentId) return;
+    try{
+      const d=await api("/api/me/agents/"+agentId+"/routing","PATCH",{mode:r.value});
+      ROUTING=d.routing; paintSetups();
+    }catch(e){ bar("err", e.message); }
+  }));
+})();
 
 function bar(state, text){
   const b=$("#saveBar"); if(!b) return;
@@ -1274,19 +1579,182 @@ async function save(){
     bar("err", e.message);
   }
 }
-const queueSave=()=>{ clearTimeout(saveTimer); saveTimer=setTimeout(save, 900); };
+const queueSave=()=>{ clearTimeout(saveTimer); saveTimer=setTimeout(save, 900); paintGaps(); };
+
+/* The explicit Save. Autosave runs quietly in the background, but a customer
+   who has filled in a long form needs to press something and be told plainly
+   that it is stored. This reports its own state, refuses to double-submit, and
+   keeps everything on screen if the save fails. */
+(function(){
+  const btn=$("#saveBtn"); if(!btn) return;
+  let busy=false;
+  btn.addEventListener("click", async ()=>{
+    if(busy) return;
+    if(!online){ bar("err","You are not signed in, so nothing can be saved. Log in and your work here is still on screen."); return; }
+    busy=true;
+    const was=btn.textContent;
+    btn.disabled=true; btn.textContent="Saving…";
+    clearTimeout(saveTimer);                       // no racing autosave
+    try{
+      const body=collect();
+      const d = agentId ? await api("/api/me/agents/"+agentId,"PATCH",body)
+                        : await api("/api/me/agents","POST",body);
+      agentId=d.agent.id;
+      paintReadiness(d.agent.readiness, d.agent.status);
+      bar("saved","Saved to your account");
+      btn.textContent="Saved ✓";
+      setTimeout(()=>{ btn.textContent=was; btn.disabled=false; busy=false; }, 1600);
+    }catch(e){
+      /* nothing is cleared and no step advances: the form stays exactly as it
+         was so the customer can correct and try again */
+      bar("err", e.message || "That did not save. Nothing was lost, try again.");
+      btn.textContent=was; btn.disabled=false; busy=false;
+    }
+  });
+})();
 ["bName","bType","bHours","bLang","bGreet","bKnow","bRules","bScript","bXfer","num","host","user"]
   .forEach(id=>{ const el=$("#"+id); if(el){ el.addEventListener("input",queueSave); el.addEventListener("change",queueSave); }});
-$$('input[name="route"]').forEach(i=>i.addEventListener("change",queueSave));
 drawHours();
 [["oOrders","orderOpts"],["oBook","bookOpts"]].forEach(([tick,panel])=>{
   const t2=$("#"+tick), box=$("#"+panel);
   if(t2&&box){ const sync=()=>{ box.hidden=!t2.checked; }; t2.addEventListener("change",sync); sync(); }
 });
 ["hLast","hLead","cSeats","cTables","cSlot","waId","waTpl","waLang","waTok",
-  "oBook","oOrders","oReview","oAreas","oMin","oLinks"].forEach(id=>{
+  "oBook","oOrders","oReview","oMin","oLinks"].forEach(id=>{
   const el=$("#"+id); if(el){ el.addEventListener("change",queueSave); el.addEventListener("input",queueSave); }
 });
+drawZones(); bindZones();
+
+/* ============================================================
+   WHAT THIS AGENT HAS, AND WHAT IT IS MISSING
+   ------------------------------------------------------------
+   Three honest groups, all read off the live form:
+
+     SET        what is filled in
+     MISSING    what this agent needs for the job it has been
+                given — so turning orders on adds rows here,
+                and turning them off takes them away again
+     COULD ADD  capabilities that exist and are switched off
+
+   Nothing is invented: if a field is blank it is blank, and a
+   capability that is not built is not offered.
+   ============================================================ */
+function paintGaps(){
+  const body=$("#gapsBody"); if(!body) return;
+
+  const has = id => !!val(id);
+  const on  = id => !!(($("#"+id))||{}).checked;
+  const book=on("oBook"), ord=on("oOrders"), outb=(typeof mode!=="undefined" && mode==="out");
+  const zones=(typeof zonesClean==="function") ? zonesClean() : [];
+  const openDays=DAYS.filter(([k])=>HOURS[k] && !HOURS[k].shut).length;
+  const seats=parseInt(($("#cSeats")||{}).value||"0",10)||0;
+  const tables=parseInt(($("#cTables")||{}).value||"0",10)||0;
+  const hasNumber=!!val("num");
+  const waOn = has("waId") && has("waTpl");
+  const setupCount = (typeof SETUPS!=="undefined" && Array.isArray(SETUPS)) ? SETUPS.length : 0;
+
+  /* a zone is incomplete if it quotes nothing: no fee of its own, and, for a
+     zone inside an area, no area fee to fall back on */
+  const feeless=[];
+  zones.forEach(z=>{
+    if(z.subs.length) z.subs.forEach(s=>{ if(!s.fee && !z.fee) feeless.push(`${z.name} — ${s.name}`); });
+    else if(!z.fee) feeless.push(z.name);
+  });
+
+  const set=[], miss=[], add=[];
+  const row=(list,t,s,panel,focus)=>list.push({t,s,panel,focus});
+
+  /* --- the basics, needed whatever this agent does --- */
+  has("bName")  ? row(set,"Business name","",2,"bName")
+                : row(miss,"Business name","The agent says this out loud in its first sentence.",2,"bName");
+  has("bType")  ? row(set,"What the business does","",2,"bType")
+                : row(miss,"What the business does","Without it the agent answers in generalities.",2,"bType");
+  has("bGreet") ? row(set,"Greeting","",2,"bGreet")
+                : row(miss,"Greeting","The first thing a caller hears.",2,"bGreet");
+  has("bKnow")  ? row(set,"What the agent knows","",2,"bKnow")
+                : row(miss,"What the agent knows",
+                    ord ? "Including the menu and the prices, or it cannot take an order."
+                        : "Prices, the menu, where you are, what you offer.",2,"bKnow");
+  has("bRules") ? row(set,"Your rules","",2,"bRules")
+                : row(miss,"Your rules","What it must never say or promise.",2,"bRules");
+  /* the route is settled; what is actually outstanding is the number itself */
+  hasNumber ? row(set,"Your phone number","",1,"num")
+            : row(miss,"Your phone number","The number your trunk carries. Without it the agent has no line.",1,"num");
+  if(outb){
+    has("bScript") ? row(set,"Outbound script","",2,"bScript")
+                   : row(miss,"Outbound script","An outbound agent needs to know why it is calling.",2,"bScript");
+  }
+
+  /* --- bookings: only asked for when bookings are on --- */
+  if(book){
+    row(set,"Takes bookings","",2,"oBook");
+    openDays ? row(set,`Opening hours · ${openDays} ${openDays===1?"day":"days"} open`,"",2,"hLast")
+             : row(miss,"Opening hours","Every day is marked closed, so no booking can be taken.",2,"hLast");
+    (seats||tables)
+      ? row(set,`Capacity · ${[seats?seats+" people":"",tables?tables+" tables":""].filter(Boolean).join(", ")}`,"",2,"cSeats")
+      : row(miss,"Seats or tables","Without a number the agent cannot turn down a slot that is already full.",2,"cSeats");
+    if(on("oReview")) row(set,"You approve every booking yourself","",2,"oReview");
+  }
+
+  /* --- orders: only asked for when orders are on --- */
+  if(ord){
+    row(set,"Takes delivery and collection orders","",2,"oOrders");
+    if(!zones.length){
+      row(miss,"Delivery zones","No areas set, so the agent cannot quote a fee or turn down an address it cannot reach.",2,"zoneList");
+    } else {
+      const subs=zones.reduce((n,z)=>n+z.subs.length,0);
+      row(set,`Delivery zones · ${zones.length} ${zones.length===1?"area":"areas"}${subs?`, ${subs} zones inside`:""}`,"",2,"zoneList");
+      if(feeless.length) row(miss,`No fee set for ${feeless.length===1?"one area":feeless.length+" areas"}`,
+        feeless.slice(0,4).join(" · ")+(feeless.length>4?" and more":"")+". The agent will not name a price it was not given.",2,"zoneList");
+    }
+    has("oMin") ? row(set,"Minimum order","",2,"oMin")
+                : row(add,"A minimum order","So the agent can stop a 30 EGP delivery before it is taken.",2,"oMin");
+  }
+
+  /* --- what is switched off, or built and not used --- */
+  if(!book) row(add,"Take bookings on this line","Tables and appointments, with capacity and opening hours behind them.",2,"oBook");
+  if(!ord)  row(add,"Take orders on this line","Delivery and collection, with zones and a fee for each.",2,"oOrders");
+  if(book && !on("oReview")) row(add,"Approve bookings yourself","The agent takes them in full, and nothing is confirmed until you say so.",2,"oReview");
+  waOn ? row(set,"WhatsApp confirmations","",2,"waId")
+       : row(add,"WhatsApp confirmations","Sent from your own WhatsApp Business number when a booking lands.",2,"waId");
+  has("oLinks") ? row(set,"Menu, photo and location links","",2,"oLinks")
+                : row(add,"Links to your menu or Instagram","The agent can point callers to them instead of reading everything out.",2,"oLinks");
+  has("bXfer") ? row(set,"Transfers to a person when it has to","",2,"bXfer")
+               : row(add,"A number to transfer to","For the call the agent should not be handling on its own.",2,"bXfer");
+  if(setupCount<=1) row(add,"A second setup on the same number",
+    "Sales, support or reservations, each with its own voice and instructions, all on one line.",2,"setupsCard");
+
+  const group=(key,label,items,mark)=> !items.length ? "" : `
+    <div class="gset">
+      <div class="ghead">${label}<span class="gcount">${items.length}</span></div>
+      ${items.map((it,i)=>`<button class="gitem" type="button" data-k="${key}" data-i="${i}">
+        <span class="gm ${mark[0]}">${mark[1]}</span>
+        <span class="gt"><b>${escZ(it.t)}</b>${it.s?`<small>${escZ(it.s)}</small>`:""}</span>
+      </button>`).join("")}
+    </div>`;
+
+  body.innerHTML =
+      (miss.length ? group("miss","Missing",miss,["no","✕"])
+                   : `<p class="gok">Nothing missing. Everything this agent needs for the job you gave it is filled in.</p>`)
+    + group("add","You could also add",add,["add","+"])
+    + group("set","Already set",set,["yes","✓"]);
+
+  const buckets={miss,add,set};
+  $$("#gapsBody .gitem").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const it=(buckets[b.dataset.k]||[])[+b.dataset.i]; if(!it) return;
+      go(it.panel);
+      if(!it.focus) return;
+      /* after the scroll settles, or the element lands under the sticky header */
+      setTimeout(()=>{
+        const el=$("#"+it.focus); if(!el) return;
+        el.scrollIntoView({block:"center",behavior:"smooth"});
+        if(/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) el.focus({preventScroll:true});
+        else { const first=el.querySelector("input,textarea,select,button"); if(first) first.focus({preventScroll:true}); }
+      },340);
+    });
+  });
+}
 
 function paintReadiness(r, status){
   if(!r) return;
@@ -1354,17 +1822,24 @@ async function markTested(){
       if($("#oBook")) $("#oBook").checked = b.take_bookings !== false;
       if($("#oOrders")) $("#oOrders").checked = !!b.take_orders;
       if($("#oReview")) $("#oReview").checked = !!b.review_bookings;
-      set("oAreas",b.delivery_areas); set("oMin",b.min_order); set("oLinks",b.links);
+      /* zones if they were saved; otherwise lift the old comma-separated areas
+         into zones with no fee yet, so nobody loses what they already typed */
+      if(Array.isArray(b.delivery_zones)) ZONES=normZones(b.delivery_zones);
+      else if(b.delivery_areas) ZONES=String(b.delivery_areas).split(",")
+             .map(s=>s.trim()).filter(Boolean).map(n=>({name:n,fee:"",subs:[]}));
+      else ZONES=[];   /* a real agent with nothing saved shows nothing, not the example */
+      drawZones();
+      set("oMin",b.min_order); set("oLinks",b.links);
       if($("#orderOpts")) $("#orderOpts").hidden = !($("#oOrders")||{}).checked;
       set("bXfer",a.transfer_to); set("bLang",a.lang);
       set("num",c.number); set("host",c.host); set("user",c.user);
       if(c.wa){ set("waId",c.wa.phone_number_id); set("waTpl",c.wa.template);
                 if($("#waLang") && c.wa.lang) $("#waLang").value=c.wa.lang; }
-      if(c.route){
-        const r=document.querySelector(`input[name="route"][value="${c.route}"]`);
-        if(r){ r.checked=true; routeLocked=true; $("#autoPick").hidden=true; $("#routes").hidden=false; syncRoute(); }
-      } else { applyAutoRoute(); }
+      /* An agent saved when forwarding or a call link still existed is moved to
+         the trunk, which is now the only route. Nothing else about it changes. */
+      syncRoute();
       paintReadiness(a.readiness, a.status);
+      loadSetups();
       bar("saved","Loaded your saved agent");
     } else {
       bar("saved","Signed in. Changes save automatically.");
@@ -1377,6 +1852,9 @@ async function markTested(){
       {k:"greeting",say:"Greeting"},{k:"knowledge",say:"Knowledge"},{k:"rules",say:"Rules"},
       {k:"script",say:"Outbound script"},{k:"channel",say:"Channel"},{k:"tested",say:"Tested"}]});
   }
+  /* last, either way: signed in or in preview, the gaps list reads the form in
+     front of the customer, so it is honest even when nothing was loaded */
+  paintGaps();
 })();
 </script>
 </body>

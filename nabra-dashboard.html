@@ -19,7 +19,8 @@
   --bone:#EEF2F9; --bone-hi:#FFFFFF; --paper:#DEE6F3;
   --fg:#163466; --fg-mute:#4A5F86; --fg-faint:#8394B2;
   --rule:rgba(22,52,102,.115); --rule-soft:rgba(22,52,102,.055);
-  --ember:#C08A2E; --ember-wash:rgba(192,138,46,.07);
+  --ember:#1E4FD8;
+  --ember-mid:#2F6BFF; --ember-wash:rgba(47,107,255,.07);
   --display:'Plus Jakarta Sans',system-ui,sans-serif;
   --body:'Plus Jakarta Sans',system-ui,sans-serif;
   --mono:'Chivo Mono',ui-monospace,monospace;
@@ -160,7 +161,7 @@ td .ar{font-family:var(--ar-body);direction:rtl;display:inline-block}
   text-transform:uppercase;padding:.2rem .45rem;border-radius:4px;border:1px solid var(--rule);color:var(--fg-mute);white-space:nowrap}
 html[dir="rtl"] .tag{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.7rem}
 .tag.on{border-color:var(--fg);color:var(--fg)}
-.tag.hot{border-color:rgba(192,138,46,.4);color:var(--ember);background:var(--ember-wash)}
+.tag.hot{border-color:rgba(47,107,255,.4);color:var(--ember);background:var(--ember-wash)}
 .tag.dim{color:var(--fg-faint)}
 
 .bar{height:4px;background:var(--paper);border-radius:2px;overflow:hidden;min-width:70px}
@@ -305,7 +306,7 @@ body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#16
 .empty .btn{margin-top:1rem}
 .sample{font-size:.8rem;color:var(--fg-mute);padding:.45rem .8rem;border:1px solid var(--rule);border-radius:99px;display:inline-block;margin-bottom:1rem}
 .stag{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:.15rem .5rem;border-radius:99px}
-.stag.live{background:rgba(27,122,74,.1);color:#1B7A4A}.stag.draft{background:var(--paper);color:var(--fg-mute)}.stag.paused{background:rgba(192,138,46,.1);color:#C08A2E}
+.stag.live{background:rgba(27,122,74,.1);color:#1B7A4A}.stag.draft{background:var(--paper);color:var(--fg-mute)}.stag.paused{background:rgba(47,107,255,.1);color:#2F6BFF}
 
 /* Text fill must follow each element's own colour. Setting it to a fixed value
    on body inherits everywhere and repaints light text on dark buttons black,
@@ -339,11 +340,11 @@ body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#16
   border-radius:7px;background:var(--bone);color:var(--fg)}
 
 .bk .oh{font-style:normal;font-family:var(--mono);font-size:.56rem;letter-spacing:.07em;text-transform:uppercase;
-  padding:.12rem .4rem;border-radius:99px;background:rgba(192,138,46,.16);color:#8A5A00;margin-inline-start:.35rem}
+  padding:.12rem .4rem;border-radius:99px;background:rgba(47,107,255,.14);color:#1E4FD8;margin-inline-start:.35rem}
 .oh-note{margin-top:.9rem;font-size:.8rem;color:var(--fg-mute);border-inline-start:2px solid var(--ember);
   padding-inline-start:.7rem;line-height:1.55}
 .cal-d.req::after{content:"";position:absolute;top:5px;inset-inline-start:5px;width:5px;height:5px;
-  border-radius:50%;background:#C08A2E}
+  border-radius:50%;background:#2F6BFF}
 
 .plancard{display:flex;flex-wrap:wrap;align-items:center;gap:1.2rem 2rem;margin-bottom:1rem}
 .pc-main{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
@@ -352,7 +353,7 @@ body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#16
 .pc-cyc{font-size:.82rem;font-weight:400;color:var(--fg-mute)}
 .pc-state{font-size:.72rem;padding:.2rem .6rem;border-radius:99px}
 .pc-state.ok{background:rgba(27,122,74,.12);color:#1B7A4A}
-.pc-state.warn{background:var(--ember-wash);color:#8A5A00}
+.pc-state.warn{background:var(--ember-wash);color:#1E4FD8}
 .pc-side{display:flex;flex-direction:column;gap:.1rem;margin-inline-start:auto}
 .pc-side b{font-size:1.15rem;font-weight:600}
 .pc-warn{flex-basis:100%;margin:0;font-size:.86rem;color:var(--fg-mute);
@@ -362,6 +363,20 @@ body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#16
 .railfoot-links{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.9rem}
 .railfoot-links a{font-size:.8rem;color:var(--fg-mute);text-decoration:none}
 .railfoot-links a:hover{color:var(--ember)}
+
+.firstrun{max-width:46rem;padding:1.6rem 1.8rem}
+.firstrun h2{font-size:1.3rem;margin-bottom:.4rem}
+.firstrun p{color:var(--fg-mute);max-width:52ch;margin-bottom:1.1rem}
+.firstrun .btn{display:inline-flex;text-decoration:none}
+.fr-steps{list-style:none;padding:0;margin:1.4rem 0 0;display:grid;gap:1px;background:var(--rule-soft);
+  border:1px solid var(--rule-soft);border-radius:10px;overflow:hidden;counter-reset:fr}
+.fr-steps li{counter-increment:fr;background:#fff;padding:.75rem .95rem;font-size:.9rem;color:var(--fg-mute);
+  display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:baseline}
+.fr-steps li::before{content:counter(fr);font-family:var(--mono);font-size:.7rem;color:var(--ember)}
+
+/* display:flex beats the hidden attribute, so say it explicitly */
+.live-chip[hidden]{display:none}
+.firstrun .btn-ember{background:var(--ember-mid);border-color:var(--ember-mid);color:#fff}
 </style>
 </head>
 <body>
@@ -402,7 +417,7 @@ body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#16
       </button>
       <h1 id="viewTitle">Overview</h1>
       <div class="right">
-        <span class="live-chip"><span class="ld"></span><span id="liveCount">3 live calls</span></span>
+        <span class="live-chip"><span class="ld"></span><span id="liveCount"></span></span>
         <div class="langsel">
           <button data-setlang="en" aria-pressed="true">EN</button>
           <button data-setlang="ar" aria-pressed="false">عربية</button>
@@ -509,7 +524,7 @@ const T={
   cycM:"Billed monthly",cycY:"Billed yearly",ymFree:"2 months free",
   perMo:"/month",perYr:"/year",approxMo:"≈{p}/month",ySave:"you save {s} a year vs monthly",
   sample:"Sample data. Sign in to see your own account.",
-  kAgents:"Live agents",yourPlan:"Your plan",billedM:"billed monthly",billedY:"billed yearly",minsUsed:"Minutes used",stActive:"Active",stPending:"Waiting on payment",stUnverified:"Confirm your email to put an agent live. Check your inbox.",bkToday:"Today",bkWeek:"Week",bkMonth:"Month",bkNew:"Add booking",bkSub:"Subscribe in your calendar",bkCopy:"Copy link",bkCopied:"Link copied",bkNoneH:"Nothing booked yet",bkNoneP:"When an agent takes a booking on a call it appears here, and in any calendar you subscribe from.",bkOutside:"Outside hours",bkOutsideNote:"{n} request(s) for a time you are normally closed. They are not confirmed, and they are worth reading: repeated requests at the same hour are a reason to open then.",odNoneH:"No orders yet",odNoneP:"Switch orders on for an agent and anything it takes on a call lands here, with the items and the address.",odItems:"Order",odAddr:"Address",bkWhen:"When",bkWho:"Who",bkWhat:"For",bkAgent:"Agent",bkStatus:"Status",bkNoDay:"Nothing on this day",kCalls:"Calls, last 7 days",kLeads:"Leads captured",kMin:"Minutes used",
+  kAgents:"Live agents",yourPlan:"Your plan",fr1h:"No agents yet",fr1p:"Nothing has happened on your account because there is no agent yet. Building the first one takes a few minutes and you can hear it answer before anyone else does.",fr1cta:"Create your first agent",fr1s1:"Tell it what your business does, in your own words",fr1s2:"Test it on your own phone until it sounds right",fr1s3:"Connect your line when you are happy, not before",billedM:"billed monthly",billedY:"billed yearly",minsUsed:"Minutes used",stActive:"Active",stPending:"Waiting on payment",stUnverified:"Confirm your email to put an agent live. Check your inbox.",bkToday:"Today",bkWeek:"Week",bkMonth:"Month",bkNew:"Add booking",bkSub:"Subscribe in your calendar",bkCopy:"Copy link",bkCopied:"Link copied",bkNoneH:"Nothing booked yet",bkNoneP:"When an agent takes a booking on a call it appears here, and in any calendar you subscribe from.",bkOutside:"Outside hours",bkOutsideNote:"{n} request(s) for a time you are normally closed. They are not confirmed, and they are worth reading: repeated requests at the same hour are a reason to open then.",odNoneH:"No orders yet",odNoneP:"Switch orders on for an agent and anything it takes on a call lands here, with the items and the address.",odItems:"Order",odAddr:"Address",bkWhen:"When",bkWho:"Who",bkWhat:"For",bkAgent:"Agent",bkStatus:"Status",bkNoDay:"Nothing on this day",kCalls:"Calls, last 7 days",kLeads:"Leads captured",kMin:"Minutes used",
   noAgentsH:"No agents yet",noAgentsP:"Create your first agent in about five minutes. Connect a line, teach it your business, test it, deploy.",
   noAgentsB:"Create an agent",
   noCallsH:"No calls yet",noCallsP:"Calls appear here the moment your first agent answers one, with the transcript and outcome.",
@@ -635,7 +650,7 @@ const T={
   cycM:"فوترة شهرية",cycY:"فوترة سنوية",ymFree:"شهران مجاناً",
   perMo:"/شهر",perYr:"/سنة",approxMo:"≈{p} شهرياً",ySave:"توفر {s} في السنة مقارنة بالشهري",
   sample:"بيانات تجريبية. سجّل الدخول لترى حسابك.",
-  kAgents:"وكلاء يعملون",yourPlan:"خطتك",billedM:"تُحصَّل شهرياً",billedY:"تُحصَّل سنوياً",minsUsed:"الدقائق المستخدمة",stActive:"فعّالة",stPending:"في انتظار الدفع",stUnverified:"أكّد بريدك حتى يعمل الوكيل. تحقق من صندوق الوارد.",bkToday:"اليوم",bkWeek:"الأسبوع",bkMonth:"الشهر",bkNew:"إضافة حجز",bkSub:"اشترك به في تقويمك",bkCopy:"نسخ الرابط",bkCopied:"تم نسخ الرابط",bkNoneH:"لا حجوزات بعد",bkNoneP:"حين يأخذ الوكيل حجزاً في مكالمة يظهر هنا، وفي أي تقويم تشترك به.",bkOutside:"خارج المواعيد",bkOutsideNote:"{n} طلب لوقت تكون فيه مغلقاً عادةً. وهي غير مؤكدة، وتستحق القراءة: تكرار الطلب في الساعة نفسها سبب وجيه لفتح فيها.",odNoneH:"لا طلبات بعد",odNoneP:"فعّل الطلبات لأحد الوكلاء، وكل ما يأخذه في مكالمة يظهر هنا بالأصناف والعنوان.",odItems:"الطلب",odAddr:"العنوان",bkWhen:"الموعد",bkWho:"الاسم",bkWhat:"الغرض",bkAgent:"الوكيل",bkStatus:"الحالة",bkNoDay:"لا شيء في هذا اليوم",kCalls:"مكالمات آخر ٧ أيام",kLeads:"عملاء محتملون",kMin:"دقائق مستخدمة",
+  kAgents:"وكلاء يعملون",yourPlan:"خطتك",billedM:"تُحصَّل شهرياً",fr1h:"لا وكلاء بعد",fr1p:"لم يحدث شيء في حسابك لأنه لا يوجد وكيل بعد. بناء الأول يستغرق دقائق، وتستطيع سماعه يرد قبل أي شخص آخر.",fr1cta:"أنشئ وكيلك الأول",fr1s1:"اشرح نشاطك بكلماتك أنت",fr1s2:"جرّبه على هاتفك حتى يصبح مناسباً",fr1s3:"وصّل خطك حين ترضى، وليس قبل ذلك",billedY:"تُحصَّل سنوياً",minsUsed:"الدقائق المستخدمة",stActive:"فعّالة",stPending:"في انتظار الدفع",stUnverified:"أكّد بريدك حتى يعمل الوكيل. تحقق من صندوق الوارد.",bkToday:"اليوم",bkWeek:"الأسبوع",bkMonth:"الشهر",bkNew:"إضافة حجز",bkSub:"اشترك به في تقويمك",bkCopy:"نسخ الرابط",bkCopied:"تم نسخ الرابط",bkNoneH:"لا حجوزات بعد",bkNoneP:"حين يأخذ الوكيل حجزاً في مكالمة يظهر هنا، وفي أي تقويم تشترك به.",bkOutside:"خارج المواعيد",bkOutsideNote:"{n} طلب لوقت تكون فيه مغلقاً عادةً. وهي غير مؤكدة، وتستحق القراءة: تكرار الطلب في الساعة نفسها سبب وجيه لفتح فيها.",odNoneH:"لا طلبات بعد",odNoneP:"فعّل الطلبات لأحد الوكلاء، وكل ما يأخذه في مكالمة يظهر هنا بالأصناف والعنوان.",odItems:"الطلب",odAddr:"العنوان",bkWhen:"الموعد",bkWho:"الاسم",bkWhat:"الغرض",bkAgent:"الوكيل",bkStatus:"الحالة",bkNoDay:"لا شيء في هذا اليوم",kCalls:"مكالمات آخر ٧ أيام",kLeads:"عملاء محتملون",kMin:"دقائق مستخدمة",
   noAgentsH:"لا يوجد وكلاء بعد",noAgentsP:"أنشئ أول وكيل في نحو خمس دقائق: وصّل خطاً، علّمه نشاطك، جرّبه، ثم فعّله.",
   noAgentsB:"إنشاء وكيل",
   noCallsH:"لا مكالمات بعد",noCallsP:"تظهر المكالمات هنا فور أن يرد وكيلك على أول مكالمة، مع النص والنتيجة.",
@@ -761,7 +776,7 @@ const T={
   cycM:"فوترة شهرية",cycY:"فوترة سنوية",ymFree:"شهرين ببلاش",
   perMo:"/شهر",perYr:"/سنة",approxMo:"≈{p} في الشهر",ySave:"بتوفر {s} في السنة عن الشهري",
   sample:"بيانات تجريبية. سجّل دخولك عشان تشوف حسابك.",
-  kAgents:"وكلاء شغالين",yourPlan:"خطتك",billedM:"بتتحصل شهري",billedY:"بتتحصل سنوي",minsUsed:"الدقايق المستخدمة",stActive:"شغالة",stPending:"مستنية الدفع",stUnverified:"أكّد إيميلك عشان الوكيل يشتغل. بص في الوارد.",bkToday:"النهاردة",bkWeek:"الأسبوع",bkMonth:"الشهر",bkNew:"ضيف حجز",bkSub:"اشترك بيه في التقويم",bkCopy:"انسخ اللينك",bkCopied:"اتنسخ اللينك",bkNoneH:"مفيش حجوزات لسه",bkNoneP:"لما الوكيل ياخد حجز في مكالمة هيظهر هنا، وفي أي تقويم تشترك بيه.",bkOutside:"برّه المواعيد",bkOutsideNote:"{n} طلب في وقت بتكون قافل فيه عادة. مش مؤكدين، ويستحقوا القراية: تكرار الطلب في نفس الساعة سبب كويس إنك تفتح فيها.",odNoneH:"مفيش طلبات لسه",odNoneP:"فعّل الطلبات لوكيل، وأي حاجة ياخدها في مكالمة هتظهر هنا بالأصناف والعنوان.",odItems:"الطلب",odAddr:"العنوان",bkWhen:"الميعاد",bkWho:"الاسم",bkWhat:"الغرض",bkAgent:"الوكيل",bkStatus:"الحالة",bkNoDay:"مفيش حاجة في اليوم ده",kCalls:"مكالمات آخر ٧ أيام",kLeads:"عملاء محتملين",kMin:"دقايق اتستخدمت",
+  kAgents:"وكلاء شغالين",yourPlan:"خطتك",billedM:"بتتحصل شهري",fr1h:"مفيش وكلاء لسه",fr1p:"مفيش حاجة حصلت في حسابك لأن مفيش وكيل لسه. بناء الأول بياخد دقايق، وتقدر تسمعه بيرد قبل أي حد.",fr1cta:"اعمل وكيلك الأول",fr1s1:"قول شغلك بيعمل إيه بكلامك إنت",fr1s2:"جرّبه على تليفونك لحد ما يبقى مظبوط",fr1s3:"وصّل خطك لما ترتاح، مش قبل كده",billedY:"بتتحصل سنوي",minsUsed:"الدقايق المستخدمة",stActive:"شغالة",stPending:"مستنية الدفع",stUnverified:"أكّد إيميلك عشان الوكيل يشتغل. بص في الوارد.",bkToday:"النهاردة",bkWeek:"الأسبوع",bkMonth:"الشهر",bkNew:"ضيف حجز",bkSub:"اشترك بيه في التقويم",bkCopy:"انسخ اللينك",bkCopied:"اتنسخ اللينك",bkNoneH:"مفيش حجوزات لسه",bkNoneP:"لما الوكيل ياخد حجز في مكالمة هيظهر هنا، وفي أي تقويم تشترك بيه.",bkOutside:"برّه المواعيد",bkOutsideNote:"{n} طلب في وقت بتكون قافل فيه عادة. مش مؤكدين، ويستحقوا القراية: تكرار الطلب في نفس الساعة سبب كويس إنك تفتح فيها.",odNoneH:"مفيش طلبات لسه",odNoneP:"فعّل الطلبات لوكيل، وأي حاجة ياخدها في مكالمة هتظهر هنا بالأصناف والعنوان.",odItems:"الطلب",odAddr:"العنوان",bkWhen:"الميعاد",bkWho:"الاسم",bkWhat:"الغرض",bkAgent:"الوكيل",bkStatus:"الحالة",bkNoDay:"مفيش حاجة في اليوم ده",kCalls:"مكالمات آخر ٧ أيام",kLeads:"عملاء محتملين",kMin:"دقايق اتستخدمت",
   noAgentsH:"مفيش وكلاء لسه",noAgentsP:"اعمل أول وكيل في حوالي خمس دقايق: وصّل خط، علّمه شغلك، جرّبه، وشغّله.",
   noAgentsB:"اعمل وكيل",
   noCallsH:"مفيش مكالمات لسه",noCallsP:"المكالمات هتظهر هنا أول ما وكيلك يرد على أول مكالمة، بالنص والنتيجة.",
@@ -901,7 +916,7 @@ const NUMSHOP=[
 const VIEWS=[
  {g:"gOps"},
  {k:"overview",i:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'},
- {k:"calls",i:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12 19.8 19.8 0 0 1 1.6 3.4 2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.7 2z"/>',pill:"3"},
+ {k:"calls",i:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12 19.8 19.8 0 0 1 1.6 3.4 2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.7 2z"/>',pill:null},
  {k:"recordings",i:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>'},
  {k:"orders",i:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'},
  {k:"bookings",i:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'},
@@ -1804,7 +1819,229 @@ const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const empty=(h,p,btn)=>`<div class="empty"><h4>${t(h)}</h4><p>${t(p)}</p>${btn?`<a class="btn" href="/setup">${t(btn)}</a>`:""}</div>`;
 const _vOverview=vOverview, _vAgents=vAgents, _vLeads=vLeads;
 
+/* ============================================================
+   OUTBOUND — THE CUSTOMER'S VIEW OF IT
+   ------------------------------------------------------------
+   One agent's call list: who is waiting, who was reached, and
+   what came of it. The agent does the dialling; this is where
+   the owner adds people and reads the results.
+
+   When nothing is dialling, this screen says why in the same
+   words the server used, rather than showing a list that
+   quietly never moves.
+   ============================================================ */
+let OB = { agentId:null, data:null, busy:false };
+
+async function obLoad(agentId){
+  OB.agentId = agentId;
+  try{
+    const r = await fetch(`/api/me/agents/${agentId}/outbound`,{headers:{accept:"application/json"}});
+    OB.data = r.ok ? await r.json() : null;
+  }catch(_){ OB.data=null; }
+  vCampaigns();
+}
+
+function obFmt(d){ return d ? new Date(d).toLocaleString() : "—"; }
+
+const OB_STATE = {
+  waiting:  ["dim","Waiting"],
+  calling:  ["on","Calling now"],
+  done:     ["ok","Reached"],
+  failed:   ["no","Could not reach"],
+  cancelled:["dim","Cancelled"],
+};
+
+function vCampaignsReal(){
+  const box=$("#v-campaigns");
+  const outbound = REAL.agents.filter(a=>a.direction==="outbound");
+
+  if(!REAL.agents.length){
+    box.innerHTML = empty("fr1h","fr1p","fr1cta"); return;
+  }
+  if(!outbound.length){
+    box.innerHTML = `<div class="empty"><h4>No agent is set to make calls</h4>
+      <p>An agent either answers your line or calls out on it. Set one to outbound in setup, give it a
+      script, and its call list appears here.</p>
+      <a class="btn" href="/setup">Open setup</a></div>`;
+    return;
+  }
+
+  const agent = outbound.find(a=>String(a.id)===String(OB.agentId)) || outbound[0];
+  if(String(agent.id)!==String(OB.agentId)){ obLoad(agent.id); return; }
+
+  const d = OB.data;
+  if(!d){ box.innerHTML = `<div class="empty"><h4>Could not load the call list</h4><p>Reload the page and it should come back.</p></div>`; return; }
+
+  const c = d.counts||{}, s = d.settings||{};
+  const total = Object.values(c).reduce((a,b)=>a+b,0);
+  const reached = (c.done||0);
+  const pct = total ? Math.round((reached + (c.failed||0) + (c.cancelled||0)) / total * 100) : 0;
+  const paused = s.paused !== false;
+  const days = Array.isArray(s.days)?s.days:[0,1,2,3,4,6];
+  const DAYN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  box.innerHTML = `
+  ${outbound.length>1 ? `<div class="seg" style="margin-bottom:1rem">
+    ${outbound.map(a=>`<button data-obagent="${a.id}" aria-pressed="${String(a.id)===String(agent.id)}">${esc(a.name)}</button>`).join("")}
+  </div>`:""}
+
+  ${d.blockers.length ? `<div class="card" style="border-color:#C9A227;background:rgba(201,162,39,.06)">
+    <h3 style="margin-bottom:.4rem">Nothing is being dialled</h3>
+    <ul style="margin:.3rem 0 0 1.1rem;color:var(--fg-mute);font-size:.9rem;line-height:1.8">
+      ${d.blockers.map(x=>`<li>${esc(x)}</li>`).join("")}
+    </ul>
+  </div>` : `<div class="card" style="border-color:var(--ok);background:var(--ok-wash)">
+    <h3 style="margin-bottom:.3rem">The agent is calling</h3>
+    <p class="note" style="margin:0">Working through the list between ${esc(s.from||"10:00")} and ${esc(s.to||"18:00")}, ${
+      (s.concurrency||1)>1 ? `up to ${s.concurrency} calls at a time` : "one call at a time"}.</p>
+  </div>`}
+
+  <div class="grid g4" style="margin-top:1rem">
+    <div class="stat"><span class="lbl">Waiting</span><span class="v">${c.waiting||0}</span></div>
+    <div class="stat"><span class="lbl">Calling now</span><span class="v">${c.calling||0}</span></div>
+    <div class="stat"><span class="lbl">Reached</span><span class="v">${reached}</span></div>
+    <div class="stat"><span class="lbl">Could not reach</span><span class="v">${c.failed||0}</span></div>
+  </div>
+
+  <div class="cols" style="margin-top:1rem">
+    <div class="card">
+      <h3>Add people to call</h3>
+      <p class="note" style="margin-bottom:.7rem">One person per line. Put the name and the phone number on
+      the same line, in whichever order, and anything after that is a note the agent is given for that call.
+      Someone already waiting is not added twice.</p>
+      <textarea id="obPaste" rows="7" placeholder="Mona Hassan, +20 100 123 4567, asked about the Sokhna plots&#10;+20 101 222 3333, Ahmed, wants 5000 sqm"
+        style="width:100%;font:inherit;font-size:.88rem;line-height:1.6;padding:.75rem;border:1px solid var(--rule);
+               border-radius:4px;background:transparent;color:inherit;resize:vertical"></textarea>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.8rem">
+        <button class="btn btn-ember" id="obAdd">Add to the list</button>
+        ${(c.waiting||0) ? `<button class="btn ghost" id="obClear">Cancel the ${c.waiting} still waiting</button>`:""}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>When it may call</h3>
+      <p class="note" style="margin-bottom:.8rem">Cairo time. Outside these hours the list simply waits.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem">
+        <div><label class="lbl" for="obFrom">From</label>
+          <input id="obFrom" type="time" value="${esc(s.from||"10:00")}" style="width:100%;padding:.55rem;border:1px solid var(--rule);border-radius:4px;background:transparent;color:inherit;font:inherit"></div>
+        <div><label class="lbl" for="obTo">Until</label>
+          <input id="obTo" type="time" value="${esc(s.to||"18:00")}" style="width:100%;padding:.55rem;border:1px solid var(--rule);border-radius:4px;background:transparent;color:inherit;font:inherit"></div>
+      </div>
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.8rem">
+        <div class="seg">${DAYN.map((n,i)=>`<button type="button" class="obday" data-d="${i}" aria-pressed="${days.includes(i)}">${n}</button>`).join("")}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-top:.9rem">
+        <div><label class="lbl" for="obConc">Calls at once</label>
+          <input id="obConc" type="number" min="1" max="10" value="${Number(s.concurrency)||1}" style="width:100%;padding:.55rem;border:1px solid var(--rule);border-radius:4px;background:transparent;color:inherit;font:inherit"></div>
+        <div><label class="lbl" for="obTries">Tries per person</label>
+          <input id="obTries" type="number" min="1" max="5" value="${Number(s.max_attempts)||2}" style="width:100%;padding:.55rem;border:1px solid var(--rule);border-radius:4px;background:transparent;color:inherit;font:inherit"></div>
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
+        <button class="btn ${paused?"btn-ember":"ghost"}" id="obToggle">${paused?"Start calling":"Pause calling"}</button>
+        <button class="btn ghost" id="obSave">Save the hours</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1rem;padding-top:1rem">
+    <h3>The list${total?` <span style="font-weight:400;color:var(--fg-faint);font-size:.8rem">· ${pct}% worked through</span>`:""}</h3>
+    ${d.queue.length ? `<div class="tw"><table>
+      <thead><tr><th>Who</th><th>Number</th><th>State</th><th>Tries</th><th>What happened</th><th></th></tr></thead>
+      <tbody>${d.queue.map(r=>{
+        const st = OB_STATE[r.status] || ["dim", r.status];
+        return `<tr>
+          <td style="font-weight:500">${esc(r.name)||"—"}${r.note?`<span class="t2" style="display:block;font-weight:400">${esc(r.note)}</span>`:""}</td>
+          <td class="mono">${esc(r.phone)}</td>
+          <td><span class="tag ${st[0]}">${st[1]}</span></td>
+          <td class="num">${r.attempts}</td>
+          <td class="t2">${esc(r.summary || r.last_error || r.outcome || (r.status==="waiting"?"Not called yet":""))}</td>
+          <td style="text-align:end">${r.status==="waiting"
+            ? `<button class="btn ghost" style="padding:.3rem .65rem;font-size:.76rem" data-obcancel="${r.id}">Cancel</button>`:""}</td>
+        </tr>`;}).join("")}</tbody>
+    </table></div>` : `<p class="note">Nobody on the list yet. Paste some people in above and the agent starts working through them.</p>`}
+  </div>`;
+
+  /* ---- wiring ---- */
+  $$("[data-obagent]").forEach(b=>b.addEventListener("click",()=>obLoad(b.dataset.obagent)));
+
+  const patch = async body => {
+    const r = await fetch(`/api/me/agents/${agent.id}/outbound`,{method:"PATCH",
+      headers:{"content-type":"application/json"}, body:JSON.stringify(body)});
+    if(!r.ok){ toast("Could not save that."); return null; }
+    return r.json();
+  };
+
+  const dayBtns = $$(".obday");
+  dayBtns.forEach(b=>b.addEventListener("click",()=>{
+    b.setAttribute("aria-pressed", b.getAttribute("aria-pressed")==="true" ? "false" : "true");
+  }));
+  const chosenDays = () => dayBtns.filter(b=>b.getAttribute("aria-pressed")==="true").map(b=>Number(b.dataset.d));
+
+  const saveBtn=$("#obSave");
+  if(saveBtn) saveBtn.addEventListener("click", async ()=>{
+    const days=chosenDays();
+    if(!days.length){ toast("Pick at least one day."); return; }
+    const r = await patch({ from:$("#obFrom").value, to:$("#obTo").value, days,
+                            concurrency:$("#obConc").value, max_attempts:$("#obTries").value });
+    if(r){ toast("Saved."); obLoad(agent.id); }
+  });
+
+  const tog=$("#obToggle");
+  if(tog) tog.addEventListener("click", async ()=>{
+    const r = await patch({ paused: !paused });
+    if(r){ toast(paused ? "Calling started." : "Calling paused."); obLoad(agent.id); }
+  });
+
+  const add=$("#obAdd");
+  if(add) add.addEventListener("click", async ()=>{
+    const text=$("#obPaste").value.trim();
+    if(!text){ toast("Paste some people in first."); return; }
+    if(OB.busy) return; OB.busy=true;
+    const was=add.textContent; add.disabled=true; add.textContent="Adding…";
+    try{
+      const r=await fetch(`/api/me/agents/${agent.id}/outbound`,{method:"POST",
+        headers:{"content-type":"application/json"}, body:JSON.stringify({text})});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok){ toast(j.error||"Could not add those."); }
+      else{
+        $("#obPaste").value="";
+        toast(j.skipped ? `${j.added} added, ${j.skipped} already on the list.` : `${j.added} added.`);
+        obLoad(agent.id);
+      }
+    } finally { OB.busy=false; add.disabled=false; add.textContent=was; }
+  });
+
+  const clr=$("#obClear");
+  if(clr) clr.addEventListener("click", async ()=>{
+    if(!confirm("Cancel everyone still waiting? People already called are not affected.")) return;
+    const r=await fetch(`/api/me/agents/${agent.id}/outbound/clear`,{method:"POST"});
+    if(r.ok){ const j=await r.json(); toast(`${j.cancelled} cancelled.`); obLoad(agent.id); }
+    else toast("Could not do that.");
+  });
+
+  $$("[data-obcancel]").forEach(b=>b.addEventListener("click", async ()=>{
+    const r=await fetch(`/api/me/outbound/${b.dataset.obcancel}/cancel`,{method:"POST"});
+    if(r.ok){ obLoad(agent.id); } else toast("Already being called, so it cannot be cancelled.");
+  }));
+}
+
 vOverview=function(){
+  /* A customer with no agents has nothing to measure. Showing them a grid of
+     zeros reads as a broken product; showing them the next step does not. */
+  if(REAL && !REAL.agents.length){
+    $("#v-overview").innerHTML = planCard() + `
+      <div class="card firstrun">
+        <h2>${t("fr1h")}</h2>
+        <p>${t("fr1p")}</p>
+        <a class="btn btn-ember" href="/setup">${t("fr1cta")}</a>
+        <ul class="fr-steps">
+          <li>${t("fr1s1")}</li>
+          <li>${t("fr1s2")}</li>
+          <li>${t("fr1s3")}</li>
+        </ul>
+      </div>`;
+    return;
+  }
   if(!REAL){ _vOverview(); $("#v-overview").insertAdjacentHTML("afterbegin",`<span class="sample">${t("sample")}</span>`); return; }
   const wk=Date.now()-7*864e5;
   const calls7=REAL.calls.filter(c=>new Date(c.at).getTime()>wk);
@@ -1885,8 +2122,7 @@ vCalls=function(){
    there, so the deployed agent and the console can never disagree. */
 vScripts=function(){ if(!REAL){ _vScripts(); return; } $("#v-scripts").innerHTML=empty("inSetupH","inSetupP","inSetupB"); };
 vKnowledge=function(){ if(!REAL){ _vKnowledge(); return; } $("#v-knowledge").innerHTML=empty("inSetupH","inSetupP","inSetupB"); };
-/* Not built yet. Say so rather than show sample rows to a paying customer. */
-vCampaigns=function(){ if(!REAL){ _vCampaigns(); return; } $("#v-campaigns").innerHTML=empty("soonH","soonP"); };
+vCampaigns=function(){ if(!REAL){ _vCampaigns(); return; } vCampaignsReal(); };
 vRecordings=function(){ if(!REAL){ _vRecordings(); return; } $("#v-recordings").innerHTML=empty("soonH","soonP"); };
 vRoutes=function(){ if(!REAL){ _vRoutes(); return; } $("#v-routes").innerHTML=empty("soonH","soonP"); };
 vNumbers=function(){ if(!REAL){ _vNumbers(); return; } $("#v-numbers").innerHTML=empty("inSetupH","inSetupP","inSetupB"); };
@@ -2029,6 +2265,11 @@ function vOrders(){
     if(!c.ok||!a.ok||!l.ok) return;
     REAL={calls:(await c.json()).calls||[],agents:(await a.json()).agents||[],leads:(await l.json()).leads||[]};
     await loadBookings(); await loadOrders();
+    /* every count on screen now comes from this tenant's own data */
+    const pill=document.querySelector('.nav [data-k="calls"] .pill');
+    if(pill){ if(REAL.calls.length) pill.textContent=REAL.calls.length; else pill.remove(); }
+    const lc=$("#liveCount"); if(lc) lc.textContent = REAL.calls.length ? (0+" "+t("live")) : "";
+    const chip=document.querySelector(".live-chip"); if(chip && !REAL.calls.length) chip.hidden=true;
     vOverview(); vAgents(); vLeads(); vCalls(); vBookings(); vOrders(); vScripts(); vKnowledge(); vCampaigns(); vRecordings(); vRoutes(); vNumbers();
   }catch(_){}
 })();

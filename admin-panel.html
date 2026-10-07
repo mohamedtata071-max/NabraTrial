@@ -16,7 +16,8 @@
   --bone:#EEF2F9;--bone-hi:#FFFFFF;--paper:#DEE6F3;--armor:linear-gradient(#FFFFFF,#FFFFFF);
   --fg:#163466;--fg-mute:#4A5F86;--fg-faint:#8394B2;
   --rule:rgba(22,52,102,.115);--rule-soft:rgba(22,52,102,.055);
-  --ember:#C08A2E;--ember-wash:rgba(192,138,46,.07);
+  --ember:#1E4FD8;
+  --ember-mid:#2F6BFF;--ember-wash:rgba(47,107,255,.07);
   --ok:#2E7D4F;--ok-wash:rgba(46,125,79,.08);
   --display:'Plus Jakarta Sans',system-ui,sans-serif;--body:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'Chivo Mono',ui-monospace,monospace;
   --ease:cubic-bezier(.16,1,.3,1);
@@ -80,7 +81,7 @@ td.num{font-family:var(--mono);font-size:.78rem;color:var(--fg-mute);white-space
 .tag{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;
   text-transform:uppercase;padding:.2rem .45rem;border-radius:4px;border:1px solid var(--rule);color:var(--fg-mute);white-space:nowrap}
 .tag.on{border-color:rgba(46,125,79,.4);color:var(--ok);background:var(--ok-wash)}
-.tag.hot{border-color:rgba(192,138,46,.4);color:var(--ember);background:var(--ember-wash)}
+.tag.hot{border-color:rgba(47,107,255,.4);color:var(--ember);background:var(--ember-wash)}
 .tag.dim{color:var(--fg-faint)}
 
 .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;border-radius:999px;
@@ -194,6 +195,7 @@ body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#16
   <section class="view" data-view="provisioning" id="v-provisioning"></section>
   <section class="view" data-view="billing" id="v-billing"></section>
   <section class="view" data-view="activity" id="v-activity"></section>
+  <section class="view" data-view="ourline" id="v-ourline"></section>
   <section class="view" data-view="deploy" id="v-deploy"></section>
 </main>
 
@@ -241,7 +243,7 @@ async function api(path,opts){
 }
 
 /* ---------------- shell ---------------- */
-const TABS=[["overview","Overview"],["customers","Customers"],["provisioning","Provisioning"],["billing","Billing & FX"],["activity","Activity"],["deploy","Deployment"]];
+const TABS=[["overview","Overview"],["customers","Customers"],["provisioning","Provisioning"],["billing","Billing & FX"],["activity","Activity"],["ourline","Our line"],["deploy","Deployment"]];
 let view="overview";
 function renderTabs(){
   $("#tabs").innerHTML=TABS.map(([k,l])=>`<button data-v="${k}" aria-current="${k===view}">${l}</button>`).join("");
@@ -429,6 +431,9 @@ const DEP=[
  {k:"secrets",t:"Gateway secrets",why:"the values only you should ever hold",
   cred:[["session","SESSION_SECRET","secret","long random hex — Generate →","env"],["aemail","ADMIN_EMAIL","text","you@nabra…","env"],["apass","ADMIN_PASSWORD","secret","","env"],["vtoken","VAPI_WEBHOOK_TOKEN","secret","random — Generate →","VAPI_WEBHOOK_TOKEN"]],
   steps:[["gen","Secrets generated (never the dev defaults)"],["set","All four saved into Railway variables"],["rot","Admin password changed after first login"],["safe","Copies of these live in a password manager, not only here"]]},
+ {k:"askbot",t:"Ask NABRA — the assistant on the site",why:"the chat bubble on the homepage, and the brief behind our own number",
+  cred:[["key","ANTHROPIC_API_KEY","secret","sk-ant-…","ANTHROPIC_API_KEY"],["model","ASK_MODEL","text","claude-sonnet-4-5","ASK_MODEL"]],
+  steps:[["key","Key applied to the gateway — never into the page"],["sectors","Sectors read through on the Our line tab"],["ask","Asked it something on the live site and got a real answer"],["limits","Asked it something it should not know, and it said so"]]},
  {k:"openai",t:"OpenAI — the chat model",why:"the brain behind every conversation",
   cred:[["email","Email","text",""],["pass","Password","secret",""],["key","API key","secret","sk-…","vapi"]],
   steps:[["key","API key created"],["billing","Billing + monthly usage limit set"],["invapi","Key added in Vapi so assistants can use the model"]]},
@@ -570,7 +575,152 @@ function vDeploy(){
 }
 
 const esc=s=>String(s??"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
-const RENDER={overview:vOverview,customers:vCustomers,provisioning:vProvisioning,billing:vBilling,activity:vActivity,deploy:async()=>{await loadSrv();vDeploy();}};
+
+/* ---------------- our own line, and what its agent knows ----------------
+   NABRA's number and the sectors behind it. The same text answers the chat
+   bubble on the site and the phone, so editing a sector here changes both.   */
+let SECTORS=[], SECPHONE={phone:"",note:""};
+
+async function loadSectors(){
+  const d=await api("/api/admin/sectors");
+  if(!d) return false;
+  SECTORS=d.sectors||[]; SECPHONE={phone:d.phone||"",note:d.note||""};
+  return true;
+}
+
+async function vOurLine(){
+  const ok=await loadSectors();
+  const live=SECPHONE.phone.trim();
+  const words=SECTORS.filter(x=>x.active).reduce((n,x)=>n+String(x.body||"").split(/\s+/).filter(Boolean).length,0);
+
+  $("#v-ourline").innerHTML = !ok ? `
+    <div class="card" style="margin-top:0"><h3>Not connected</h3>
+    <p class="dep-note">This tab reads and writes real data, so it needs the gateway. Sign in on the live site.</p></div>` : `
+  <div class="card" style="margin-top:0">
+    <h3>Our phone number</h3>
+    <p class="dep-note">The number shown on the website, under the hero and in the footer. Leave it empty and the
+    site shows no number at all — which is right until a line is actually answering, because a number nobody picks
+    up is the first thing a visitor tests. Saving here applies straight to the live server.</p>
+    <div class="cols2" style="margin-top:.9rem">
+      <div class="cred"><label>Number, as it should read</label>
+        <input id="olPhone" value="${esc(SECPHONE.phone)}" placeholder="+20 10 1234 5678" dir="ltr" spellcheck="false"></div>
+      <div class="cred"><label>One short line beside it, optional</label>
+        <input id="olNote" value="${esc(SECPHONE.note)}" placeholder="Answers 24/7, in Masri or English"></div>
+    </div>
+    <div class="row" style="margin-top:.9rem;display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn" id="olSave">Save the number</button>
+      <button class="btn ghost" id="olPrompt">Show the prompt this line answers with</button>
+      <span class="tag ${live?"on":"dim"}">${live?"showing on the site":"not shown on the site"}</span>
+    </div>
+    <pre id="olPromptOut" class="dep-note" hidden
+         style="white-space:pre-wrap;max-height:22rem;overflow:auto;margin-top:.9rem;padding:.9rem;
+                border:1px solid var(--rule);border-radius:3px;font-size:.8rem;line-height:1.6"></pre>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap">
+      <h3 style="margin:0">What the agent knows, in sectors</h3>
+      <span class="tag dim">${SECTORS.filter(x=>x.active).length} live · ${words.toLocaleString("en-US")} words</span>
+    </div>
+    <p class="dep-note">Everything NABRA knows about itself, split so each part can be changed on its own. Both the
+    Ask NABRA bubble on the website and the agent on the number above answer from exactly this text and nothing else,
+    so neither can drift from the other. Switch a sector off and both stop using it immediately.</p>
+    <p class="dep-note"><b>The sector on what NABRA does not do earns its keep.</b> An agent that oversells is worse
+    than one that says it is not sure.</p>
+    <div id="olList" style="margin-top:1rem"></div>
+    <div class="row" style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn" id="olAdd">Add a sector</button>
+      <button class="btn ghost" id="olRestore">Restore any deleted sector</button>
+    </div>
+  </div>`;
+
+  if(!ok) return;
+  paintSectors();
+
+  $("#olSave").addEventListener("click", async e=>{
+    const b=e.target, was=b.textContent; b.disabled=true; b.textContent="Saving…";
+    const r=await api("/api/admin/config",{method:"POST",body:JSON.stringify({
+      NABRA_PHONE:$("#olPhone").value.trim(), NABRA_PHONE_NOTE:$("#olNote").value.trim() })});
+    b.disabled=false; b.textContent=was;
+    toast(r ? "Saved. The site picks it up on the next page load." : "Could not save.");
+    if(r) vOurLine();
+  });
+
+  $("#olPrompt").addEventListener("click", async ()=>{
+    const out=$("#olPromptOut");
+    if(!out.hidden){ out.hidden=true; return; }
+    const d=await api("/api/admin/line-prompt");
+    out.textContent = d ? d.prompt : "Could not load it.";
+    out.hidden=false;
+  });
+
+  $("#olAdd").addEventListener("click", async ()=>{
+    const title=prompt("What is this sector about? A short title.");
+    if(!title) return;
+    const key=title.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || ("s"+Date.now());
+    const sort=(SECTORS.reduce((m,x)=>Math.max(m,x.sort),0))+10;
+    const r=await api("/api/admin/sectors",{method:"POST",body:JSON.stringify({key,title,body:"",sort})});
+    if(!r){ toast("A sector with that name may already exist."); return; }
+    SECTORS.push(r.sector); paintSectors(); toast("Added. Write what it should say, then save it.");
+  });
+
+  $("#olRestore").addEventListener("click", async ()=>{
+    const r=await api("/api/admin/sectors/restore",{method:"POST",body:"{}"});
+    if(!r) return toast("Could not restore.");
+    toast(r.restored ? `Restored ${r.restored}.` : "Nothing was missing.");
+    if(r.restored) vOurLine();
+  });
+}
+
+function paintSectors(){
+  const box=$("#olList"); if(!box) return;
+  if(!SECTORS.length){ box.innerHTML=`<p class="dep-note">No sectors. The agent would have nothing to answer from.</p>`; return; }
+  box.innerHTML=SECTORS.map(s=>`
+    <details class="svc" data-sid="${s.id}">
+      <summary><span class="ttl">${esc(s.title)}</span>
+        <span class="why">${esc(String(s.body||"").slice(0,90).replace(/\s+/g," "))}${String(s.body||"").length>90?"…":""}</span>
+        <span class="end"><span class="tag ${s.active?"on":"dim"}">${s.active?"live":"off"}</span></span></summary>
+      <div class="bd" style="padding:.9rem 0">
+        <div class="cred"><label>Title</label>
+          <input class="olT" value="${esc(s.title)}"></div>
+        <div class="cred" style="margin-top:.7rem"><label>What the agent knows about this, in its own words</label>
+          <textarea class="olB" rows="10" style="width:100%;font:inherit;font-size:.85rem;line-height:1.65;
+            padding:.7rem;border:1px solid var(--rule);border-radius:3px;background:transparent;color:inherit;
+            resize:vertical">${esc(s.body)}</textarea></div>
+        <div class="row" style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
+          <button class="btn olSave">Save this sector</button>
+          <button class="btn ghost olTog">${s.active?"Switch it off":"Switch it on"}</button>
+          <button class="btn ghost olDel">Delete</button>
+          <span class="tag dim">order ${s.sort}</span>
+        </div>
+      </div>
+    </details>`).join("");
+
+  $$("#olList details").forEach(d=>{
+    const id=d.dataset.sid, row=SECTORS.find(x=>String(x.id)===id); if(!row) return;
+    d.querySelector(".olSave").addEventListener("click", async e=>{
+      const b=e.target, was=b.textContent; b.disabled=true; b.textContent="Saving…";
+      const r=await api("/api/admin/sectors/"+id,{method:"PATCH",body:JSON.stringify({
+        title:d.querySelector(".olT").value, body:d.querySelector(".olB").value })});
+      b.disabled=false; b.textContent=was;
+      if(!r) return toast("Could not save.");
+      Object.assign(row,r.sector); toast("Saved. The site and the phone line both use it from now on.");
+    });
+    d.querySelector(".olTog").addEventListener("click", async ()=>{
+      const r=await api("/api/admin/sectors/"+id,{method:"PATCH",body:JSON.stringify({active:!row.active})});
+      if(!r) return toast("Could not change it.");
+      Object.assign(row,r.sector); paintSectors();
+    });
+    d.querySelector(".olDel").addEventListener("click", async ()=>{
+      if(!confirm(`Delete "${row.title}"? The agent stops knowing it. A seeded sector can be brought back with Restore; one you wrote yourself cannot.`)) return;
+      const r=await api("/api/admin/sectors/"+id,{method:"DELETE"});
+      if(!r) return toast("Could not delete.");
+      SECTORS=SECTORS.filter(x=>String(x.id)!==id); paintSectors(); toast("Deleted.");
+    });
+  });
+}
+
+const RENDER={overview:vOverview,customers:vCustomers,provisioning:vProvisioning,billing:vBilling,activity:vActivity,ourline:vOurLine,deploy:async()=>{await loadSrv();vDeploy();}};
 
 /* boot */
 if(window.NABRA_BOOT&&window.NABRA_BOOT.admin){ $("#whoName").textContent=window.NABRA_BOOT.admin.name||window.NABRA_BOOT.admin.email; }

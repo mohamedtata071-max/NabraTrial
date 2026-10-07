@@ -53,28 +53,34 @@
   --paper:#DEE6F3;
 
   /* navy field — sampled from the reference: a royal navy, not a slate */
+  --void:#04080F;        /* near black, the space the sphere sits in */
+  --navy-deep:#071426;   /* deep navy */
+  --navy:#0B2140;        /* navy */
+  --sig:#1677FF;         /* electric blue, the signal */
+  --sig-lit:#4DA3FF;     /* bright signal */
   --ink:#163466;
   --ink-2:#1B3D77;
   --ink-3:#244C8C;
-  --ink-deep:#0E2450;
+  --ink-deep:#071426;
 
   /* type on light */
   --fg:#14294F;
   --fg-mute:#4A5F86;
-  --fg-faint:#8394B2;
+  --fg-faint:#566888;
   --rule:rgba(22,52,102,.14);
   --rule-soft:rgba(22,52,102,.07);
 
   /* type on navy */
   --on-ink:#EEF3FA;
   --on-ink-mute:rgba(238,243,250,.70);
-  --on-ink-faint:rgba(238,243,250,.45);
+  --on-ink-faint:rgba(238,243,250,.62);
   --rule-ink:rgba(238,243,250,.17);
 
   /* accent — brass, and only for the live line */
-  --ember:#C08A2E;
-  --ember-lit:#E3AA45;
-  --ember-wash:rgba(192,138,46,.11);
+  --ember:#1E4FD8;
+  --ember-mid:#2F6BFF;
+  --ember-lit:#7FA8FF;
+  --ember-wash:rgba(47,107,255,.11);
   --signal:#163466;
 
   /* families */
@@ -100,14 +106,14 @@ html{color-scheme:only light;background:#FCFCFB}
 @media (prefers-color-scheme: dark){
   :root{
     color-scheme: only light;
-    --bone:#FCFCFB; --bone-hi:#FFFFFF; --paper:#F3F3F1;
-    --fg:#0E0F11; --fg-mute:#4A5F86; --fg-faint:#94969B;
-    --rule:rgba(14,15,17,.115); --rule-soft:rgba(14,15,17,.055);
+    --bone:#EEF2F9; --bone-hi:#FFFFFF; --paper:#DEE6F3;
+    --fg:#14294F; --fg-mute:#4A5F86; --fg-faint:#566888;
+    --rule:rgba(22,52,102,.14); --rule-soft:rgba(22,52,102,.07);
   }
-  html,body{background:#FCFCFB !important;color:#0E0F11 !important}
-  .console,.panel,.panel-col,.cs-card,.uc-panel{background:#FFFFFF !important;color:#0E0F11 !important}
-  .console-bar,.console-foot,.wave-band,.panel-top,.stage,.dir,.act{background:#FCFCFB !important}
-  .transcript .turn .txt,.tl-item .bub,.kv .v{color:#0E0F11 !important}
+  html,body{background:#EEF2F9 !important;color:#14294F !important}
+  .console,.panel,.panel-col,.cs-card,.uc-panel{background:#FFFFFF !important;color:#14294F !important}
+  .console-bar,.console-foot,.wave-band,.panel-top,.stage,.dir,.act{background:#EEF2F9 !important}
+  .transcript .turn .txt,.tl-item .bub,.kv .v{color:#14294F !important}
 }
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{
@@ -181,6 +187,11 @@ html[dir="rtl"] .sec-mark .ttl{font-family:var(--ar-body);letter-spacing:0;font-
   padding-block:.95rem;
   background:var(--bone-hi);
   border-bottom:1px solid transparent;
+  /* The white bar meets the navy hero on a knife edge. A soft shadow under it
+     reads as the bar floating above the field rather than being cut into it —
+     the only honest way to soften that join while keeping the bar solid white,
+     which is what it has to be. */
+  box-shadow:0 10px 30px -18px rgba(4,8,15,.9), 0 1px 0 rgba(4,8,15,.06);
   transition:border-color .4s,background .6s var(--ease-out),padding .4s,color .4s;
 }
 /* One header, always a white bar with navy type. It used to be transparent
@@ -225,9 +236,38 @@ html[dir="rtl"] .sec-mark .ttl{font-family:var(--ar-body);letter-spacing:0;font-
 .btn:hover{transform:translateY(-2px)}
 .btn-ghost{background:transparent;color:var(--fg);border-color:var(--rule)}
 .btn-ghost:hover{border-color:var(--fg)}
+/* ---- navy islands on a light page ------------------------------------
+   The page is light, but several pieces are deliberately navy: the hero, the
+   figures, the glass captions, the decision band, the closing call and the
+   footer. Everything inside them was still reading the light page's tokens,
+   so dark type kept landing on a dark field — "See the plans" measured 1.2
+   against its own background, which is invisible.
+
+   Rather than chase each element, the navy containers re-point the tokens
+   themselves. Custom properties cascade, so every descendant picks up the
+   on-dark values without knowing it sits on navy. */
+.hero,.fig,.ovl,.cta-band,.foot{
+  --fg:var(--on-ink);
+  --fg-mute:var(--on-ink-mute);
+  --fg-faint:var(--on-ink-faint);
+  --rule:var(--rule-ink);
+  --rule-soft:rgba(238,243,250,.09);
+  --ember:var(--ember-lit);
+}
+
+/* A ghost button takes --fg. On navy that now resolves light on its own, but
+   it still needs a border and a backdrop that read against a photograph. */
+.hero .btn-ghost,.cta-band .btn-ghost,.fig .btn-ghost{
+  color:var(--on-ink);border-color:rgba(238,243,250,.34);
+  background:rgba(4,8,15,.3);backdrop-filter:blur(6px)}
+.hero .btn-ghost:hover,.cta-band .btn-ghost:hover,.fig .btn-ghost:hover{
+  color:#FFFFFF;border-color:rgba(238,243,250,.75);background:rgba(4,8,15,.5)}
+.hero .btn-ghost svg{opacity:.85}
+/* the accent as TEXT on a navy field needs the lighter tone */
+
 /* the brass button marks the live line, and nothing else */
-.btn-ember{background:var(--ember);border-color:var(--ember);color:#163466;font-weight:600}
-.btn-ember:hover{background:var(--ember-lit);border-color:var(--ember-lit)}
+.btn-ember{background:var(--ember-mid);border-color:var(--ember-mid);color:#FFFFFF;font-weight:600}
+.btn-ember:hover{background:#1E4FD8;border-color:#1E4FD8}
 .btn-sm{padding:.5rem 1rem;font-size:.8rem}
 .nav-cta-mob{display:none}
 
@@ -248,31 +288,57 @@ html[dir="rtl"] .sec-mark .ttl{font-family:var(--ar-body);letter-spacing:0;font-
   background:var(--ink-deep);
   position:relative;min-height:clamp(620px,86svh,900px);
   display:flex;align-items:center;overflow:hidden;
-  padding-top:clamp(5.5rem,11vh,7.5rem);padding-bottom:clamp(3rem,7vh,5rem);
+  /* room at the foot for the dissolve and for the console to climb into */
+  padding-top:clamp(5.5rem,11vh,7.5rem);padding-bottom:clamp(7rem,16vh,11rem);
   z-index:2;
+}
+/* the dissolve: navy → the page, with nothing to catch the eye between them */
+.hero::after{
+  content:"";position:absolute;inset-inline:0;bottom:0;height:46%;
+  z-index:2;pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(238,242,249,0) 0%, rgba(238,242,249,.06) 34%, rgba(238,242,249,.28) 58%,
+    rgba(238,242,249,.68) 78%, rgba(238,242,249,.94) 92%, var(--bone) 100%);
 }
 /* The hero is the switchboard: a deep navy field with the faintest
    signal arcs. No photograph, because the product is a voice. */
-.hero-bg{position:absolute;inset:0;z-index:0;overflow:hidden;background:var(--ink-deep)}
+.hero-bg{position:absolute;inset:0;z-index:0;overflow:hidden;
+  background:
+    radial-gradient(120% 100% at 72% 42%, #0C2546 0%, #071426 46%, #04080F 100%)}
+#sphereImg{
+  /* a right-hand panel, not a full-bleed background: the headline keeps clean
+     dark space on the left and the lit limb stays visible */
+  position:absolute;top:0;bottom:0;inset-inline-end:0;z-index:0;
+  width:min(68%, 1240px);height:100%;object-fit:cover;object-position:left center;
+  -webkit-mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.5) 18%, #000 46%);
+          mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.5) 18%, #000 46%);
+}
+html[dir="rtl"] #sphereImg{transform:scaleX(-1)}
+@media(max-width:860px){
+  /* On a phone the sphere is the bottom half of the first screen, not a wash
+     behind the text. It was masked down to almost nothing before, which threw
+     away the one image the page is built around. */
+  /* Wider than the viewport on purpose. At exactly 100% the image scaled to
+     the box height with nothing left over, so object-position had nothing to
+     crop and the whole picture showed — including the stray words baked into
+     the bottom-left of the original render. Overflowing the width gives the
+     crop something to work with, and being wider than the screen means there
+     is still no visible edge. */
+  /* the global img{max-width:100%} reset caps this at the viewport, which is
+     what silently turned 132% back into 100% and put the edge on screen */
+  #sphereImg{width:132%;max-width:none;height:53%;top:auto;bottom:0;
+    inset-inline-start:-16%;inset-inline-end:auto;
+    object-fit:cover;object-position:center 18%;opacity:1;
+    -webkit-mask-image:linear-gradient(180deg, transparent 0%, rgba(0,0,0,.5) 12%, #000 30%);
+            mask-image:linear-gradient(180deg, transparent 0%, rgba(0,0,0,.5) 12%, #000 30%)}
+}
 .hero-bg::before{
-  content:"";position:absolute;inset:0;
-  background:
-    radial-gradient(120% 90% at 78% 18%, rgba(23,54,90,.95) 0%, rgba(14,36,80,0) 62%),
-    radial-gradient(80% 60% at 8% 92%, rgba(192,138,46,.14) 0%, rgba(14,36,80,0) 58%);
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(70% 55% at 6% 72%, rgba(22,119,255,.10) 0%, rgba(4,8,15,0) 62%);
 }
-/* concentric arcs, like a signal leaving the exchange */
-.hero-bg::after{
-  content:"";position:absolute;inset-inline-end:-18%;top:50%;translate:0 -50%;
-  width:min(78vw,900px);aspect-ratio:1;border-radius:50%;
-  background:
-    repeating-radial-gradient(circle at center,
-      rgba(238,243,250,.055) 0 1px, rgba(238,243,250,0) 1px 58px);
-  mask-image:radial-gradient(circle at center, #000 38%, transparent 72%);
-}
-html[dir="rtl"] .hero-bg::after{inset-inline-end:auto;inset-inline-start:-18%}
 .hero-scrim{
   position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(90deg, rgba(14,36,80,.92) 0%, rgba(14,36,80,.72) 42%, rgba(14,36,80,.22) 72%, transparent 100%);
+  background:linear-gradient(90deg, rgba(4,8,15,.88) 0%, rgba(4,8,15,.58) 38%, rgba(4,8,15,.10) 64%, transparent 86%);
 }
 html[dir="rtl"] .hero-scrim{transform:scaleX(-1)}
 
@@ -308,16 +374,20 @@ html[dir="rtl"] .hero-langline .lgl.hot::after{transform-origin:right}
 .talk-btn{
   display:inline-flex;align-items:center;gap:.9rem;
   padding:.95rem 1.5rem .95rem 1.15rem;border-radius:999px;
-  background:var(--fg);color:var(--bone-hi);font-size:1rem;font-weight:500;
-  box-shadow:0 14px 34px -14px rgba(14,15,17,.55);
+  /* The one bright thing on the page, as in the reference. It read as
+     var(--fg) when the page was light; on a dark ground that is near-white,
+     which is not a call to action, it is a blank pill. */
+  background:linear-gradient(100deg,var(--sig) 0%,var(--ember-mid) 55%,#5B8CFF 100%);
+  color:#FFFFFF;font-size:1rem;font-weight:600;
+  box-shadow:0 14px 38px -12px rgba(22,119,255,.55), inset 0 1px 0 rgba(255,255,255,.18);
   transition:transform .35s var(--ease-out),box-shadow .35s;
   position:relative;overflow:hidden;
 }
 html[dir="rtl"] .talk-btn{padding:.95rem 1.15rem .95rem 1.5rem}
-.talk-btn:hover{transform:translateY(-2px);box-shadow:0 18px 40px -14px rgba(14,15,17,.6)}
+.talk-btn:hover{transform:translateY(-2px);box-shadow:0 20px 46px -12px rgba(22,119,255,.68), inset 0 1px 0 rgba(255,255,255,.22)}
 .talk-btn .mic-ring{
   width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;
-  background:rgba(252,252,251,.14);position:relative;
+  background:rgba(255,255,255,.18);position:relative;
 }
 .talk-btn .mic-ring::before{
   content:"";position:absolute;inset:0;border-radius:50%;border:1px solid rgba(252,252,251,.5);
@@ -341,6 +411,41 @@ html[dir="rtl"] .talk-btn{padding:.95rem 1.15rem .95rem 1.5rem}
   text-transform:uppercase;color:var(--fg-faint);
 }
 html[dir="rtl"] .hero-support{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.76rem}
+
+/* three facts, read at a glance rather than in a line of fine print */
+.hero-facts{
+  list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:1.4rem;margin-top:2.6rem;max-width:30rem;
+}
+.hero-facts li{display:flex;flex-direction:column;gap:.55rem;align-items:flex-start}
+.hero-facts svg{width:19px;height:19px;color:var(--ember-lit);flex:none}
+.hero-facts b{
+  font-family:var(--mono);font-size:.58rem;letter-spacing:.11em;text-transform:uppercase;
+  font-weight:500;color:var(--on-ink-mute);line-height:1.6;
+}
+html[dir="rtl"] .hero-facts b{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.78rem}
+@media(max-width:860px){
+  .hero-facts{gap:1rem;margin-top:1.9rem;max-width:none}
+  .hero-facts b{font-size:.54rem;letter-spacing:.08em;
+    /* they sit over the lit limb on a phone, so they carry their own shadow
+       rather than a panel, which would box in the picture */
+    text-shadow:0 1px 10px rgba(4,8,15,.95),0 0 26px rgba(4,8,15,.8)}
+  .hero-facts svg{filter:drop-shadow(0 1px 8px rgba(4,8,15,.9))}
+  html[dir="rtl"] .hero-facts b{font-size:.72rem}
+}
+
+/* NABRA's own line, under the hero. Quiet by design: it is a second way in,
+   not a competing call to action. Hidden until the server confirms a number. */
+.hero-line{margin-top:.75rem;font-size:.9rem;color:var(--fg-mute);display:flex;
+           flex-wrap:wrap;align-items:baseline;gap:.5rem}
+.hero-line[hidden]{display:none}
+.hero-line a{font-family:var(--mono);font-size:1rem;letter-spacing:.02em;color:var(--ember-lit);
+             text-decoration:none;border-bottom:1px solid rgba(127,168,255,.35);padding-bottom:1px;
+             transition:color .3s,border-color .3s;white-space:nowrap}
+.hero-line a:hover{color:#FFFFFF;border-color:#FFFFFF}
+.hero-line-note{font-size:.82rem;color:var(--fg-faint)}
+#footLineLi[hidden]{display:none}
+#footLineNum{font-family:var(--mono);white-space:nowrap}
 
 /* the live capsule — mirrors the console, sized for a hero */
 .hero-cap{
@@ -378,13 +483,20 @@ html[dir="rtl"] .hero-scroll{font-family:var(--ar-body);letter-spacing:0;text-tr
 /* ---- mobile hero: the navy field runs the full height ---- */
 @media(max-width:900px){
   .hero{min-height:auto;padding-top:6rem;padding-bottom:clamp(2.2rem,7vh,3.4rem)}
-  /* a light scrim here would strand the copy on white: hold the field dark
-     and let the arcs fade out instead */
+  /* The scrim darkens the space BEHIND the words, which on a phone is the top
+     of the screen. It used to do the opposite — 96% opaque navy at the bottom,
+     exactly where the sphere sits — so the one image this page is built around
+     came out as a smudge. Dark at the top, clear over the picture. */
   .hero-scrim{
     background:linear-gradient(180deg,
-      rgba(14,36,80,.30) 0%, rgba(14,36,80,.55) 34%, rgba(14,36,80,.86) 72%, rgba(14,36,80,.96) 100%);
+      rgba(4,8,15,.94) 0%, rgba(4,8,15,.88) 26%, rgba(4,8,15,.52) 40%,
+      rgba(4,8,15,.14) 52%, transparent 66%);
   }
   html[dir="rtl"] .hero-scrim{transform:none}
+  /* near black under the sphere: a lifted navy reads brighter than the
+     picture's own night side and flattens the lit limb into the backdrop */
+  .hero-bg{background:radial-gradient(140% 52% at 50% 2%, #0A1E3A 0%, #060D1A 40%, #04080F 100%)}
+  .hero-bg::before{background:none}
   .hero-bg::after{inset-inline-end:-48%;top:26%;width:min(135vw,720px);opacity:.7}
   html[dir="rtl"] .hero-bg::after{inset-inline-start:-48%;inset-inline-end:auto}
   .hero-inner{padding-top:clamp(16px,4svh,48px)}
@@ -404,7 +516,21 @@ html[dir="rtl"] .hero-scroll{font-family:var(--ar-body);letter-spacing:0;text-tr
 /* ============================================================
    CONSOLE — the live voice demo
    ============================================================ */
-.console-wrap{position:relative;z-index:3;padding-bottom:clamp(3rem,7vw,5.5rem)}
+/* ---- the seam, and how it is removed ---------------------------------
+   The hero used to stop dead: navy, then a razor line, then the light page.
+   Two things fix it, and neither is a border.
+
+   1. The hero dissolves. A tall gradient over its last third fades the navy
+      into the page colour, so there is no edge to notice — the earth simply
+      runs out of night.
+   2. The demo console rises INTO that dissolve. Pulling it up by a third of
+      its own height interlocks the two sections instead of stacking them,
+      and the panel reads as lifting out of the hero rather than sitting
+      under it. */
+.console-wrap{
+  position:relative;z-index:3;padding-bottom:clamp(3rem,7vw,5.5rem);
+  margin-top:clamp(-150px,-13vw,-80px);
+}
 .console{
   background:var(--bone-hi);color:var(--fg);border-radius:22px;overflow:hidden;
   border:1px solid var(--rule);box-shadow:0 18px 44px -30px rgba(14,15,17,.35);
@@ -709,7 +835,7 @@ html[dir="rtl"] .fig .said b{font-family:var(--ar-body);letter-spacing:0;font-si
 .fig .said u{display:block;text-decoration:none;height:7px;border-radius:99px;background:rgba(238,243,250,.13)}
 .fig .said u+u{margin-top:.3rem}
 .fig .said .them u{background:rgba(238,243,250,.13)}
-.fig .said .us u{background:rgba(192,138,46,.32)}
+.fig .said .us u{background:rgba(47,107,255,.32)}
 .fig .said .us{padding-inline-start:1.1rem}
 /* the panels keep the proportions the layout was built around */
 .fig[data-crop="inbound"]{aspect-ratio:1360/906}
@@ -719,9 +845,11 @@ html[dir="rtl"] .fig .said b{font-family:var(--ar-body);letter-spacing:0;font-si
 /* ---- floating UI that belongs to the product, not to the photo ---- */
 .ovl{
   position:absolute;z-index:3;
-  background:rgba(238,243,250,.96);
-  backdrop-filter:blur(10px) saturate(1.1);
-  border:1px solid rgba(22,52,102,.1);border-radius:12px;
+  /* dark glass, not light: these sit on the photograph, and a near-white card
+     here left its own label at 1.0 contrast — invisible */
+  background:rgba(7,14,26,.82);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border:1px solid rgba(233,239,249,.14);border-radius:12px;
   box-shadow:0 14px 38px -16px rgba(14,36,80,.75);
   padding:.6rem .8rem;
   opacity:0;transform:translateY(12px);
@@ -1006,9 +1134,9 @@ html[dir="rtl"] .cycswitch button:last-child{border-radius:99px 0 0 99px}
 .cycswitch button[aria-pressed="true"]{background:#0E0F11;color:#FFFFFF;border-color:#0E0F11}
 .cycswitch .save{
   font-size:.6rem;padding:.14rem .5rem;border-radius:99px;
-  background:var(--ember,#e2552b);color:#fff;letter-spacing:.06em;white-space:nowrap}
+  background:var(--ember-mid);color:#fff;letter-spacing:.06em;white-space:nowrap}
 html[dir="rtl"] .cycswitch .save{font-size:.72rem;letter-spacing:0}
-.cycswitch button[aria-pressed="true"] .save{background:var(--ember,#e2552b)}
+.cycswitch button[aria-pressed="true"] .save{background:var(--ember-mid)}
 .plan .was{font-size:.9rem;color:var(--fg-faint);text-decoration:line-through;margin-inline-end:.2rem;font-family:var(--display)}
 .plan .yline{font-size:.78rem;color:var(--fg-mute);line-height:1.5;margin:-.7rem 0 1.2rem}
 .plan .yline b{color:var(--fg)}
@@ -1089,6 +1217,9 @@ html[dir="rtl"] .numhead h3{font-family:var(--ar-display);font-size:clamp(1.3rem
 .numhead p{font-size:.88rem;color:var(--fg-mute);max-width:46ch;line-height:1.7}
 .numgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:14px;overflow:hidden}
 @media(max-width:860px){.numgrid{grid-template-columns:1fr}}
+/* only one way onto a line now, so the grid holds a single card */
+.numgrid.one{grid-template-columns:1fr}
+.numgrid.one .numcard{min-height:0;padding:1.6rem 1.5rem}
 .numcard{background:var(--bone-hi);padding:1.5rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;min-height:210px}
 .numcard .ntag{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.3rem}
 .numcard .ntag span{font-family:var(--mono);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;
@@ -1254,10 +1385,11 @@ html[dir="rtl"] #connect .hop .who{font-family:var(--ar-body);letter-spacing:0;t
 @media (prefers-reduced-motion:reduce){#connect .hop .mk{transition:none}}
 
 /* ==== FORCED-DARK HARDENING ====================================
-   Some in-app browsers (notably iOS) repaint pages that theme via
-   CSS variables. Literal values plus !important cannot be reached
-   that way. The navy sections are deliberate, so they are pinned
-   dark with light type rather than forced back to white. */
+   Some in-app browsers, iOS above all, repaint pages that theme
+   through CSS variables. Literal values with !important cannot be
+   reached that way. The page is light; the hero and the footer are
+   deliberately navy, so those are pinned dark with light type
+   rather than being forced back to white. */
 html{color-scheme:only light !important;background:#EEF2F9 !important;background-color:#EEF2F9 !important}
 body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#163466 !important}
 @media (prefers-color-scheme:dark){
@@ -1265,29 +1397,28 @@ body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#16
   html,body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#163466 !important}
 
   /* light surfaces stay light, with navy type */
-  .plan,.sheet,#connect .cn-step,#connect .hop .mk{background:#FFFFFF !important}
+  .plan,.sheet,#connect .cn-step,#connect .hop .mk,.numcard{background:#FFFFFF !important}
   .nav{background:#FFFFFF !important;border-bottom-color:rgba(22,52,102,.14) !important}
   .nav .brand .mk,.nav a.nav-link,.nav .nav-links a,.nav .lang-trigger{color:#163466 !important}
   .nav .brand .ar{color:#4A5F86 !important}
   .ser,h1,h2,h3,h4{color:#163466 !important}
   .lede,.hop p,.cn-step p{color:#4A5F86 !important}
-  .langsel button[aria-pressed="true"]{color:#FFFFFF !important}
-  .langsel .thumb{background:#163466 !important}
   .btn,.cycswitch button[aria-pressed="true"],.cyc button[aria-pressed="true"],
-  #connect .dirsw button[aria-pressed="true"],#connect .playbtn,#connect .hop.lit .mk{
+  #connect .dirsw button[aria-pressed="true"],#connect .playbtn{
     background:#163466 !important;color:#FFFFFF !important}
-  /* the brass action is the one thing that must not turn navy: it is the only
-     accent on the page and it marks the thing we want pressed */
-  .btn-ember{background:#C08A2E !important;border-color:#C08A2E !important;color:#0E2450 !important}
-  .btn-ember:hover{background:#E3AA45 !important;border-color:#E3AA45 !important}
+  /* the one accent on the page, and the thing we want pressed */
+  .btn-ember{background:#2F6BFF !important;border-color:#2F6BFF !important;color:#FFFFFF !important}
+  .btn-ember:hover{background:#5B8CFF !important;border-color:#5B8CFF !important}
 
   /* the navy field is intentional: hold it, and keep its type light */
   .hero-bg{background:#0E2450 !important}
   .fig{background:#163466 !important}
   .hero h1,.hero .ser{color:#EEF3FA !important}
   .hero .lede,.hero p{color:rgba(238,243,250,.72) !important}
-  .hero .hero-langline .lgl{color:rgba(238,243,250,.72) !important}
-  .hero .hero-langline .lgl.hot{color:#EEF3FA !important}
+  .hero-facts b{color:rgba(238,243,250,.72) !important}
+  .ovl{background:rgba(7,14,26,.82) !important}
+  .ovl .ov{color:#EEF3FA !important}
+  .ovl .ol{color:rgba(238,243,250,.6) !important}
   .foot{background:#0E2450 !important;background-color:#0E2450 !important}
   .foot,.foot a,.foot span,.foot p,.foot small,.foot b,.foot h1,.foot h2,.foot h3,.foot h4{color:#EEF3FA !important}
 }
@@ -1450,8 +1581,16 @@ html[dir="rtl"] .lang-menu button{text-align:start}
 .vid-facade img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
 .vid-facade .play{position:relative;width:62px;height:62px;border-radius:50%;background:var(--ember);
   display:grid;place-items:center;box-shadow:0 14px 34px -12px rgba(7,18,40,.7)}
-.vid-facade .play svg{width:20px;height:20px;margin-inline-start:3px;fill:#0E2450}
+.vid-facade .play svg{width:20px;height:20px;margin-inline-start:3px;fill:#FFFFFF}
 .vid-note{margin-top:.9rem;font-size:.88rem;color:var(--fg-mute);max-width:60ch}
+
+/* The accent has two weights for a reason: the deep blue is for text on paper,
+   the light blue for text on navy. Anything sitting on a navy field takes the
+   light one, or it disappears into the background. */
+.hero .ital,.hero .kicker,.hero .eyebrow,.hero .hero-cap .hlang,
+.cta-band .ital,.foot a:hover,.fig .call-top .live{color:var(--ember-lit)}
+.hero-langline .lgl.hot::after,.cta-band .btn-ember{background:var(--ember-mid)}
+.vid-facade .play{background:var(--ember-mid)}
 </style>
 </head>
 <body>
@@ -1498,41 +1637,56 @@ html[dir="rtl"] .lang-menu button{text-align:start}
 <main id="main">
 <header class="hero" id="top">
   <div class="hero-bg">
-    </div>
+    <img id="sphereImg" alt="" aria-hidden="true" decoding="async" fetchpriority="high" src="data:image/webp;base64,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">
+  </div>
   <div class="hero-scrim"></div>
 
   <div class="hero-inner">
     <div class="hero-copy">
       <div class="hero-tag">
         <span class="pip"></span>
-        <span class="eyebrow" data-i18n="hero.tag">Real-time voice agents · Cairo</span>
+        <span class="eyebrow" data-i18n="hero.tag">Real business conversations</span>
       </div>
 
       <h1 class="ser h-xl hero-h" data-i18n="hero.h" data-i18n-html>It answers the phone in the language they <span class="ital">actually</span> speak.</h1>
 
-      <p class="lede hero-sub" style="margin-top:1.3rem" data-i18n="hero.sub">Inbound and outbound calls, handled end to end by an agent that hears Egyptian Arabic the way it is really spoken.</p>
-
-      <div class="hero-langline">
-        <span class="lgl" data-i18n="hl.en">English</span>
-        <span class="sep">·</span>
-        <span class="lgl ar" data-i18n="hl.ar">العربية</span>
-        <span class="sep">·</span>
-        <span class="lgl ar hot" data-i18n="hl.eg">مصري</span>
-      </div>
+      <p class="lede hero-sub" style="margin-top:1.3rem" data-i18n="hero.sub">AI voice agents for real businesses. Inbound and outbound calls, handled end to end, in English, Arabic and Egyptian Arabic.</p>
 
       <div class="hero-actions">
         <button class="talk-btn" id="talkBtn" data-start-mic>
           <span class="mic-ring">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 11v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
           </span>
-          <span id="talkLabel" data-i18n="hero.cta1">Talk to the AI</span>
+          <span id="talkLabel" data-i18n="hero.cta1">Talk to the AI →</span>
           <span class="tbars" id="tbars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
         </button>
-        <a href="#plans" class="btn btn-ember btn-hero" data-i18n="hero.ctaStart">Create your agent</a>
-        <a href="#calls" class="plain" data-i18n="hero.cta2">See how a call runs</a>
+        <a href="#calls" class="btn btn-ghost btn-hero" data-i18n="hero.cta2">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="13" height="13"><polygon points="6,4 20,12 6,20"/></svg>
+          See how it works</a>
       </div>
 
-      <p class="hero-support" data-i18n="hero.support">Inbound + outbound · real-time transcription · live handover</p>
+      <!-- Three facts, not a sentence of them. The reference puts these under
+           the fold of the first screen as icons; a mono strip of the same words
+           read as fine print and nobody looked at it. -->
+      <ul class="hero-facts">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8.1 9.6a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2z"/></svg>
+          <b data-i18n="hf.1">Inbound + outbound</b></li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <b data-i18n="hf.2">Masri, Arabic, English</b></li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <b data-i18n="hf.3">Built for real businesses</b></li>
+      </ul>
+
+      <!-- NABRA's own line. Stays hidden until the server says there is a number
+           to show: a number that nobody answers is worse than no number. -->
+      <p class="hero-line" id="heroLine" hidden>
+        <span data-i18n="hero.callus">Or call it from any phone</span>
+        <a id="heroLineNum" href="#" dir="ltr"></a>
+        <span class="hero-line-note" id="heroLineNote"></span>
+      </p>
 
       <aside class="hero-cap" id="heroCap" aria-live="polite">
         <div class="hcap-top">
@@ -1620,7 +1774,7 @@ html[dir="rtl"] .lang-menu button{text-align:start}
           <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5 5 19"/><path d="M19 15v4h-4"/></svg></span>
           <h3 data-i18n="s3.in">Inbound</h3>
         </div>
-        <p class="dlede" data-i18n="s3.inp">Nobody waits on hold, nobody hears a menu, and nothing rings out after 6pm.</p>
+        <p class="dlede" data-i18n="s3.inp">No hold music, no menu, nothing rings out after 6pm.</p>
         <div class="flow">
           <div class="fstep"><span class="node"></span><span><span class="ft" data-i18n="s3.i1">Customer calls your number</span><span class="fs" data-i18n="s3.i1s">Answered on the first ring, 24/7</span></span></div>
           <div class="fstep"><span class="node"></span><span><span class="ft" data-i18n="s3.i2">Agent greets in Masri</span><span class="fs" data-i18n="s3.i2s">Switches to English if the caller does</span></span></div>
@@ -1641,9 +1795,9 @@ html[dir="rtl"] .lang-menu button{text-align:start}
           <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 19 19 5"/><path d="M9 5h10v10"/></svg></span>
           <h3 data-i18n="s3.out">Outbound</h3>
         </div>
-        <p class="dlede" data-i18n="s3.outp">Every lead in the sheet gets called, qualified and logged — on the same day it arrives.</p>
+        <p class="dlede" data-i18n="s3.outp">Every lead called, qualified and logged, the day it arrives.</p>
         <div class="flow">
-          <div class="fstep"><span class="node"></span><span><span class="ft" data-i18n="s3.o1">List loaded</span><span class="fs" data-i18n="s3.o1s">CSV, CRM sync, or webhook per lead</span></span></div>
+          <div class="fstep"><span class="node"></span><span><span class="ft" data-i18n="s3.o1">List loaded</span><span class="fs" data-i18n="s3.o1s">Leads added to the list in your dashboard</span></span></div>
           <div class="fstep"><span class="node"></span><span><span class="ft" data-i18n="s3.o2">Agent dials</span><span class="fs" data-i18n="s3.o2s">Inside your calling window and pacing rules</span></span></div>
           <div class="fstep"><span class="node"></span><span><span class="ft" data-i18n="s3.o3">Qualifies naturally</span><span class="fs" data-i18n="s3.o3s">Budget, timeline, decision maker</span></span></div>
           <div class="fstep"><span class="node"></span><span><span class="ft" data-i18n="s3.o4">Books or hands over</span><span class="fs" data-i18n="s3.o4s">Live transfer to a rep on hot leads</span></span></div>
@@ -1745,11 +1899,7 @@ html[dir="rtl"] .lang-menu button{text-align:start}
       </ul>
       <p class="cn-note" data-nk="briefNote"></p>
     </div>
-        <h4 data-nk="s1h"></h4><p data-nk="s1p"></p><div class="cn-say" data-nk="s1say"></div></article>
-      <article class="cn-step"><div class="n">2</div>
-        <h4 data-nk="s2h"></h4><p data-nk="s2p"></p><div class="cn-say" data-nk="s2say"></div></article>
-      <article class="cn-step"><div class="n">3</div>
-        <h4 data-nk="s3h"></h4><p data-nk="s3p"></p><div class="cn-say" data-nk="s3say"></div></article>
+        <h4 data-nk="s1h"></h4><p data-nk="s1p"></p></article>
     </div>
   </div>
 </section>
@@ -1760,50 +1910,38 @@ html[dir="rtl"] .lang-menu button{text-align:start}
       <span class="ttl" data-i18n="s7.mark">Go live</span>
     </div>
     <h2 class="ser h-lg rv" style="margin-bottom:1rem" data-i18n="s7.h">Your agent is answering by this afternoon.</h2>
-    <p class="lede rv" data-d="1" style="margin-bottom:2.8rem" data-i18n="s7.p">No integration project, no engineering sprint. Four steps from signing up to a live number your customers can call.</p>
+    <p class="lede rv" data-d="1" style="margin-bottom:2.8rem" data-i18n="s7.p">Four steps from signing up to a number your customers can call.</p>
 
     <div class="deploy rv" data-d="2">
-      <div class="dstep"><span class="dn">01</span><span class="dt" data-i18n="s7.d1">Create the account</span><span class="dd" data-i18n="s7.d1s">Pick a plan and pay by card. Live in under a minute.</span></div>
-      <div class="dstep"><span class="dn">02</span><span class="dt" data-i18n="s7.d2">Write the script</span><span class="dd" data-i18n="s7.d2s">Paste what your team says on a call. Plain Masri is fine.</span></div>
-      <div class="dstep"><span class="dn">03</span><span class="dt" data-i18n="s7.d3">Pick the voice, connect the line</span><span class="dd" data-i18n="s7.d3s">Choose a dialect and voice, then connect the number you already use, hotline included.</span></div>
-      <div class="dstep"><span class="dn">04</span><span class="dt" data-i18n="s7.d4">Go live</span><span class="dd" data-i18n="s7.d4s">Take inbound calls, or upload a list and start dialling.</span></div>
+      <div class="dstep"><span class="dn">01</span><span class="dt" data-i18n="s7.d1">Create the account</span><span class="dd" data-i18n="s7.d1s">Pick a plan, pay by card.</span></div>
+      <div class="dstep"><span class="dn">02</span><span class="dt" data-i18n="s7.d2">Write the script</span><span class="dd" data-i18n="s7.d2s">Paste what your team already says. Masri is fine.</span></div>
+      <div class="dstep"><span class="dn">03</span><span class="dt" data-i18n="s7.d3">Pick the voice, connect the line</span><span class="dd" data-i18n="s7.d3s">A dialect, a voice, and the number you already use.</span></div>
+      <div class="dstep"><span class="dn">04</span><span class="dt" data-i18n="s7.d4">Go live</span><span class="dd" data-i18n="s7.d4s">Answer calls, or start dialling a list.</span></div>
     </div>
 
 
     <div class="numblock rv" data-d="3">
       <div class="numhead">
         <h3 data-i18n="n.h">Your number stays your number.</h3>
-        <p data-i18n="n.p">Keep the hotline already printed on your vans and invoices. Nothing your customers know has to change.</p>
+        <p data-i18n="n.p">Keep the hotline printed on your vans. Nothing your customers know changes.</p>
       </div>
 
-      <div class="numgrid">
+      <div class="numgrid one">
         <div class="numcard">
-          <div class="ntag"><span class="hot" data-i18n="n.a1">Live today</span><span data-i18n="n.a2">Works with hotlines</span></div>
-          <span class="nt" data-i18n="n.1t">Forward the number you have</span>
-          <span class="nd" data-i18n="n.1d">Set unconditional forwarding from your existing line to the connector number we issue you. Works with any number, including a 16xxx or 19xxx hotline, and needs nothing from your operator.</span>
-          <span class="nx" data-i18n="n.1x">Same day · no paperwork</span>
-        </div>
-        <div class="numcard">
-          <div class="ntag"><span data-i18n="n.b1">Best audio</span></div>
-          <span class="nt" data-i18n="n.2t">Point your SIP trunk at us</span>
-          <span class="nd" data-i18n="n.2d">If you already run a PBX or a SIP trunk, route calls to us directly instead of forwarding them. Cleaner audio and no per-minute forwarding charge from your carrier.</span>
-          <span class="nx" data-i18n="n.2x">A few hours · needs your PBX admin</span>
+          <div class="ntag"><span class="hot" data-i18n="n.b1">One way in</span><span data-i18n="n.a2">Works with hotlines</span></div>
+          <span class="nt" data-i18n="n.2t">We answer the number you already have</span>
+          <span class="nd" data-i18n="n.2d">Your number does not change and it stays in your name with your operator. Calls run both ways on it. We set the connection up with you after you sign up.</span>
+          <span class="nx" data-i18n="n.2x">A few days · one call to your operator</span>
         </div>
         </div>
 
-      <div class="verify">
+      <div class="verify verify-slim">
         <h4>
           <span class="vlock"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
           <span data-i18n="n.vh">Proving the number is yours</span>
         </h4>
-        <p data-i18n="n.vp">Caller ID alone proves nothing — it can be forged. So we ask for two independent things: that you can place a call from the line, and that you can answer one on it.</p>
-        <div class="vsteps">
-          <div class="vstep"><span class="vn">01</span><span class="vt" data-i18n="n.v1t">Call us from the line</span><span class="vd" data-i18n="n.v1d">We show a six-digit code. Ring our verification number from the line you are claiming and key the code in. We match the code against the caller ID.</span></div>
-          <div class="vstep"><span class="vn">02</span><span class="vt" data-i18n="n.v2t">We call you back</span><span class="vd" data-i18n="n.v2d">A second code is read out to whoever answers that line. You enter it here. Possession of the number now has to be genuine, not spoofed.</span></div>
-          <div class="vstep"><span class="vn">03</span><span class="vt" data-i18n="n.v3t">A live test call</span><span class="vd" data-i18n="n.v3d">Once forwarding or your SIP route is set, we place a real call and confirm it lands on your agent before anything goes live.</span></div>
-          <div class="vstep"><span class="vn">04</span><span class="vt" data-i18n="n.v4t">Paperwork, only for porting</span><span class="vd" data-i18n="n.v4d">Moving a number to us needs a signed authorisation and a recent operator invoice in your company name. Forwarding and SIP need neither.</span></div>
-        </div>
-        <p class="vnote" data-i18n="n.vn">A number can be active on one account at a time. Attempts are rate-limited and locked after repeated failures, every verification is logged, and we re-verify annually or whenever account ownership changes.</p>
+        <p data-i18n="n.vp2">Caller ID can be forged, so we check two things you cannot fake: that you can call out
+        from the line, and that you can answer on it. Then a real test call, before anything goes live.</p>
       </div>
     </div>
 
@@ -1821,7 +1959,7 @@ html[dir="rtl"] .lang-menu button{text-align:start}
         <p class="yline" id="p1y"></p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.1f1">1 agent, 1 phone number</span></li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.1f2">Inbound calls</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.1f2">Inbound and outbound calls</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.1f3">Masri, Arabic and English</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.1f4">Transcripts and recordings</span></li>
         </ul>
@@ -1831,13 +1969,13 @@ html[dir="rtl"] .lang-menu button{text-align:start}
       <div class="plan lead">
         <span class="tagline" data-i18n="pl.pop">Most teams</span>
         <div class="pn" data-i18n="pl.2n">Growth</div>
-        <p class="pd" data-i18n="pl.2d">Inbound and outbound together, with your CRM and calendar wired in.</p>
+        <p class="pd" data-i18n="pl.2d">More agents, more numbers, and one line that does several jobs at once.</p>
         <div class="pprice"><span class="amt" id="p2"><span class="was" id="p2w"></span><span id="p2a">—</span></span><span class="per" id="p2per" data-i18n="pl.per">per month</span></div>
         <p class="egpline" id="p2e"></p>
         <p class="yline" id="p2y"></p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.2f1"><b>Everything in Starter</b></span></li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.2f2">Outbound campaigns and auto-dialling</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.2f2">Several setups on one number — sales, support, reservations</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.2f3">Live transfer to your sales team</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.2f4">Bookings, with a calendar feed you can subscribe to</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.2f5">Multiple agents and numbers</span></li>
@@ -2016,6 +2154,7 @@ html[dir="rtl"] .lang-menu button{text-align:start}
       <div>
         <h4 data-i18n="f.h4">Company</h4>
         <ul>
+          <li id="footLineLi" hidden><a id="footLineNum" href="#" dir="ltr"></a></li>
           <li><a href="/login" data-i18n="nav.login">Log in</a></li>
           <li><a href="/legal#privacy" data-i18n="f.priv">Privacy Policy</a></li>
           <li><a href="/legal#terms" data-i18n="f.tos">Terms of Service</a></li>
@@ -2047,12 +2186,12 @@ const I18N = {
 en:{
   "skip":"Skip to the live voice demo",
   "nav.demo":"Live demo","nav.dialect":"Masri","nav.calls":"Calls","nav.work":"Use cases","nav.cta":"Talk to it",
-  "hero.tag":"Real-time voice agents · Cairo",
+  "hero.tag":"Real business conversations",
   "hero.h":"It answers the phone in the language they <span class='ital'>actually</span> speak.",
-  "hero.sub":"Inbound and outbound calls, handled end to end by a voice agent that hears Egyptian Arabic the way it's really spoken — half-swallowed words, English loaned mid-sentence, and all.",
+  "hero.sub":"AI voice agents for real businesses. Inbound and outbound calls, handled end to end, in English, Arabic and Egyptian Arabic.",
   "chip.en":"English","chip.ar":"العربية الفصحى","chip.eg":"مصري — Masri","chip.mix":"عربي + English",
-  "hero.cta1":"Press and speak","hero.cta2":"See how a call runs",
-  "hero.ctaStart":"Create your agent","nav.start":"Create agent","vid.eyebrow":"See it working","vid.h":"Watch it, rather than read about it.","vid.p":"Short films, no sign-up needed. Each one is a few minutes.","nav.watch":"Watch",
+  "hero.cta1":"Talk to the AI →","hero.cta2":"See how it works",
+  "hero.ctaStart":"Create your agent","hf.1":"Inbound + outbound","hf.2":"Masri, Arabic, English","hf.3":"Built for real businesses","hero.callus":"Or hear it yourself \u2014 call","hero.callnote":"It is the same agent this page is about.","nav.start":"Create agent","vid.eyebrow":"See it working","vid.h":"Watch it, rather than read about it.","vid.p":"Short films, no sign-up needed. Each one is a few minutes.","nav.watch":"Watch",
   "band.h":"Your agent can be answering this afternoon.",
   "band.p":"Pick a plan, teach it your business, test it on your own phone. No integration project, no engineer.",
   "band.cta":"Create your agent","band.alt":"Or talk to it first",
@@ -2084,14 +2223,14 @@ en:{
   "s2.a5":"Voice","s2.b5":"Reply synthesised in a cloned Egyptian voice.",
   "s2.a6":"Act","s2.b6":"Booking written, lead created, call transferred.",
   "s3.mark":"Both directions","s3.h":"It picks up. It also dials.",
-  "s3.in":"Inbound","s3.inp":"Nobody waits on hold, nobody hears a menu, and nothing rings out after 6pm.",
+  "s3.in":"Inbound","s3.inp":"No hold music, no menu, nothing rings out after 6pm.",
   "s3.i1":"Customer calls your number","s3.i1s":"Answered on the first ring, 24/7",
   "s3.i2":"Agent greets in Masri","s3.i2s":"Switches to English if the caller does",
   "s3.i3":"Understands the request","s3.i3s":"Pricing, status, booking, complaint",
   "s3.i4":"Resolves or escalates","s3.i4s":"Warm transfer with full context",
   "s3.ia":"Reception","s3.ib":"Support","s3.ic":"Reservations","s3.id":"Order status","s3.ie":"FAQs",
-  "s3.out":"Outbound","s3.outp":"Every lead in the sheet gets called, qualified and logged — on the same day it arrives.",
-  "s3.o1":"List loaded","s3.o1s":"CSV, CRM sync, or webhook per lead",
+  "s3.out":"Outbound","s3.outp":"Every lead called, qualified and logged, the day it arrives.",
+  "s3.o1":"List loaded","s3.o1s":"Leads added to the list in your dashboard",
   "s3.o2":"Agent dials","s3.o2s":"Inside your calling window and pacing rules",
   "s3.o3":"Qualifies naturally","s3.o3s":"Budget, timeline, decision maker",
   "s3.o4":"Books or hands over","s3.o4s":"Live transfer to a rep on hot leads",
@@ -2134,7 +2273,7 @@ ar:{
   "hero.sub":"مكالمات واردة وصادرة يديرها وكيل صوتي من أولها لآخرها، ويفهم العربية المصرية كما تُنطق حقاً — بسرعتها، وبكلماتها الإنجليزية المتداخلة.",
   "chip.en":"الإنجليزية","chip.ar":"العربية الفصحى","chip.eg":"المصرية","chip.mix":"عربي + إنجليزي",
   "hero.cta1":"اضغط وتحدث","hero.cta2":"شاهد مسار المكالمة",
-  "hero.ctaStart":"أنشئ وكيلك","nav.start":"أنشئ وكيلك","vid.eyebrow":"شاهده وهو يعمل","vid.h":"شاهده بدلاً من أن تقرأ عنه.","vid.p":"مقاطع قصيرة، بلا تسجيل. كل واحد منها دقائق معدودة.","nav.watch":"شاهد",
+  "hero.ctaStart":"أنشئ وكيلك","hf.1":"وارد وصادر","hf.2":"مصري، عربي، إنجليزي","hf.3":"للأعمال الحقيقية","hero.callus":"أو اسمعه بنفسك — اتصل على","hero.callnote":"هو نفس الوكيل الذي تتحدث عنه هذه الصفحة.","nav.start":"أنشئ وكيلك","vid.eyebrow":"شاهده وهو يعمل","vid.h":"شاهده بدلاً من أن تقرأ عنه.","vid.p":"مقاطع قصيرة، بلا تسجيل. كل واحد منها دقائق معدودة.","nav.watch":"شاهد",
   "band.h":"وكيلك ممكن يرد بعد الظهر.",
   "band.p":"اختر خطة، علّمه نشاطك، وجرّبه على هاتفك. بلا مشروع تكامل وبلا مهندس.",
   "band.cta":"أنشئ وكيلك","band.alt":"أو تحدث إليه أولاً",
@@ -2173,7 +2312,7 @@ ar:{
   "s3.i4":"يحل أو يصعّد","s3.i4s":"تحويل للموظف مع السياق الكامل",
   "s3.ia":"الاستقبال","s3.ib":"الدعم","s3.ic":"الحجوزات","s3.id":"حالة الطلب","s3.ie":"الأسئلة الشائعة",
   "s3.out":"المكالمات الصادرة","s3.outp":"كل عميل محتمل يُتصل به ويُقيَّم ويُسجَّل في اليوم نفسه.",
-  "s3.o1":"تحميل القائمة","s3.o1s":"ملف CSV أو مزامنة مع نظام العملاء",
+  "s3.o1":"تحميل القائمة","s3.o1s":"عملاء تُضاف إلى القائمة في لوحتك",
   "s3.o2":"الوكيل يتصل","s3.o2s":"داخل أوقاتك وقواعد الاتصال لديك",
   "s3.o3":"يقيّم بشكل طبيعي","s3.o3s":"الميزانية والتوقيت وصاحب القرار",
   "s3.o4":"يحجز أو يسلّم","s3.o4s":"تحويل مباشر للمندوب في الفرص القوية",
@@ -2216,7 +2355,7 @@ eg:{
   "hero.sub":"مكالمات داخلة وخارجة، وكيل صوتي بيمسكها من أولها لآخرها وبيفهم المصري زي ما بيتقال بالظبط — بسرعته، وبالكلمات الإنجليزي اللي بتيجي في نص الجملة.",
   "chip.en":"إنجليزي","chip.ar":"عربي فصحى","chip.eg":"مصري","chip.mix":"عربي + إنجليزي",
   "hero.cta1":"دوس واتكلم","hero.cta2":"شوف المكالمة ماشية إزاي",
-  "hero.ctaStart":"اعمل وكيلك","nav.start":"اعمل وكيلك","vid.eyebrow":"شوفه وهو شغال","vid.h":"شوفه بدل ما تقرا عنه.","vid.p":"فيديوهات قصيرة، من غير تسجيل. كل واحد كام دقيقة.","nav.watch":"شوف",
+  "hero.ctaStart":"اعمل وكيلك","hf.1":"داخل وخارج","hf.2":"مصري، عربي، إنجليزي","hf.3":"للشغل الحقيقي","hero.callus":"أو اسمعه بنفسك — كلّم","hero.callnote":"ده نفس الوكيل اللي الصفحة بتتكلم عنه.","nav.start":"اعمل وكيلك","vid.eyebrow":"شوفه وهو شغال","vid.h":"شوفه بدل ما تقرا عنه.","vid.p":"فيديوهات قصيرة، من غير تسجيل. كل واحد كام دقيقة.","nav.watch":"شوف",
   "band.h":"وكيلك ممكن يرد بعد الضهر.",
   "band.p":"اختار خطة، علّمه شغلك، وجربه على تليفونك. من غير مشروع تكامل ومن غير مهندس.",
   "band.cta":"اعمل وكيلك","band.alt":"أو كلمه الأول",
@@ -2255,7 +2394,7 @@ eg:{
   "s3.i4":"بيحل أو بيحوّل","s3.i4s":"تحويل للموظف والسياق كله معاه",
   "s3.ia":"استقبال","s3.ib":"دعم","s3.ic":"حجوزات","s3.id":"حالة الأوردر","s3.ie":"أسئلة متكررة",
   "s3.out":"المكالمات الخارجة","s3.outp":"كل عميل في الليستة بيتم الاتصال بيه وتقييمه وتسجيله في نفس اليوم.",
-  "s3.o1":"تحميل الليستة","s3.o1s":"ملف CSV أو ربط مع نظام العملاء",
+  "s3.o1":"تحميل الليستة","s3.o1s":"عملاء بتتضاف لليستة في لوحتك",
   "s3.o2":"الوكيل بيتصل","s3.o2s":"في مواعيدك وبقواعد الاتصال بتاعتك",
   "s3.o3":"بيقيّم بشكل طبيعي","s3.o3s":"الميزانية والتوقيت وصاحب القرار",
   "s3.o4":"بيحجز أو بيسلّم","s3.o4s":"تحويل مباشر للمندوب في الفرص السخنة",
@@ -2320,8 +2459,8 @@ Object.assign(I18N.eg,{
 
 Object.assign(I18N.en,{
  "hero.h":"It answers the phone in the language they <span class='ital'>actually</span> speak.",
- "hero.sub":"Inbound and outbound calls, handled end to end by an agent that hears Egyptian Arabic the way it is really spoken.",
- "hero.cta1":"Talk to the AI","hero.cta1b":"Stop talking",
+ "hero.sub":"AI voice agents for real businesses. Inbound and outbound calls, handled end to end, in English, Arabic and Egyptian Arabic.",
+ "hero.cta1":"Talk to the AI →","hero.cta1b":"Stop talking",
  "hero.support":"Inbound + outbound · real-time transcription · live handover",
  "hero.scroll":"Scroll","hl.en":"English","hl.ar":"العربية","hl.eg":"مصري",
  "hcap.idle":"Speak normally — Masri, Arabic or English. Your words appear here.",
@@ -2350,17 +2489,17 @@ Object.assign(I18N.en,{
  "nav.plans":"Pricing","v.1":"Telephony layer","v.2":"Speech engine","v.3":"Dialect model",
  "v.4":"Reasoning engine","v.5":"Voice engine","v.6":"Your systems",
  "s7.mark":"Go live","s7.h":"Your agent is answering by this afternoon.",
- "s7.p":"No integration project, no engineering sprint. Four steps from signing up to a live number your customers can call.",
- "s7.d1":"Create the account","s7.d1s":"Pick a plan and pay by card. Live in under a minute.",
- "s7.d2":"Write the script","s7.d2s":"Paste what your team says on a call. Plain Masri is fine.",
- "s7.d3":"Pick the voice, connect the line","s7.d3s":"Choose a dialect and voice, then connect the number you already use, hotline included",
- "s7.d4":"Go live","s7.d4s":"Take inbound calls, or upload a list and start dialling.",
+ "s7.p":"Four steps from signing up to a number your customers can call.",
+ "s7.d1":"Create the account","s7.d1s":"Pick a plan, pay by card.",
+ "s7.d2":"Write the script","s7.d2s":"Paste what your team already says. Masri is fine.",
+ "s7.d3":"Pick the voice, connect the line","s7.d3s":"A dialect, a voice, and the number you already use.",
+ "s7.d4":"Go live","s7.d4s":"Answer calls, or start dialling a list.",
  "pl.per":"per month","pl.pop":"Most teams","pl.start":"Start now","pl.contact":"Contact sales",
  "pl.trial":"Card required · monthly or yearly billing · cancel any time",
  "pl.1n":"Starter","pl.1d":"One agent, one number. For a small team testing the water on real calls.","pl.1a":"—",
- "pl.1f1":"1 agent, 1 phone number","pl.1f2":"Inbound calls","pl.1f3":"Masri, Arabic and English","pl.1f4":"Transcripts and recordings",
- "pl.2n":"Growth","pl.2d":"Inbound and outbound together, with your CRM and calendar wired in.","pl.2a":"—",
- "pl.2f1":"<b>Everything in Starter</b>","pl.2f2":"Outbound campaigns and auto-dialling","pl.2f3":"Live transfer to your sales team",
+ "pl.1f1":"1 agent, 1 phone number","pl.1f2":"Inbound and outbound calls","pl.1f3":"Masri, Arabic and English","pl.1f4":"Transcripts and recordings",
+ "pl.2n":"Growth","pl.2d":"More agents, more numbers, and one line that does several jobs at once.","pl.2a":"—",
+ "pl.2f1":"<b>Everything in Starter</b>","pl.2f2":"Several setups on one number — sales, support, reservations","pl.2f3":"Live transfer to your sales team",
  "pl.2f4":"Bookings, with a calendar feed you can subscribe to","pl.2f5":"Multiple agents and connected lines",
  "pl.3n":"Enterprise","pl.3d":"High call volume, your own voice, and terms that fit procurement.","pl.3a":"Start now","pl.3price":"Priced on your usage",
  "pl.3f1":"<b>Everything in Growth</b>","pl.3f2":"A cloned voice of your own","pl.3f3":"Unlimited seats and connected lines",
@@ -2378,9 +2517,9 @@ Object.assign(I18N.ar,{
  "pl.per":"شهرياً","pl.pop":"الأكثر اختياراً","pl.start":"ابدأ دلوقتي","pl.contact":"تواصل مع المبيعات",
  "pl.trial":"يتطلب بطاقة · فوترة شهرية أو سنوية · إلغاء في أي وقت",
  "pl.1n":"البداية","pl.1d":"وكيل واحد ورقم واحد. لفريق صغير يجرب على مكالمات حقيقية.","pl.1a":"—",
- "pl.1f1":"وكيل واحد ورقم واحد","pl.1f2":"المكالمات الواردة","pl.1f3":"المصرية والعربية والإنجليزية","pl.1f4":"النصوص والتسجيلات",
- "pl.2n":"النمو","pl.2d":"وارد وصادر معاً، مع ربط نظام العملاء والتقويم.","pl.2a":"—",
- "pl.2f1":"<b>كل ما في البداية</b>","pl.2f2":"حملات صادرة واتصال آلي","pl.2f3":"تحويل مباشر لفريق المبيعات",
+ "pl.1f1":"وكيل واحد ورقم واحد","pl.1f2":"مكالمات واردة وصادرة","pl.1f3":"المصرية والعربية والإنجليزية","pl.1f4":"النصوص والتسجيلات",
+ "pl.2n":"النمو","pl.2d":"وكلاء أكثر وأرقام أكثر، وخط واحد يؤدي عدة مهام معاً.","pl.2a":"—",
+ "pl.2f1":"<b>كل ما في البداية</b>","pl.2f2":"عدة إعدادات على رقم واحد — مبيعات، دعم، حجوزات","pl.2f3":"تحويل مباشر لفريق المبيعات",
  "pl.2f4":"حجوزات، مع تقويم يمكنك الاشتراك به","pl.2f5":"وكلاء وخطوط متصلة متعددة",
  "pl.3n":"المؤسسات","pl.3d":"حجم مكالمات كبير، وصوت خاص بك، وشروط تناسب المشتريات.","pl.3a":"ابدأ الآن","pl.3price":"يُسعَّر على استخدامك",
  "pl.3f1":"<b>كل ما في النمو</b>","pl.3f2":"صوت مستنسخ خاص بك","pl.3f3":"مستخدمون وخطوط متصلة بلا حد",
@@ -2398,9 +2537,9 @@ Object.assign(I18N.eg,{
  "pl.per":"في الشهر","pl.pop":"الأكتر اختياراً","pl.start":"ابدأ دلوقتي","pl.contact":"كلّم المبيعات",
  "pl.trial":"محتاج كارت · فوترة شهرية أو سنوية · تقدر تلغي في أي وقت",
  "pl.1n":"البداية","pl.1d":"وكيل واحد ورقم واحد. لفريق صغير عايز يجرب على مكالمات حقيقية.","pl.1a":"—",
- "pl.1f1":"وكيل واحد ورقم واحد","pl.1f2":"المكالمات الداخلة","pl.1f3":"مصري وعربي وإنجليزي","pl.1f4":"النصوص والتسجيلات",
- "pl.2n":"النمو","pl.2d":"داخل وخارج مع بعض، وربط نظام العملاء والكاليندر.","pl.2a":"—",
- "pl.2f1":"<b>كل اللي في البداية</b>","pl.2f2":"حملات خارجة واتصال أوتوماتيك","pl.2f3":"تحويل مباشر لفريق المبيعات",
+ "pl.1f1":"وكيل واحد ورقم واحد","pl.1f2":"مكالمات داخلة وخارجة","pl.1f3":"مصري وعربي وإنجليزي","pl.1f4":"النصوص والتسجيلات",
+ "pl.2n":"النمو","pl.2d":"وكلاء أكتر وأرقام أكتر، وخط واحد يعمل كام حاجة مع بعض.","pl.2a":"—",
+ "pl.2f1":"<b>كل اللي في البداية</b>","pl.2f2":"كام إعداد على رقم واحد — مبيعات، دعم، حجوزات","pl.2f3":"تحويل مباشر لفريق المبيعات",
  "pl.2f4":"حجوزات، مع تقويم تقدر تشترك بيه","pl.2f5":"وكلاء وخطوط متصلة كتير",
  "pl.3n":"المؤسسات","pl.3d":"مكالمات كتير، وصوت خاص بيك، وشروط تناسب المشتريات.","pl.3a":"ابدأ دلوقتي","pl.3price":"بيتسعّر على استخدامك",
  "pl.3f1":"<b>كل اللي في النمو</b>","pl.3f2":"صوت مستنسخ خاص بيك","pl.3f3":"مستخدمين وخطوط متصلة من غير حد",
@@ -2487,8 +2626,12 @@ Object.assign(I18N.eg,{
    ============================================================================ */
 const PRICING = {
   fx: {
-    cbeSell:   51.00,     // CBE sell rate, EGP per 1 USD  (fx-service.js overwrites this)
-    bufferPct: 7,         // your FX margin on top
+    /* One number: the rate we bill at, EGP per 1 USD. The Central Bank rate and
+       the margin on top used to live here too, and the page computed the
+       billing rate from them — which put our margin in the source of a public
+       web page for anyone to read. The server does that arithmetic now and
+       sends only the result. */
+    rate:      55.00,     // overwritten by /api/fx/current; a placeholder only
     roundEgpTo: 5,        // round published EGP up to nearest
     updated:   "2026-08-10"
   },
@@ -2517,7 +2660,7 @@ const PRICING = {
 const annualUSD = usd => usd==null ? null : usd*(12 - PRICING.annualMonthsFree);   // yearly bundle total
 const annualPct = () => Math.round(PRICING.annualMonthsFree/12*100);               // headline saving %
 let planCyc = "monthly";                                                           // cycle shown on the cards
-const fxRate  = () => PRICING.fx.cbeSell * (1 + PRICING.fx.bufferPct/100);
+const fxRate  = () => PRICING.fx.rate;
 const toEGP   = usd => { const r=PRICING.fx.roundEgpTo; const v=usd*fxRate(); return r>0?Math.ceil(v/r)*r:Math.ceil(v); };
 const num     = n => Number(n).toLocaleString("en-US");
 const fmtUSD  = usd => usd==null ? null : "$"+num(usd);
@@ -2538,9 +2681,8 @@ async function refreshFX(){
   try{
     const r = await fetch("/api/fx/current"); if(!r.ok) return;
     const d = await r.json();
-    PRICING.fx.cbeSell   = d.cbe.sell;
-    PRICING.fx.bufferPct = d.bufferPct;
-    PRICING.fx.updated   = d.date;
+    if(typeof d.billingRate === "number") PRICING.fx.rate = d.billingRate;
+    PRICING.fx.updated = d.date;
     renderPricing();
   }catch(_){ /* offline / static hosting — the values above stand */ }
 }
@@ -2604,7 +2746,7 @@ Object.assign(I18N.en,{
  "t3q":"Billing, renewal and cancellation",
  "t3a":"Plans are billed monthly in advance to the card on file, and renew automatically until cancelled. Annual plans are billed once for the year.|You can cancel at any time from your dashboard. Cancellation stops the next renewal; the current period runs to its end and is not refunded pro rata. Usage above your included minutes is billed in arrears at the overage rate shown on your plan.|Egyptian VAT is added where applicable.",
  "t9q":"Your phone numbers stay yours",
- "t9a":"You can connect a number you already own, including a hotline, by forwarding it to us, pointing a SIP route at us, or porting it across. Connecting a number never transfers ownership of it: the line stays in your name, with your operator.|<b>You can move the number away at any time</b>, and we will not obstruct or delay it.",
+ "t9a":"You can connect a number you already own, including a hotline. Connecting a number never transfers ownership of it: the line stays in your name, with your operator.|<b>You can move the number away at any time</b>, and we will not obstruct or delay it.",
  "t4q":"Calls are recorded only where every party has consented",
  "t4a":"Egyptian law requires the consent of all parties to a call before it may be recorded. Recording is therefore switched off by default on every agent.|If you enable it, the agent states clearly at the start of each call that it is being recorded and the caller can decline. Where a caller declines, the call proceeds and no recording is retained — the transcript is still produced, because a transcript is generated for you as the operator of the call and is not a recording of the other party's voice.|You are the controller of that data. You choose the retention period and can delete any recording at any time.",
  "t5q":"Who owns the data",
@@ -2634,7 +2776,7 @@ Object.assign(I18N.ar,{
  "t3q":"الفوترة والتجديد والإلغاء",
  "t3a":"تُحصَّل الخطط شهرياً مقدماً على البطاقة المسجلة، وتتجدد تلقائياً حتى الإلغاء. أما الخطط السنوية فتُحصَّل مرة واحدة عن العام.|يمكنك الإلغاء في أي وقت من لوحة التحكم. ويوقف الإلغاء التجديد التالي، بينما تستمر الفترة الحالية حتى نهايتها ولا تُرد بالتناسب. وتُحتسب الدقائق الزائدة عن حصتك لاحقاً بسعر التجاوز المبيَّن في خطتك.|تُضاف ضريبة القيمة المضافة المصرية عند الاقتضاء.",
  "t9q":"أرقامك تظل ملكك",
- "t9a":"يمكنك ربط رقم تملكه بالفعل — بما في ذلك الخط الساخن — عن طريق تحويله إلينا، أو توجيه مسار SIP، أو نقله. والربط لا ينقل ملكية الرقم في أي حال.|<b>وتقدر تنقل الرقم بعيداً عنا في أي وقت</b>، ولن نعرقل ذلك أو نؤخره.",
+ "t9a":"يمكنك ربط رقم تملكه بالفعل — بما في ذلك الخط الساخن — . والربط لا ينقل ملكية الرقم في أي حال.|<b>وتقدر تنقل الرقم بعيداً عنا في أي وقت</b>، ولن نعرقل ذلك أو نؤخره.",
  "t4q":"لا تُسجَّل المكالمات إلا بموافقة جميع الأطراف",
  "t4a":"يشترط القانون المصري موافقة جميع أطراف المكالمة قبل تسجيلها، ولذلك يأتي التسجيل معطَّلاً افتراضياً في كل وكيل.|وإذا فعّلته، يوضح الوكيل في بداية كل مكالمة أنها تُسجَّل ويمكن للمتصل الرفض. وعند الرفض تستمر المكالمة ولا يُحتفظ بأي تسجيل، مع استمرار إنتاج النص لأنه يُنشأ لك بصفتك مشغّل المكالمة وليس تسجيلاً لصوت الطرف الآخر.|أنت المتحكم في هذه البيانات، وتحدد مدة الاحتفاظ ويمكنك حذف أي تسجيل في أي وقت.",
  "t5q":"ملكية البيانات",
@@ -2646,6 +2788,10 @@ Object.assign(I18N.ar,{
  "t8q":"القانون الواجب التطبيق",
  "t8a":"تخضع هذه الشروط لقوانين جمهورية مصر العربية، وتختص محاكم القاهرة بالنظر في أي نزاع.|ونعالج البيانات الشخصية وفقاً للقانون رقم ١٥١ لسنة ٢٠٢٠ بشأن حماية البيانات الشخصية ولائحته التنفيذية."
 });
+/* Masri inherits Arabic ONLY where it has nothing of its own. Written the
+   other way round, this line copied the whole Arabic dictionary over every
+   Masri string defined above it, so the مصري option rendered as العربية.
+   Order of precedence here: existing Masri, then the Masri below, then Arabic. */
 Object.assign(I18N.eg, Object.assign({}, I18N.ar, {
  "nav.terms":"الشروط","pl.tba":"عند الطلب","pl.billed":"بتتحصل شهري","pl.billedY":"مرة واحدة في السنة",
  "pl.m":"شهري","pl.y":"سنوي","pl.savepill":"وفّر {p}٪",
@@ -2653,60 +2799,51 @@ Object.assign(I18N.eg, Object.assign({}, I18N.ar, {
  "pl.yline":"الباقة السنوية بتديك شهرين ببلاش — بتوفر {s} في السنة",
  "s9.h":"البنود اللي محتاج تقراها فعلاً.",
  "s9.p":"مكتوبة بوضوح. الاتفاقية الكاملة بتيجي مع أول فاتورة وهي اللي بتحكم الحساب."
-}));
+}, I18N.eg));
 
 Object.assign(I18N.en,{
  "n.h":"Your number stays your number.",
- "n.p":"Keep the hotline already printed on your vans and invoices. Nothing your customers know has to change.",
- "n.a1":"Live today","n.a2":"Works with hotlines","n.b1":"Best audio",
- "n.1t":"Forward the number you have",
- "n.1d":"Set unconditional forwarding from your existing line to the connector number we issue you. Works with any number, including a 16xxx or 19xxx hotline, and needs nothing from your operator.",
- "n.1x":"Same day · no paperwork",
- "n.2t":"Point your SIP trunk at us",
- "n.2d":"If you already run a PBX or a SIP trunk, route calls to us directly instead of forwarding them. Cleaner audio and no per-minute forwarding charge from your carrier.",
- "n.2x":"A few hours · needs your PBX admin",
- "n.vh":"Proving the number is yours",
+ "n.p":"Keep the hotline printed on your vans. Nothing your customers know changes.",
+ "n.a2":"Works with hotlines","n.b1":"One way in",
+ "n.2t":"We answer the number you already have",
+ "n.2d":"Your number does not change and it stays in your name with your operator. Calls run both ways on it. We set the connection up with you after you sign up.",
+ "n.2x":"A few days · we walk you through it",
+ "n.vh":"Proving the number is yours","n.vp2":"Caller ID can be forged, so we check two things you cannot fake: that you can call out from the line, and that you can answer on it. Then a real test call, before anything goes live.",
  "n.vp":"Caller ID alone proves nothing — it can be forged. So we ask for two independent things: that you can place a call from the line, and that you can answer one on it.",
  "n.v1t":"Call us from the line","n.v1d":"We show a six-digit code. Ring our verification number from the line you are claiming and key the code in. We match the code against the caller ID.",
  "n.v2t":"We call you back","n.v2d":"An automated call reads a second code to whoever answers that line. You enter it here. Possession of the number now has to be genuine, not spoofed.",
- "n.v3t":"A live test call","n.v3d":"Once forwarding or your SIP route is set, we place a real call and confirm it lands on your agent before anything goes live.",
- "n.v4t":"Paperwork, only for porting","n.v4d":"Moving a number to us needs a signed authorisation and a recent operator invoice in your company name. Forwarding and SIP need neither.",
+ "n.v3t":"A live test call","n.v3d":"Once the connection is set, we place a real call and confirm it lands on your agent before anything goes live.",
+ "n.v4t":"Paperwork, only for porting","n.v4d":"Moving a number to us needs a signed authorisation and a recent operator invoice in your company name. Keeping your own number needs neither.",
  "n.vn":"A number can be active on one account at a time. Attempts are rate-limited and locked after repeated failures, every verification is logged, and we re-verify annually or whenever account ownership changes."
 });
 Object.assign(I18N.ar,{
  "n.h":"رقمك يظل رقمك.",
  "n.p":"احتفظ بالخط الساخن المطبوع على سياراتك وفواتيرك. لا شيء يعرفه عملاؤك يحتاج إلى تغيير.",
- "n.a1":"يعمل اليوم","n.a2":"يدعم الخطوط الساخنة","n.b1":"أفضل جودة صوت",
- "n.1t":"حوّل رقمك الحالي",
- "n.1d":"اضبط تحويلاً غير مشروط من خطك الحالي إلى رقم الربط الذي نصدره لك. يعمل مع أي رقم، بما فيه الخط الساخن ١٦ أو ١٩، ولا يحتاج شيئاً من مشغّلك.",
- "n.1x":"في نفس اليوم · بلا أوراق",
- "n.2t":"وجّه خط SIP إلينا",
- "n.2d":"إذا كان لديك سنترال أو خط SIP، وجّه المكالمات إلينا مباشرة بدل تحويلها. صوت أنقى وبلا رسوم تحويل بالدقيقة من مشغّلك.",
+ "n.a2":"يدعم الخطوط الساخنة","n.b1":"طريق واحد للدخول",
+ "n.2t":"نرد على رقمك الحالي",
+ "n.2d":"رقمك لا يتغير ويبقى باسمك لدى مشغّلك. والمكالمات تعمل عليه في الاتجاهين. نضبط الربط معك بعد التسجيل.",
  "n.2x":"ساعات قليلة · يحتاج مسؤول السنترال",
- "n.vh":"إثبات ملكيتك للرقم",
+ "n.vh":"إثبات ملكيتك للرقم","n.vp2":"يمكن تزوير رقم المتصل، لذلك نتحقق من أمرين لا يمكن تزييفهما: أن تتصل من الخط، وأن ترد عليه. ثم مكالمة اختبار حقيقية قبل أي تشغيل.",
  "n.vp":"رقم المتصل وحده لا يثبت شيئاً لأنه قابل للتزوير. لذلك نطلب أمرين مستقلين: أن تستطيع الاتصال من الخط، وأن تستطيع الرد عليه.",
  "n.v1t":"اتصل بنا من الخط","n.v1d":"نعرض رمزاً من ستة أرقام. اتصل برقم التحقق من الخط الذي تدّعي ملكيته وأدخل الرمز، ونطابقه مع رقم المتصل.",
  "n.v2t":"نتصل بك","n.v2d":"يُقرأ رمز ثانٍ لمن يرد على ذلك الخط، وتدخله هنا. عندها تصبح حيازة الرقم حقيقية لا منتحلة.",
- "n.v3t":"مكالمة اختبار حقيقية","n.v3d":"بعد ضبط التحويل أو مسار SIP نجري مكالمة فعلية ونتأكد من وصولها لوكيلك قبل التشغيل.",
- "n.v4t":"أوراق، للنقل فقط","n.v4d":"نقل الرقم إلينا يحتاج تفويضاً موقعاً وفاتورة حديثة من المشغّل باسم شركتك. أما التحويل وSIP فلا يحتاجان شيئاً.",
+ "n.v3t":"مكالمة اختبار حقيقية","n.v3d":"بعد ضبط الربط نجري مكالمة فعلية ونتأكد من وصولها لوكيلك قبل التشغيل.",
+ "n.v4t":"أوراق، للنقل فقط","n.v4d":"نقل الرقم إلينا يحتاج تفويضاً موقعاً وفاتورة حديثة من المشغّل باسم شركتك. أما الإبقاء على رقمك فلا يحتاج شيئاً.",
  "n.vn":"يمكن تفعيل الرقم على حساب واحد فقط في الوقت ذاته. والمحاولات محدودة ويُقفل الحساب بعد تكرار الفشل، وكل عملية تحقق مسجَّلة، ونعيد التحقق سنوياً أو عند تغيّر ملكية الحساب."
 });
 Object.assign(I18N.eg, Object.assign({}, I18N.eg, {
  "n.h":"رقمك يفضل رقمك.",
  "n.p":"خلي الخط الساخن المطبوع على عربياتك وفواتيرك. مفيش حاجة عملاؤك عارفينها محتاجة تتغير.",
- "n.a1":"شغال النهاردة","n.a2":"بيشتغل مع الخطوط الساخنة","n.b1":"أحسن جودة صوت",
- "n.1t":"حوّل رقمك اللي عندك",
- "n.1d":"اضبط تحويل غير مشروط من خطك الحالي لرقم الربط اللي بنديهولك. بيشتغل مع أي رقم، وكمان الخط الساخن ١٦ أو ١٩، ومش محتاج حاجة من مشغّلك.",
- "n.1x":"نفس اليوم · من غير أوراق",
- "n.2t":"وجّه خط SIP لينا",
- "n.2d":"لو عندك سنترال أو خط SIP، وجّه المكالمات لينا على طول بدل التحويل. صوت أنضف ومن غير رسوم تحويل بالدقيقة.",
+ "n.a2":"بيشتغل مع الخطوط الساخنة","n.b1":"طريق واحد للدخول",
+ "n.2t":"بنرد على رقمك اللي عندك",
+ "n.2d":"رقمك مابيتغيرش وبيفضل باسمك عند مشغّلك. والمكالمات بتشتغل عليه في الاتجاهين. إحنا بنظبط الربط معاك بعد التسجيل.",
  "n.2x":"كام ساعة · محتاج مسؤول السنترال",
- "n.vh":"إثبات إن الرقم بتاعك",
+ "n.vh":"إثبات إن الرقم بتاعك","n.vp2":"رقم المتصل ممكن يتزوّر، عشان كده بنتأكد من حاجتين ماتنفعش تتزوّر: إنك تتصل من الخط، وإنك ترد عليه. وبعدين مكالمة تجربة حقيقية قبل أي تشغيل.",
  "n.vp":"رقم المتصل لوحده مش دليل لأنه ممكن يتزوّر. عشان كده بنطلب حاجتين مستقلين: إنك تقدر تتصل من الخط، وإنك تقدر ترد عليه.",
  "n.v1t":"اتصل بينا من الخط","n.v1d":"بنعرض رمز من ٦ أرقام. اتصل برقم التحقق من الخط اللي بتقول إنه بتاعك ودخّل الرمز، وإحنا بنطابقه مع رقم المتصل.",
  "n.v2t":"إحنا بنتصل بيك","n.v2d":"بيتقري رمز تاني لأي حد بيرد على الخط ده، وتدخّله هنا. ساعتها حيازة الرقم بتبقى حقيقية مش منتحلة.",
- "n.v3t":"مكالمة اختبار حقيقية","n.v3d":"بعد ما تظبط التحويل أو مسار SIP، بنعمل مكالمة فعلية ونتأكد إنها وصلت لوكيلك قبل ما تشتغل.",
- "n.v4t":"أوراق، للنقل بس","n.v4d":"نقل الرقم لينا محتاج تفويض موقّع وفاتورة حديثة من المشغّل باسم شركتك. أما التحويل وSIP مش محتاجين حاجة.",
+ "n.v3t":"مكالمة اختبار حقيقية","n.v3d":"بعد ما نظبط الربط، بنعمل مكالمة فعلية ونتأكد إنها وصلت لوكيلك قبل ما تشتغل.",
+ "n.v4t":"أوراق، للنقل بس","n.v4d":"نقل الرقم لينا محتاج تفويض موقّع وفاتورة حديثة من المشغّل باسم شركتك. أما إنك تفضل على رقمك فمش محتاج حاجة.",
  "n.vn":"الرقم بيتفعّل على حساب واحد بس في نفس الوقت. والمحاولات محدودة والحساب بيتقفل بعد تكرار الفشل، وكل تحقق بيتسجل، وبنعيد التحقق سنوياً أو لما ملكية الحساب تتغير."
 }));
 
@@ -2716,17 +2853,17 @@ Object.assign(I18N.eg,{"tr.idle":"لسه مفيش حاجة — دوس على ا�
 
 Object.assign(I18N.en,{
  "ab.l":"Session ended","ab.h":"That was the demo. The real one answers your phone.",
- "ab.p":"You spoke {n} turns in {l}. On a live number it would have booked the appointment, written the lead to your CRM, and sent the confirmation before hanging up.",
+ "ab.p":"You spoke {n} turns in {l}. On a live number it would have booked the appointment, recorded the lead in your dashboard, and sent the confirmation before hanging up.",
  "ab.b1":"Start now","ab.b2":"See the plans","ab.x":"Not now"
 });
 Object.assign(I18N.ar,{
  "ab.l":"انتهت الجلسة","ab.h":"تلك كانت التجربة. النسخة الحقيقية ترد على هاتفك.",
- "ab.p":"تحدثت {n} من الأدوار بـ{l}. على رقم فعلي كان الوكيل قد حجز الموعد، وسجّل العميل في نظامك، وأرسل التأكيد قبل إنهاء المكالمة.",
+ "ab.p":"تحدثت {n} من الأدوار بـ{l}. على رقم فعلي كان الوكيل قد حجز الموعد، وسجّل العميل في لوحتك، وأرسل التأكيد قبل إنهاء المكالمة.",
  "ab.b1":"ابدأ الآن","ab.b2":"اعرض الخطط","ab.x":"ليس الآن"
 });
 Object.assign(I18N.eg,{
  "ab.l":"الجلسة خلصت","ab.h":"دي كانت تجربة. النسخة الحقيقية بترد على تليفونك.",
- "ab.p":"اتكلمت {n} دور بـ{l}. على رقم حقيقي كان الوكيل حجز الميعاد، وسجّل العميل في نظامك، وبعت التأكيد قبل ما يقفل.",
+ "ab.p":"اتكلمت {n} دور بـ{l}. على رقم حقيقي كان الوكيل حجز الميعاد، وسجّل العميل في لوحتك، وبعت التأكيد قبل ما يقفل.",
  "ab.b1":"ابدأ دلوقتي","ab.b2":"شوف الخطط","ab.x":"مش دلوقتي"
 });
 
@@ -2764,7 +2901,10 @@ function applyLang(l){
   $$("[data-i18n]").forEach(el=>{
     const k = el.getAttribute("data-i18n");
     const v = t(k);
-    if(el.hasAttribute("data-i18n-html") || /<span/.test(v)) el.innerHTML = v;
+    /* Any tag, not only <span>. "<b>Everything in Starter</b>" was being set as
+       text, so the plan cards printed the tags out loud in all three languages.
+       These strings are ours, not anything a visitor typed. */
+    if(el.hasAttribute("data-i18n-html") || /<[a-z][\s\S]*>/i.test(v)) el.innerHTML = v;
     else el.textContent = v;
   });
 
@@ -3346,7 +3486,7 @@ const USECASES = [
           ["user","آه اتفضل."],
           ["ai","تمام. الشركة بتاعتكم حوالي كام موظف، وبتدوروا على حل من إمتى؟"],
           ["user","إحنا ٦٠ تقريباً، وبندور بقالنا شهر."]],
-    res:{en:"Qualified · routed to a rep · CRM updated",ar:"عميل مؤهل · حُوِّل لمندوب · حُدِّث النظام",eg:"عميل مؤهل · اتحول لمندوب · النظام اتحدث"} },
+    res:{en:"Qualified · routed to a rep · lead recorded",ar:"عميل مؤهل · حُوِّل لمندوب · سُجِّل في لوحتك",eg:"عميل مؤهل · اتحول لمندوب · اتسجل في لوحتك"} },
   { key:"reception",
     t:{en:"Reception",ar:"الاستقبال",eg:"الاستقبال"},
     dir:{en:"Inbound",ar:"واردة",eg:"داخلة"},
@@ -3421,7 +3561,7 @@ function renderUseCases(){
 /* ============================================== ACTIONS GRID ============ */
 const ACTIONS = [
   {i:"cal", n:{en:"Book a slot",ar:"حجز موعد",eg:"حجز ميعاد"}, d:{en:"Writes straight into your calendar",ar:"يُكتب في التقويم مباشرة",eg:"بيتكتب في الكاليندر على طول"}},
-  {i:"user",n:{en:"Create the lead",ar:"إنشاء العميل",eg:"تسجيل العميل"}, d:{en:"Pushed into your CRM the moment the call ends",ar:"يُرسل إلى نظام العملاء لديك",eg:"بيروح لنظام العملاء عندك"}},
+  {i:"user",n:{en:"Create the lead",ar:"إنشاء العميل",eg:"تسجيل العميل"}, d:{en:"In your dashboard the moment the call ends",ar:"يظهر في لوحتك فور انتهاء المكالمة",eg:"بيظهر في لوحتك أول ما المكالمة تخلص"}},
   {i:"arrow",n:{en:"Transfer live",ar:"تحويل مباشر",eg:"تحويل مباشر"}, d:{en:"Warm handover with the transcript attached",ar:"تحويل مع النص الكامل للمكالمة",eg:"تحويل والنص كله معاه"}},
   {i:"msg", n:{en:"Send the details",ar:"إرسال التفاصيل",eg:"بعت التفاصيل"}, d:{en:"Captured before the call ends, ready to send",ar:"تُسجَّل قبل انتهاء المكالمة، جاهزة للإرسال",eg:"بتتسجل قبل ما المكالمة تقفل، وجاهزة للإرسال"}},
   {i:"doc", n:{en:"Log the outcome",ar:"تسجيل النتيجة",eg:"تسجيل النتيجة"}, d:{en:"Summary, sentiment and next step",ar:"ملخص وانطباع وخطوة تالية",eg:"ملخص وانطباع وخطوة جاية"}},
@@ -3595,7 +3735,16 @@ function openTerms(){ track("terms_opened"); $("#tdBg").classList.add("open"); $
 function closeTerms(){ $("#tdBg").classList.remove("open"); $("#tdrawer").classList.remove("open"); document.body.style.overflow=""; }
 
 /* ---------------- terms accordion ---------------- */
-const TERMS_KEYS = ["t1","t2","t3","t9","t4","t5","t6","t7","t8"];
+/* t1 and t2 are gone from the public page on purpose. They set out exactly how
+   the USD list price becomes an EGP invoice — the Central Bank sell rate, the
+   margin on top, and when the rate is stepped. That is our commercial
+   mechanism, not a customer-facing term, and a competitor reads this page too.
+   The customer still sees the figure they will actually be charged, at
+   checkout and on the invoice, and the full agreement is issued with their
+   first invoice.
+   t9 came out with it: it described the SIP route, which is not something the
+   public site explains any more. */
+const TERMS_KEYS = ["t3","t4","t5","t6","t7","t8"];
 function renderTerms(){
   const el=$("#termsAcc"); if(!el) return;
   el.innerHTML = TERMS_KEYS.map((k,i)=>`
@@ -3695,29 +3844,29 @@ if(!SR){ $("#footHint") && ($("#footHint").textContent = t("err.nostt")); }
 (function(){
   var HOPS={
     en:{in:[
-      ["Your customer dials your number","The same number on your sign. They notice nothing different.","Your customer",0],
-      ["Your operator carries the call","Vodafone, Orange, Telecom Egypt or e&, exactly as today. The line stays in your name.","Your operator",0],
-      ["The call reaches NABRA in Cairo","Over the trunk on your line. Staying inside Egypt is what keeps it fast and clear.","Us",1],
-      ["The agent answers with your script","Your greeting, your menu, your prices, your rules. In Masri, Arabic or English.","Us",1],
-      ["You get the booking, not a missed call","The order or reservation lands in your dashboard, with the recording and transcript.","You",0]],
+      ["Your customer dials your number","The same number. Nothing changes for them.","Your customer",0],
+      ["Your operator carries the call","Vodafone, Orange, WE or e&, as today.","Your operator",0],
+      ["The call reaches NABRA in Cairo","Over the trunk on your line, inside Egypt.","Us",1],
+      ["The agent answers with your script","Your greeting, prices and rules.","Us",1],
+      ["You get the booking, not a missed call","Straight into your dashboard, with the recording.","You",0]],
     out:[
-      ["You set the agent a task","Confirm tomorrow's bookings, chase a quote, follow up an enquiry.","You",0],
-      ["The agent dials out through your trunk","The same line, used in the other direction. Nothing extra to buy.","Us",1],
-      ["Your operator places the call","A normal Egyptian call from your own line, carried by your own operator.","Your operator",0],
-      ["Your number shows on their screen","Not a foreign number. People answer a number they recognise.","Your customer",0],
-      ["The result comes back to you","Confirmed, declined, or call again later, written into your dashboard.","You",0]]},
+      ["You set the agent a task","Confirm bookings, chase a quote, follow up.","You",0],
+      ["The agent dials out through your trunk","The same line, the other direction.","Us",1],
+      ["Your operator places the call","A normal Egyptian call from your own line.","Your operator",0],
+      ["Your number shows on their screen","People answer a number they recognise.","Your customer",0],
+      ["The result comes back to you","Confirmed, declined, or call again later.","You",0]]},
     ar:{in:[
-      ["يتصل عميلك برقمك","الرقم نفسه المكتوب على لافتتك. لا يلاحظ العميل أي اختلاف.","عميلك",0],
+      ["يتصل عميلك برقمك","الرقم نفسه. لا شيء يتغير لديه.","عميلك",0],
       ["يحمل مشغلك المكالمة","فودافون أو أورنچ أو المصرية للاتصالات أو اتصالات، تماماً كاليوم. ويظل الخط باسمك.","مشغلك",0],
       ["تصل المكالمة إلى نبرة في القاهرة","عبر الوصلة القائمة على خطك. وبقاء المسار داخل مصر هو ما يجعل الصوت سريعاً وواضحاً.","نحن",1],
       ["يرد الوكيل بالنص الذي كتبته","ترحيبك وقائمتك وأسعارك وقواعدك، بالمصري أو العربية أو الإنجليزية.","نحن",1],
       ["يصلك الحجز بدلاً من مكالمة فائتة","يظهر الطلب أو الحجز في لوحتك مع التسجيل والنص المكتوب.","أنت",0]],
     out:[
-      ["تكلف الوكيل بمهمة","تأكيد حجوزات الغد، أو متابعة عرض سعر، أو الرد على استفسار سابق.","أنت",0],
-      ["يتصل الوكيل عبر وصلتك","الخط نفسه في الاتجاه الآخر، دون شراء أي شيء إضافي.","نحن",1],
-      ["يجري مشغلك المكالمة","مكالمة مصرية عادية من خطك، يحملها مشغلك المرخص.","مشغلك",0],
-      ["يظهر رقمك على شاشة العميل","لا رقم أجنبي. الناس ترد على رقم تعرفه.","عميلك",0],
-      ["تعود إليك النتيجة","تأكيد أو اعتذار أو معاودة الاتصال لاحقاً، مسجلة في لوحتك.","أنت",0]]},
+      ["تكلف الوكيل بمهمة","تأكيد حجوزات، متابعة عرض سعر.","أنت",0],
+      ["يتصل الوكيل عبر وصلتك","الخط نفسه، في الاتجاه الآخر.","نحن",1],
+      ["يجري مشغلك المكالمة","مكالمة مصرية عادية من خطك.","مشغلك",0],
+      ["يظهر رقمك على شاشة العميل","الناس ترد على رقم تعرفه.","عميلك",0],
+      ["تعود إليك النتيجة","تأكيد أو اعتذار أو معاودة لاحقاً.","أنت",0]]},
     eg:{in:[
       ["عميلك بيتصل برقمك","نفس الرقم اللي على اللافتة. مش هيحس بأي فرق.","عميلك",0],
       ["شبكتك بتوصّل المكالمة","فودافون أو أورنچ أو المصرية للاتصالات أو اتصالات، زي دلوقتي بالظبط. والخط فاضل باسمك.","شبكتك",0],
@@ -3735,9 +3884,9 @@ if(!SR){ $("#footHint") && ($("#footHint").textContent = t("err.nostt")); }
   var C={
     en:{nav:"Connect",mark:"Getting it on your line",
       h:"Your number stays yours. We just answer it.",
-      p:"You do not move to a new number and you do not leave your operator. Your customers dial exactly what they always dialled. The only thing that changes is that somebody picks up.",
+      p:"Same number, same operator. The only change is that somebody picks up.",
       dirIn:"A customer calls you",dirOut:"You call a customer",play:"Follow the call",
-      briefH:"Connecting takes one short call to your operator and one paste into your dashboard. We walk you through it the moment you sign up.",brief1:"Your number does not change, and it stays in your name with your operator",brief2:"Inbound and outbound both run on it, with no forwarding charges",brief3:"Usually live within a few days, and you can switch it off at any moment",briefNote:"The exact steps, operator by operator, are waiting in your account.",},
+      briefH:"One call to your operator, one paste into your dashboard.",brief1:"Your number does not change, and it stays in your name with your operator",brief2:"Inbound and outbound both run on it, with no forwarding charges",brief3:"Usually live within a few days, and you can switch it off at any moment",briefNote:"The exact steps, operator by operator, are waiting in your account.",},
     ar:{nav:"التوصيل",mark:"كيف يعمل على خطك",
       h:"رقمك يظل رقمك. نحن نرد عليه فقط.",
       p:"لا تنتقل إلى رقم جديد ولا تترك مشغلك، ويتصل عملاؤك بالرقم نفسه الذي اعتادوه. الشيء الوحيد الذي يتغير أن أحداً صار يرد.",
@@ -3844,73 +3993,17 @@ if(!SR){ $("#footHint") && ($("#footHint").textContent = t("err.nostt")); }
                        return COPY[l] ? l : "en"; };
   const c = k => COPY[lang()][k];
 
-  /* The assistant's entire world. Nothing here is a claim the site does not
-     already make, and the exclusions are as important as the inclusions. */
-  function brief(){
+  /* The brief itself now lives on the server, in sectors the team can edit,
+     so the site and NABRA's own phone line answer from exactly the same text
+     and neither can drift from the other. The only thing the page still has
+     to contribute is what it is showing: the assistant should quote the price
+     in front of this visitor, not the one it was last told about. */
+  function shownPrices(){
     const shown = id => { const e=document.getElementById(id); return e ? e.textContent.trim() : ""; };
     const s1=shown("p1a"), s2=shown("p2a"), s3=shown("p3");
-    const unpublished = /request|—|^$|Talk/i.test(s1) || /request|—|^$/i.test(s2);
-    const priceLine = unpublished
-      ? `Prices are not published on this site yet. Say they are available on request and offer to take their details. Never guess a figure.`
-      : `The prices shown on this page right now are: Starter ${s1} a month, Growth ${s2} a month, Enterprise ${s3}. Yearly billing is a bundle, two months free. Egyptian customers are invoiced in Egyptian pounds, and VAT is added at checkout. Quote these exactly as written and do not convert them into another currency.`;
-
-    return `You are the assistant on the NABRA website. NABRA sells AI voice agents that answer and make
-telephone calls for businesses in Egypt, in Egyptian Arabic, Modern Standard Arabic or English.
-
-WHAT NABRA DOES, and this is the whole of what you know:
-- Inbound: the agent answers the business's existing phone line. It greets in Masri, understands the
-  request, books, takes orders, answers questions, and transfers to a human when asked, when the caller
-  is upset, or when the question is outside what it was taught.
-- Outbound: the agent makes calls too. Qualifying leads from a list, confirming bookings the day before,
-  following up quotes that went quiet, asking for feedback.
-- Every call produces a transcript, an outcome, and a record in the customer's dashboard. A booking with
-  a readable time also becomes a calendar entry, which the customer can subscribe to from Google, Apple
-  or Outlook.
-- The business teaches the agent in its own words: paste the menu or price list, or upload it, and set
-  the rules it must not cross. The agent is instructed never to invent a price or a policy.
-- Setup is self-service: choose a plan, teach the agent, test it on your own phone, deploy. No developer.
-
-CONNECTING A LINE:
-- The customer keeps their own number, in their own name, with their own operator. NABRA does not sell
-  phone numbers and does not take ownership of anyone's line.
-- Three ways in: forward an existing line, point a SIP trunk from their operator at us, or use a call
-  link that needs no phone number at all. The detailed operator steps are inside the account after signup.
-
-${priceLine}
-
-WHAT NABRA DOES NOT DO, and you must say so plainly if asked:
-- It does not sell or provide phone numbers.
-- There is no WhatsApp agent today.
-- There are no CRM or calendar integrations beyond the calendar subscription feed described above.
-- You do not know uptime figures, customer names, case studies or statistics. None are published.
-
-HOW TO ANSWER:
-- Answer only from the brief above. If something is not in it, say you do not have that, then point at
-  what they can do right now on this page. Inventing a capability, a price, a client or a number is the
-  worst thing you can do here and it loses the sale.
-
-NEVER OFFER TO PUT SOMEONE THROUGH TO A PERSON. This product exists because businesses should not need
-a human on every enquiry, and offering one contradicts the whole pitch. Do not say a salesperson, the
-team, or anyone else will follow up. Do not ask for their name, phone number or email so somebody can
-call them. Everything here is self-service, and that is the selling point: they can set the agent up
-themselves in minutes without talking to anybody.
-Instead, close on one of these three, whichever fits:
-  1. The live voice demo on this page. They press the button and talk to the agent immediately.
-  2. "Create your agent", which takes them to the plans and then straight into setup.
-  3. A specific answer to the question they actually asked, if they are still deciding.
-There is one exception, and it is a real one. If the matter is urgent, or it is something this brief
-simply does not cover, say so honestly and give them the contact address in the footer so a person can
-pick it up. That includes a legal question, a billing dispute, a complaint, an account someone cannot
-get into, or anything where waiting would actually cost them something.
-The test is not whether they would prefer a human. It is whether you can answer. If you can, answer.
-If you cannot, say you cannot and hand them the address rather than guessing or stalling.
-- Be concrete and practical. If someone says what business they run, explain specifically what the agent
-  would do for that business, using only the capabilities above. A real estate agency qualifying leads,
-  for example: the agent calls each new enquiry, asks the qualifying questions the agency wrote, records
-  the answers, and passes the qualified ones to a salesperson with the transcript.
-- Short answers. Two or three sentences usually. No markdown, no bullet lists, no headings.
-- Reply in the language the person writes in. Egyptian Arabic if they use it.
-- Never claim to be human. You are NABRA's assistant.`;
+    const unpublished = /request|\u2014|^$|Talk/i.test(s1) || /request|\u2014|^$/i.test(s2);
+    if(unpublished) return "";
+    return `Starter ${s1} a month, Growth ${s2} a month, Enterprise ${s3}. Yearly billing is a bundle, two months cheaper. Customers in Egypt are invoiced in Egyptian pounds and VAT is added at checkout.`;
   }
 
   let hist=[], busy=false, started=false;
@@ -3944,13 +4037,15 @@ If you cannot, say you cannot and hand them the address rather than guessing or 
     input.value=""; chips.innerHTML="";
     const d=dots();
     try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{
+      /* through our own server: the key stays there, and the brief it answers
+         from is the one the team maintains in the admin panel */
+      const r=await fetch("/api/site/ask",{
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:700,system:brief(),messages:hist})
+        body:JSON.stringify({lang:lang(), prices:shownPrices(), messages:hist})
       });
       if(!r.ok) throw new Error(r.status);
       const j=await r.json();
-      const out=(j.content||[]).map(b=>b.type==="text"?b.text:"").join("").trim();
+      const out=String(j.text||"").trim();
       d.remove(); add(out||c("off"),"a"); hist.push({role:"assistant",content:out});
     }catch(_){ d.remove(); add(c("off"),"a"); }
     busy=false;
@@ -3972,6 +4067,38 @@ If you cannot, say you cannot and hand them the address rather than guessing or 
     paintStatic(); if(started && !hist.length) paintChips();
   },0)));
   paintStatic();
+})();
+</script>
+<script>
+/* ============================================================
+   NABRA'S OWN LINE
+   ------------------------------------------------------------
+   The number is asked for, never written into this file. If the
+   server has one it appears; if it has none, or this page is
+   being served somewhere without the gateway behind it, nothing
+   appears at all. A number printed on a site that nobody answers
+   is worse than no number, and it is the first thing a visitor
+   would test.
+   ============================================================ */
+(function(){
+  const line=document.getElementById("heroLine"), num=document.getElementById("heroLineNum"),
+        note=document.getElementById("heroLineNote"),
+        fLi=document.getElementById("footLineLi"), fNum=document.getElementById("footLineNum");
+  if(!line||!num) return;
+
+  /* +20 10 1234 5678 → tel:+201012345678 */
+  const dial = p => "tel:" + p.replace(/[^\d+]/g,"");
+
+  fetch("/api/site/line",{headers:{accept:"application/json"}})
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if(!d || !d.phone) return;
+      num.textContent=d.phone; num.href=dial(d.phone);
+      if(d.note){ note.textContent=d.note; }
+      line.hidden=false;
+      if(fLi&&fNum){ fNum.textContent=d.phone; fNum.href=dial(d.phone); fLi.hidden=false; }
+    })
+    .catch(()=>{});   /* no gateway, no number, no noise in the console */
 })();
 </script>
 <script>

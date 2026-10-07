@@ -76,9 +76,22 @@ const CFG = {
   SILENCE_TIMEOUT_SECONDS: parseInt(process.env.SILENCE_TIMEOUT_SECONDS || "30", 10),
   /* Where the FX engine runs; /api/fx/* is proxied there. */
   FX_SERVICE_URL: process.env.FX_SERVICE_URL || "http://localhost:3100",
+  /* Vapi's API. Only ever overridden to point a test or staging run at a
+     stand-in; production must leave it alone. */
+  VAPI_BASE: process.env.VAPI_BASE || "https://api.vapi.ai",
   /* First admin, created on boot if missing. CHANGE THE PASSWORD AFTER LOGIN. */
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || "admin@nabra.local",
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || "",
+  /* NABRA's own phone line. Empty by default and the site shows no number at
+     all: a number nobody answers is worse than none. Set it from the admin
+     panel's Deployment tab when the line is actually live. */
+  NABRA_PHONE: process.env.NABRA_PHONE || "",
+  NABRA_PHONE_NOTE: process.env.NABRA_PHONE_NOTE || "",
+  /* The on-site assistant answers through this server so the key is never in
+     anyone's browser. Without it the widget says it is unavailable rather than
+     making something up. */
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "",
+  ASK_MODEL: process.env.ASK_MODEL || "claude-sonnet-4-5",
   /* Static files live next to this script. */
   DIR: __dirname,
   SESSION_DAYS: 30,
@@ -94,10 +107,9 @@ const q = (text, params) => pool.query(text, params);
    SCHEMA — created on boot, safe to re-run
    ============================================================ */
 async function migrate() {
-  // PostgreSQL provides gen_random_bytes() through the pgcrypto extension.
-  // Enable it automatically so fresh Railway databases can migrate without manual SQL.
+  /* gen_random_bytes() below lives in pgcrypto, which is not enabled by default
+     on a fresh Postgres. Without this the first boot dies on the migration. */
   await q(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
-
   await q(`
   CREATE TABLE IF NOT EXISTS tenants(
     id            SERIAL PRIMARY KEY,
@@ -116,6 +128,9 @@ async function migrate() {
     oauth_sub     TEXT,                                  -- the provider's stable user id
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
   );
+  /* A setup is one conversation flow inside an agent: Customer Service, Sales,
+     Reservations. The agent owns the phone number and the routing; each setup
+     owns how that particular conversation goes. */
   CREATE TABLE IF NOT EXISTS calls(
     id          SERIAL PRIMARY KEY,
     tenant_id   INTEGER REFERENCES tenants(id),
@@ -160,6 +175,32 @@ async function migrate() {
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
   );
   CREATE INDEX IF NOT EXISTS agents_tenant ON agents(tenant_id);
+
+  /* setups references agents, so it has to be created after it: on a brand new
+     database the other order fails the whole migration and the gateway never starts. */
+  CREATE TABLE IF NOT EXISTS setups(
+    id            SERIAL PRIMARY KEY,
+    tenant_id     INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    agent_id      INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+    name          TEXT NOT NULL,
+    description   TEXT NOT NULL DEFAULT '',
+    greeting      TEXT NOT NULL DEFAULT '',
+    instructions  TEXT NOT NULL DEFAULT '',          -- what this flow should do
+    knowledge     TEXT NOT NULL DEFAULT '',
+    rules         TEXT NOT NULL DEFAULT '',
+    business      JSONB NOT NULL DEFAULT '{}',       -- hours, capacity, orders, review
+    voice         JSONB NOT NULL DEFAULT '{}',       -- {key} only; provider ids stay server-side
+    transfer_to   TEXT,
+    intents       TEXT[] NOT NULL DEFAULT '{}',      -- words that mean "this flow"
+    dtmf_key      TEXT,                              -- "1" | "2" | "3" ...
+    active        BOOLEAN NOT NULL DEFAULT true,
+    sort          INTEGER NOT NULL DEFAULT 0,
+    vapi_assistant_id TEXT,                          -- a setup may get its own later
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS setups_agent ON setups(agent_id, sort);
+
   CREATE TABLE IF NOT EXISTS bookings(
     id          SERIAL PRIMARY KEY,
     tenant_id   INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -228,7 +269,46 @@ async function migrate() {
     kind      TEXT NOT NULL,
     detail    JSONB,
     at        TIMESTAMPTZ NOT NULL DEFAULT now()
-  );`);
+  );
+  /* NABRA's own knowledge about itself, split into sectors that can be edited
+     one at a time from the admin panel. One source, three mouths: the Ask NABRA
+     widget on the site, NABRA's own phone line, and anyone reading the brief. */
+  CREATE TABLE IF NOT EXISTS site_sectors(
+    id         SERIAL PRIMARY KEY,
+    key        TEXT UNIQUE NOT NULL,
+    title      TEXT NOT NULL,
+    body       TEXT NOT NULL DEFAULT '',
+    sort       INTEGER NOT NULL DEFAULT 0,
+    active     BOOLEAN NOT NULL DEFAULT true,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  /* People an outbound agent is to ring, one row per person. The runner below
+     claims rows from here and places the call through Vapi. A row is never
+     dialled twice at once: claiming moves it to 'calling' inside the same
+     transaction that selected it. */
+  CREATE TABLE IF NOT EXISTS outbound_queue(
+    id           SERIAL PRIMARY KEY,
+    tenant_id    INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    agent_id     INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+    name         TEXT NOT NULL DEFAULT '',
+    phone        TEXT NOT NULL,
+    note         TEXT NOT NULL DEFAULT '',
+    status       TEXT NOT NULL DEFAULT 'waiting',   -- waiting | calling | done | failed | cancelled
+    attempts     INTEGER NOT NULL DEFAULT 0,
+    last_error   TEXT,
+    vapi_call_id TEXT,
+    call_id      INTEGER REFERENCES calls(id) ON DELETE SET NULL,
+    outcome      TEXT,
+    summary      TEXT,
+    not_before   TIMESTAMPTZ,                       -- backoff after a failed attempt
+    dialled_at   TIMESTAMPTZ,
+    finished_at  TIMESTAMPTZ,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS obq_due    ON outbound_queue(agent_id, status, not_before);
+  CREATE INDEX IF NOT EXISTS obq_tenant ON outbound_queue(tenant_id, created_at DESC);
+  CREATE UNIQUE INDEX IF NOT EXISTS obq_vapi ON outbound_queue(vapi_call_id) WHERE vapi_call_id IS NOT NULL;`);
 
   /* Migrations for databases created before social sign-in existed.
      CREATE TABLE IF NOT EXISTS does nothing to a table that is already there,
@@ -240,6 +320,29 @@ async function migrate() {
   await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS cal_token TEXT`);
   await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT false`);
   await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS verify_sent_at TIMESTAMPTZ`);
+  /* which flow took the call, so per-setup numbers are possible later */
+  await q(`ALTER TABLE calls  ADD COLUMN IF NOT EXISTS setup_id INTEGER REFERENCES setups(id) ON DELETE SET NULL`);
+  await q(`ALTER TABLE leads  ADD COLUMN IF NOT EXISTS setup_id INTEGER REFERENCES setups(id) ON DELETE SET NULL`);
+  /* how this agent decides which flow a caller wants */
+  await q(`ALTER TABLE agents ADD COLUMN IF NOT EXISTS routing JSONB NOT NULL DEFAULT '{"mode":"hybrid"}'`);
+  /* The Vapi phone number this agent dials FROM. It is a provider id, so it is
+     set by us when the trunk is connected and never shown to the customer. No
+     id means no outbound: the runner skips the agent rather than guessing. */
+  await q(`ALTER TABLE agents ADD COLUMN IF NOT EXISTS vapi_phone_number_id TEXT`);
+  /* Window, pacing and pause switch for dialling out. Defaults are deliberately
+     conservative: nobody's first campaign should ring someone at 7am. */
+  await q(`ALTER TABLE agents ADD COLUMN IF NOT EXISTS outbound JSONB NOT NULL DEFAULT
+           '{"paused":true,"from":"10:00","to":"18:00","days":[0,1,2,3,4,6],"concurrency":1,"max_attempts":2,"gap_min":45}'`);
+
+  /* Backward compatibility: every agent that predates setups keeps working by
+     getting one setup built from the configuration it already has. Nothing is
+     moved or deleted, so an older gateway would still read the agent fine. */
+  await q(`
+    INSERT INTO setups(tenant_id, agent_id, name, description, greeting, knowledge, rules, business, transfer_to, sort)
+    SELECT a.tenant_id, a.id, 'Main line', 'Everything this agent already handled',
+           COALESCE(a.business->>'greeting',''), a.knowledge, a.rules, a.business, a.transfer_to, 0
+      FROM agents a
+     WHERE NOT EXISTS (SELECT 1 FROM setups s WHERE s.agent_id = a.id)`);
   /* Accounts that existed before confirmation was added are left alone: they
      were created when no confirmation was asked for, and locking them out now
      would punish the earliest customers. */
@@ -249,6 +352,11 @@ async function migrate() {
   await q(`ALTER TABLE tenants ALTER COLUMN pass_hash DROP NOT NULL`);
   await q(`CREATE UNIQUE INDEX IF NOT EXISTS tenants_oauth ON tenants(oauth_provider, oauth_sub)
            WHERE oauth_provider IS NOT NULL`);
+
+  /* NABRA's own knowledge, seeded once from what this site actually says.
+     Seeded, not hard-coded: every sector is editable from the admin panel
+     afterwards, and nothing here is written again once a row exists. */
+  await seedSectors();
 
   /* first admin */
   const { rows } = await q(`SELECT 1 FROM tenants WHERE role='admin' LIMIT 1`);
@@ -261,6 +369,126 @@ async function migrate() {
    password: ${CFG.ADMIN_PASSWORD ? "(from ADMIN_PASSWORD env)" : pw + "   ← copy this NOW, it is not shown again"}
 ────────────────────────────────────────────────────`);
   }
+}
+
+/* ============================================================
+   NABRA'S OWN KNOWLEDGE, IN SECTORS
+   ------------------------------------------------------------
+   Everything NABRA knows about itself, split so each part can be
+   edited on its own without rewriting the lot. The seed below is
+   what this website already says — no new claims, and the sector
+   on what NABRA does NOT do matters as much as the rest, because
+   an agent that oversells is worse than one that says it is not
+   sure.
+
+   Seeded once per key. Editing a sector in the admin panel is
+   permanent: nothing here overwrites a row that already exists.
+   ============================================================ */
+const SECTOR_SEED = [
+  { key:"what", sort:10, title:"What NABRA is", body:
+`NABRA is an AI phone agent for businesses in Egypt. It answers the phone number a business already uses, speaks Egyptian Arabic, Modern Standard Arabic and English, and switches to whichever one the caller is speaking.
+It answers on the first ring, at any hour. There is no hold music, no press-one menu by default, and nothing rings out after closing time.
+It works in both directions: it answers calls that come in, and it makes calls out from a list.` },
+
+  { key:"inbound", sort:20, title:"What it does on an incoming call", body:
+`It greets the caller, works out what they want, and handles it: pricing questions, order status, a booking, a complaint, the ordinary questions a reception or support line gets all day.
+It answers from what the business told it — its prices, its menu, its rules — and it is instructed not to invent anything it was not told.
+If a call needs a person, it hands over with the context of the conversation rather than making the caller start again. The business decides whether that happens and which number it goes to.` },
+
+  { key:"outbound", sort:30, title:"What it does on an outgoing call", body:
+`The agent does not only answer. It calls out too, and this is on every plan, not just the larger ones.
+On a call it makes, it qualifies naturally — budget, timing, who decides — and logs what it learned against the lead.
+It can book a time, or transfer a hot lead straight to a salesperson.
+Calling through a list automatically, on a schedule, is not switched on yet. Say so if anyone asks, and do not describe how a campaign would be set up.` },
+
+  { key:"bookings", sort:40, title:"Bookings, opening hours and capacity", body:
+`A business can switch bookings on, and then the agent takes them on the call: the time, the day, how many people, a name and a number.
+Opening hours are set day by day. The agent offers a time that works first. If the caller still wants a time the business is closed, the agent takes it as a request rather than a confirmed booking and says so plainly — the business sees those requests in its dashboard, which is also how it finds out there is demand at hours it does not open.
+Capacity is seats or tables. With a number set, the agent can say yes or no itself when a slot is full, instead of promising that somebody will check and ring back.
+A business can also choose to approve every booking itself. The agent still takes the whole booking, but it never calls it confirmed.
+Bookings appear in the dashboard as a calendar, and there is a calendar feed a business can subscribe to from Google, Apple or Outlook.` },
+
+  { key:"orders", sort:50, title:"Orders and delivery zones", body:
+`A restaurant or shop can switch orders on, and the same agent on the same number takes delivery and collection orders as well as bookings. It works out which the caller wants from what they say, and asks once if it genuinely cannot tell.
+Delivery zones are set up as a list of areas, each with its own fee. An area can be split into zones — New Cairo into Zone 1, Zone 2, Zone 3 — and each zone carries its own fee.
+The agent asks which area and zone the address is in, says the fee out loud before taking the order, and reads it back in the total. An address outside every listed area is declined politely, with collection offered instead.
+A minimum order can be set, and the agent will not let an order go below it.` },
+
+  { key:"languages", sort:60, title:"Arabic, Masri and English", body:
+`The agent speaks Egyptian Arabic, Modern Standard Arabic and English, and follows the caller rather than forcing one language on them.
+A business can pick a voice and a dialect for each line, and a different voice for each kind of conversation on the same number if it wants.
+A business writing its script can write it in plain Masri. It does not need to be translated or formalised first.` },
+
+  { key:"setups", sort:70, title:"One agent, one number, several conversations", body:
+`A business does not need a separate number or a separate agent for each department.
+One agent sits on one number and holds several setups — customer service, sales, reservations — and each setup has its own greeting, instructions, knowledge and voice.
+Callers reach the right one either by saying what they want, by pressing a key, or by both together.` },
+
+  { key:"connect", sort:80, title:"Getting it onto a business's own line", body:
+`A business keeps the number already printed on its vans and invoices. Nothing its customers know has to change.
+There is one way on: a SIP trunk. The operator puts a trunk on the number the business already has, including a 16xxx or 19xxx hotline, and points it at us. The number does not change and it stays in the operator's records in the business's own name. Calls run both ways on it, in and out, with no per-minute forwarding charge.
+Call forwarding is not offered. It cannot carry outbound calls on the business's own number, and the operator bills for every forwarded minute. There is no call-link option either: a link is not a phone line.
+The exact technical steps are shown inside the account after signing up, not on the public site.
+Before anything goes live we prove the number really belongs to the business: a code called in from that line, a second code read back on a return call, and then a real test call that has to land on the agent.
+Porting a number to us is the only route that needs paperwork — a signed authorisation and a recent operator invoice in the company name. A trunk on the business's own number needs neither.` },
+
+  { key:"start", sort:90, title:"How a business starts", body:
+`Four steps. Create the account and pick a plan. Paste in what the team already says on a call. Choose the dialect, the voice, and connect the line. Go live.
+Signing up asks for an email and a password, or a Google account, and the email has to be confirmed. No phone number is asked for at sign-up: the phone numbers come later, and they are the agent's, not the customer's.
+Setting up the agent is a form, not an engineering project.` },
+
+  { key:"pricing", sort:100, title:"Plans and billing", body:
+`Three plans. Every plan answers calls and makes them: outbound is not held back for a higher tier. Starter is one agent on one number, for a small team testing real calls. Growth adds several setups on the same number, live transfer to a sales team, bookings with a calendar feed, and more than one agent and number. Enterprise adds a cloned voice of the business's own, unlimited seats and numbers, custom integrations, an SLA and dedicated onboarding.
+Billing is monthly or yearly, by card, cancel any time. Yearly is billed as a bundle and works out two months cheaper.
+Customers in Egypt are billed in Egyptian pounds, and VAT is added at checkout.
+Quote whatever price the page is showing, exactly as written. If no price is shown, say prices are available on request and offer to take their details. Never invent a figure and never convert one into another currency.` },
+
+  { key:"limits", sort:110, title:"What NABRA does not do, and does not claim", body:
+`This sector matters more than the others. Saying "I do not know" is always better than guessing.
+It is not a human. It is an AI agent, and if a caller asks, say so straight away rather than letting them believe otherwise.
+It does not sell phone lines or numbers. A business brings its own.
+It does not read out the SIP or trunk configuration on the public site or over the phone. Those steps live inside the account, after sign-in.
+It does not give legal, financial or medical advice.
+There is no CRM integration, and no way to import a list of leads from a file or from another system. Leads come from calls, and they live in the dashboard. If someone asks about importing a list, say it is not something we have today rather than describing how it would work.
+Outbound is included on every plan, but calling through a whole list on a schedule is not switched on yet: there is no way to upload a list and have it dialled automatically. If someone asks about running a campaign this week, say that plainly and take their details rather than describing how it would work.
+It cannot see a particular customer's account, calls or bookings from the public site or from this phone line. Anyone asking about their own account should sign in, or ask to be put through.
+If something is not covered in these sectors, say plainly that it is not something you have, and offer to take a name and number or to put the caller through to the team.` },
+
+  { key:"contact", sort:120, title:"Reaching a person", body:
+`Almost everything can be settled here without a person, and that is the point of the product.
+If a caller has something urgent, or something these sectors do not cover, take their name, their number and what it is about, and say somebody from the team will come back to them. Do not promise a time unless you were given one.` },
+];
+
+/* Seeding runs on every boot, and the wording above changes as the product
+   does. A sector you have edited is yours and is never touched again; one
+   still sitting at exactly the text we shipped gets the newer text, so a
+   correction here reaches a running install without anyone editing by hand.
+   seeded_body is how the two are told apart. */
+async function seedSectors() {
+  await q(`ALTER TABLE site_sectors ADD COLUMN IF NOT EXISTS seeded_body TEXT`);
+  for (const s of SECTOR_SEED) {
+    await q(`INSERT INTO site_sectors(key,title,body,sort,seeded_body) VALUES($1,$2,$3,$4,$3)
+             ON CONFLICT (key) DO UPDATE
+                SET body        = EXCLUDED.body,
+                    title       = EXCLUDED.title,
+                    seeded_body = EXCLUDED.seeded_body,
+                    updated_at  = now()
+              WHERE site_sectors.body = site_sectors.seeded_body`,
+      [s.key, s.title, s.body, s.sort]);
+  }
+  /* Rows seeded before this column existed have no record of what they started
+     as. Anything still identical to the current seed is plainly untouched. */
+  await q(`UPDATE site_sectors SET seeded_body = body
+            WHERE seeded_body IS NULL AND key = ANY($1)`, [SECTOR_SEED.map(s => s.key)]);
+}
+
+/* The sectors, assembled into one brief. Used by the Ask NABRA widget on the
+   site and by NABRA's own phone agent, so both answer from the same text and
+   neither can drift from the other. */
+async function siteBrief() {
+  const { rows } = await q(
+    `SELECT title, body FROM site_sectors WHERE active = true AND body <> '' ORDER BY sort, id`);
+  return rows.map(r => `## ${r.title}\n${r.body}`).join("\n\n");
 }
 
 /* ============================================================
@@ -318,7 +546,10 @@ function readSession(req) {
    immediately, no redeploy. Env vars remain the fallback.
    Bootstrap secrets (DATABASE_URL, SESSION_SECRET) stay env-only.
    ============================================================ */
-const APPLYABLE = ["PAYMENTS_MODE","PAYMOB_API_KEY","PAYMOB_INTEGRATION_ID","PAYMOB_IFRAME_ID","PAYMOB_HMAC","VAPI_WEBHOOK_TOKEN","VAPI_API_KEY","MAX_CALL_SECONDS","SILENCE_TIMEOUT_SECONDS","FX_SERVICE_URL","SITE_URL","GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET","EMAIL_PROVIDER","EMAIL_API_KEY","EMAIL_FROM"];
+const APPLYABLE = ["PAYMENTS_MODE","PAYMOB_API_KEY","PAYMOB_INTEGRATION_ID","PAYMOB_IFRAME_ID","PAYMOB_HMAC","VAPI_WEBHOOK_TOKEN","VAPI_API_KEY","MAX_CALL_SECONDS","SILENCE_TIMEOUT_SECONDS","FX_SERVICE_URL","SITE_URL","GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET","EMAIL_PROVIDER","EMAIL_API_KEY","EMAIL_FROM",
+  /* NABRA's own line, and the key the on-site assistant answers with. The
+     number is public by design; the key never leaves the server. */
+  "NABRA_PHONE","NABRA_PHONE_NOTE","ANTHROPIC_API_KEY","ASK_MODEL"];
 let CONF = {};
 async function loadConf() {
   try { const { rows } = await q(`SELECT key,value FROM config`); CONF = Object.fromEntries(rows.map(r => [r.key, r.value])); }
@@ -335,7 +566,11 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 const FILES = {
-  site: path.join(CFG.DIR, "index.html"),
+  /* index.html is the deployed name; the original name is kept as a fallback
+     so the repo works under either, rather than 500ing on a missing file. */
+  site: [path.join(CFG.DIR, "index.html"), path.join(CFG.DIR, "nabra-voice-ai.html")]
+          .find(p => { try { return fs.existsSync(p); } catch (_) { return false; } })
+        || path.join(CFG.DIR, "index.html"),
   dash: path.join(CFG.DIR, "nabra-dashboard.html"),
   admin: path.join(CFG.DIR, "admin-panel.html"),
   legal: path.join(CFG.DIR, "legal-public.html"),
@@ -344,9 +579,17 @@ const FILES = {
 const read = f => fs.readFileSync(f, "utf8");
 
 /* inject the identity object right before </body> */
+/* The identity object has to exist BEFORE the page's own script runs, because
+   that script checks for it on the way in and gives up if it is missing. It
+   used to be injected before </body>, which is after the script, so the check
+   always failed and a signed-in customer was shown the sample data instead of
+   their own calls, agents and bookings. It goes in the head now.
+   The </body> branch is a fallback for a file with no head. */
 function serveWithBoot(res, file, boot) {
-  const html = read(file).replace("</body>",
-    `<script>window.NABRA_BOOT=${JSON.stringify(boot).replace(/</g, "\\u003c")}</script></body>`);
+  const tag = `<script>window.NABRA_BOOT=${JSON.stringify(boot).replace(/</g, "\\u003c")}</script>`;
+  const src = read(file);
+  const html = src.includes("</head>") ? src.replace("</head>", tag + "</head>")
+                                       : src.replace("</body>", tag + "</body>");
   res.setHeader("Content-Type", "text/html; charset=utf-8").end(html);
 }
 
@@ -462,7 +705,7 @@ app.get("/verify", async (req, res) => {
      <body style="font-family:system-ui;background:#EEF2F9;color:#163466;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center">
      <div><h1 style="font-weight:600;font-size:1.4rem">That link has expired</h1>
      <p style="color:#4A5F86">Log in and we will send you a fresh one.</p>
-     <a href="/login" style="color:#C08A2E">Log in</a></div></body>`);
+     <a href="/login" style="color:#2F6BFF">Log in</a></div></body>`);
   const { rows } = await q(`UPDATE tenants SET email_verified=true WHERE id=$1 RETURNING *`, [p.v]);
   if (!rows.length) return res.redirect("/login");
   setSession(res, rows[0]);
@@ -514,7 +757,7 @@ function oauthFail(res, why) {
 <meta name="color-scheme" content="light only"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sign-in failed — NABRA</title><style>html{background:#EEF2F9!important;color-scheme:only light!important}
 body{background:#EEF2F9;color:#163466;font-family:system-ui,sans-serif;display:grid;place-items:center;
-min-height:100vh;margin:0;text-align:center;padding:2rem}a{color:#C08A2E}</style></head><body><div>
+min-height:100vh;margin:0;text-align:center;padding:2rem}a{color:#2F6BFF}</style></head><body><div>
 <h1 style="font-weight:400;font-size:1.5rem;margin:0 0 .5rem">That sign-in did not complete</h1>
 <p style="color:#4A5F86;margin:0 0 1.2rem">Nothing was changed on your account. Please try again, or use your email and password.</p>
 <a href="/login">Back to log in</a></div></body></html>`);
@@ -610,37 +853,6 @@ app.get("/auth/google/callback", async (req, res) => {
 });
 
 app.get("/login", (req, res) => res.setHeader("Content-Type", "text/html; charset=utf-8").end(authPage("login", null, req.query.t || "")));
-app.get("/__reset-admin-password", async (req, res) => {
-  try {
-    const key = String(req.query.key || "");
-    const newPassword = String(req.query.password || "");
-
-    if (key !== CFG.ADMIN_PASSWORD) {
-      return res.status(403).send("Invalid reset key");
-    }
-
-    if (newPassword.length < 8) {
-      return res.status(400).send("Password must be at least 8 characters");
-    }
-
-    const { rows } = await q(
-      `UPDATE tenants
-       SET pass_hash=$1, role='admin', status='active'
-       WHERE role='admin'
-       RETURNING email`,
-      [hashPw(newPassword)]
-    );
-
-    if (!rows.length) {
-      return res.status(404).send("No admin account found");
-    }
-
-    res.send("Admin password reset successfully for " + rows[0].email);
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Reset failed");
-  }
-});
 app.get("/logout", (req, res) => { res.setHeader("Set-Cookie", "nabra_s=; Path=/; Max-Age=0"); res.redirect("/"); });
 
 app.post("/api/auth/signup", async (req, res) => {
@@ -791,7 +1003,8 @@ function readiness(a) {
     { k: "knowledge", ok: (a.knowledge || "").trim().length > 80,         say: "Add what the agent needs to know, or upload your menu" },
     { k: "rules",     ok: !!(a.rules || "").trim(),                       say: "Set the rules it must not cross" },
     { k: "script",    ok: a.direction === "inbound" || !!(a.script || "").trim(), say: "Write or generate the outbound script" },
-    { k: "channel",   ok: !!(a.channel_cfg && a.channel_cfg.route),       say: "Choose how calls reach the agent" },
+    { k: "channel",   ok: !!(a.channel_cfg && String(a.channel_cfg.number || "").trim()),
+                                                                          say: "Add the number your SIP trunk carries" },
     { k: "tested",    ok: !!a.tested_at,                                  say: "Test the agent at least once" },
   ];
   const done = checks.filter(c => c.ok).length;
@@ -829,15 +1042,11 @@ app.post("/api/me/agents", async (req, res) => {
   const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
   const d = cleanAgent(req.body || {});
   if (!d.name) return res.status(400).json({ error: "The agent needs a name before it can be saved." });
-  /* Same default the setup screen applies, so an agent created through the
-     API alone lands on the right route: an Egyptian account gets the trunk,
-     which is the only route carrying inbound and outbound on their own
-     +20 number. Anything the client actually sent always wins. */
-  if (!d.channel_cfg || !d.channel_cfg.route) {
-    const eg = ["ar", "eg"].includes(t.lang) ||
-               /^\+?20/.test(String((d.channel_cfg && d.channel_cfg.number) || "").replace(/[^\d+]/g, ""));
-    d.channel_cfg = { ...(d.channel_cfg || {}), route: eg ? "trunk" : "web" };
-  }
+  /* A SIP trunk on the customer's own number is the only route, so there is
+     nothing to choose or guess. Forwarding and the call link were removed:
+     forwarding cannot carry outbound on the customer's own number and bills
+     them per minute, and a link is not a phone line. */
+  d.channel_cfg = { ...(d.channel_cfg || {}), route: "trunk" };
   const { rows } = await q(
     `INSERT INTO agents(tenant_id,name,channel,direction,lang,business,knowledge,rules,script,transfer_to,channel_cfg)
      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
@@ -888,15 +1097,15 @@ app.post("/api/me/agents/:id/deploy", async (req, res) => {
   const r = readiness(rows[0]);
   if (!r.ready) return res.status(400).json({ error: "This agent is not ready yet.", readiness: r });
   const { rows: up } = await q(`UPDATE agents SET status='live', deployed_at=now(), updated_at=now() WHERE id=$1 RETURNING *`, [rows[0].id]);
-  const route = (up[0].channel_cfg && up[0].channel_cfg.route) || "web";
-  if (route !== "web")
-    await q(`INSERT INTO provisioning(tenant_id,kind,detail) VALUES($1,$2,$3)`,
-      [t.id, route === "trunk" ? "number_connect" : "number_connect",
-       `${up[0].name}: ${route} on ${(up[0].channel_cfg && up[0].channel_cfg.number) || "number not given"}`]);
-  await track(t.id, "deployment_successful", { agent: up[0].id, route });
+  /* A SIP trunk on the customer's own number is the only route now, so every
+     deployment queues a line to connect. Agents saved under the old forwarding
+     or call-link options are treated as trunks: there is nothing else to be. */
+  await q(`INSERT INTO provisioning(tenant_id,kind,detail) VALUES($1,$2,$3)`,
+    [t.id, "number_connect",
+     `${up[0].name}: SIP trunk on ${(up[0].channel_cfg && up[0].channel_cfg.number) || "number not given"}`]);
+  await track(t.id, "deployment_successful", { agent: up[0].id, route: "trunk" });
   res.json({ agent: { ...up[0], readiness: readiness(up[0]) },
-             note: route === "web" ? "Live now on your call link."
-                                   : "Configuration is live. Your line is queued for connection." });
+             note: "Configuration is live. Your line is queued for connection." });
 });
 
 app.post("/api/me/agents/:id/pause", async (req, res) => {
@@ -1067,6 +1276,324 @@ app.get("/api/me/availability", async (req, res) => {
     openNow: hrs.ok, why: hrs.ok ? (cap.ok ? null : cap.why) : hrs.why,
     seatsLeft: cap.seatsLeft ?? null, tablesLeft: cap.tablesLeft ?? null,
   });
+});
+
+/* ============================================================
+   SETUPS  (call flows inside one agent, on one number)
+   ------------------------------------------------------------
+   Ownership is resolved from the session every time. An agent id
+   or setup id arriving from the browser is never trusted: it is
+   checked against the signed-in tenant before anything is read
+   or written, so changing an id in a request reaches nothing.
+   ============================================================ */
+
+/* The voice catalogue. Customers pick a NABRA name; the provider and its
+   voice id stay here on the server and never reach the browser. */
+const VOICES = {
+  lina:  { name: "Lina",  note: "Warm, professional",      provider: "11labs", voice_id: process.env.VOICE_LINA  || "" },
+  adam:  { name: "Adam",  note: "Confident, direct",       provider: "11labs", voice_id: process.env.VOICE_ADAM  || "" },
+  maya:  { name: "Maya",  note: "Friendly, conversational",provider: "11labs", voice_id: process.env.VOICE_MAYA  || "" },
+  omar:  { name: "Omar",  note: "Calm, steady",            provider: "11labs", voice_id: process.env.VOICE_OMAR  || "" },
+};
+app.get("/api/voices", async (req, res) => {
+  /* names only: no provider, no ids */
+  res.json({ voices: Object.entries(VOICES).map(([key, v]) => ({ key, name: v.name, note: v.note })) });
+});
+
+/* ============================================================
+   NABRA'S OWN LINE AND ITS ON-SITE ASSISTANT
+   ------------------------------------------------------------
+   Both answer out of the same sectors, so the number on the site
+   and the chat bubble can never tell a visitor two different
+   things.
+
+   The Ask widget used to call api.anthropic.com straight from the
+   browser, which could only ever fail — and would have put the key
+   in every visitor's devtools the moment one was added. It posts
+   here instead, and the key stays on the server.
+   ============================================================ */
+
+/* what the public site is allowed to know about our own line */
+app.get("/api/site/line", async (req, res) => {
+  const phone = String(cfg("NABRA_PHONE") || "").trim();
+  res.json({ phone, note: String(cfg("NABRA_PHONE_NOTE") || "").trim(), live: !!phone });
+});
+
+/* the brief, readable. Public on purpose: it is a tidied copy of what this
+   website already says out loud, and it is useful to see what the agent was
+   told rather than guessing from its answers. */
+app.get("/api/site/brief", async (req, res) => {
+  try {
+    const { rows } = await q(
+      `SELECT key, title, body FROM site_sectors WHERE active = true AND body <> '' ORDER BY sort, id`);
+    res.json({ sectors: rows, updated: true });
+  } catch (e) { res.status(500).json({ error: "brief unavailable" }); }
+});
+
+/* How the assistant is told to behave, wrapped around whatever the sectors say.
+   `prices` is what the visitor's own screen is showing, passed up by the page,
+   so the assistant quotes the figure in front of them rather than a stale one.
+   The no-handoff rule is deliberate and it is the product's whole argument:
+   a business should not need a person on every enquiry. The exception for
+   something urgent or genuinely uncovered is real, and it is the only one. */
+async function askSystem(lang, prices) {
+  const brief = await siteBrief();
+  const phone = String(cfg("NABRA_PHONE") || "").trim();
+  const tongue = { ar: "Modern Standard Arabic", eg: "Egyptian Arabic (Masri)" }[lang] || "English";
+  const priceLine = prices
+    ? `THE PRICES ON THE VISITOR'S SCREEN RIGHT NOW: ${prices}. Quote these exactly as written. Do not convert them into another currency and do not round them.`
+    : `No prices are showing on the page right now. Say they are available on request and offer no figure of your own.`;
+
+  return `You are the assistant on NABRA's own website. NABRA sells an AI phone agent to businesses in Egypt.
+
+Answer in ${tongue} unless the visitor writes in another language, in which case follow them.
+
+THE ONLY THINGS YOU KNOW ARE BELOW. This is the whole of your knowledge about NABRA.
+
+${brief}
+
+${priceLine}
+
+HOW TO ANSWER
+Short and specific. Two or three sentences usually. No markdown, no bullet lists, no headings.
+Answer the question that was asked. Do not open with a greeting every time and do not end every answer with a question.
+If someone says what business they run, say specifically what the agent would do for that business, using only what you know above.
+Write plainly. No marketing language and no exclamation marks.
+
+DO NOT OFFER TO PUT ANYONE THROUGH TO A PERSON. This product exists because a business should not need a human on every enquiry, and offering one argues against the thing you are selling. Do not say a salesperson or the team will follow up, and do not ask for a name, a number or an email so somebody can call them back. Setting the agent up is self-service and takes minutes.
+Close on whichever of these fits: the live voice demo on this page, which they can talk to immediately; "Create your agent", which takes them to the plans and then into setup; or simply a straight answer to what they asked, if they are still deciding.
+THE ONE EXCEPTION, and it is a real one: if the matter is urgent, or it is something you genuinely do not cover, say so honestly and give them the contact address in the page footer so a person can pick it up. That covers a legal question, a billing dispute, a complaint, an account somebody cannot get into, and anything where waiting would actually cost them something. The test is not whether they would prefer a human. It is whether you can answer. If you can, answer.
+
+WHAT YOU MUST NOT DO
+Never state anything that is not in the sections above. Inventing a capability, a price, a client, a statistic or a timescale is the worst thing you can do here.
+Never describe how the SIP or trunk configuration is done. Say it is shown inside the account after signing up.
+Never claim to be a human. You are NABRA's assistant.
+Never claim to see their account, their calls or their bookings.
+${phone ? `If someone would rather talk than type, our own agent answers on ${phone}. It is the same product this site is about, so it is also the quickest way to hear it.` : ``}`;
+}
+
+app.post("/api/site/ask", async (req, res) => {
+  const key = cfg("ANTHROPIC_API_KEY");
+  if (!key) return res.status(503).json({ error: "assistant not configured" });
+
+  const b = req.body || {};
+  const lang = ["en", "ar", "eg"].includes(b.lang) ? b.lang : "en";
+  /* Whatever arrives is a stranger's input: cap the turns and the length so a
+     visitor cannot run up a bill or push the brief out of the window. */
+  const msgs = (Array.isArray(b.messages) ? b.messages : [])
+    .filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+    .slice(-12)
+    .map(m => ({ role: m.role, content: m.content.slice(0, 2000) }));
+  if (!msgs.length || msgs[msgs.length - 1].role !== "user")
+    return res.status(400).json({ error: "last message must be from the visitor" });
+
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: cfg("ASK_MODEL") || "claude-sonnet-4-5",
+        max_tokens: 700,
+        system: await askSystem(lang, String(b.prices || "").slice(0, 400)),
+        messages: msgs,
+      }),
+    });
+    if (!r.ok) {
+      console.error("site/ask upstream:", r.status, (await r.text()).slice(0, 300));
+      return res.status(502).json({ error: "assistant unavailable" });
+    }
+    const j = await r.json();
+    const text = (j.content || []).map(x => x.type === "text" ? x.text : "").join("").trim();
+    if (!text) return res.status(502).json({ error: "assistant unavailable" });
+    res.json({ text });
+  } catch (e) {
+    console.error("site/ask:", e.message);
+    res.status(502).json({ error: "assistant unavailable" });
+  }
+});
+
+/* ---- the sectors, edited from the admin panel ---- */
+app.get("/api/admin/sectors", async (req, res) => {
+  const a = await requireAdmin(req, res); if (!a) return;
+  const { rows } = await q(`SELECT id,key,title,body,sort,active,updated_at FROM site_sectors ORDER BY sort, id`);
+  res.json({ sectors: rows, phone: String(cfg("NABRA_PHONE") || ""), note: String(cfg("NABRA_PHONE_NOTE") || "") });
+});
+
+app.post("/api/admin/sectors", async (req, res) => {
+  const a = await requireAdmin(req, res); if (!a) return;
+  const b = req.body || {};
+  /* "Ramadan Hours!!" → "ramadan-hours": runs collapse and the ends are
+     trimmed, so two titles that only differ in punctuation collide properly
+     instead of quietly becoming two sectors saying the same thing. */
+  const key = String(b.key || "").trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40).replace(/-+$/, "");
+  const title = String(b.title || "").trim().slice(0, 120);
+  if (!title) return res.status(400).json({ error: "a title is required" });
+  /* An Arabic title slugs to nothing, which is not a reason to refuse it.
+     Give it a key of its own and keep the title the customer-facing part. */
+  const id = key || ("sector-" + Date.now().toString(36));
+  const { rows } = await q(
+    `INSERT INTO site_sectors(key,title,body,sort) VALUES($1,$2,$3,$4)
+     ON CONFLICT (key) DO NOTHING RETURNING *`,
+    [id, title, String(b.body || "").slice(0, 20000), parseInt(b.sort, 10) || 900]);
+  if (!rows[0]) return res.status(409).json({ error: "a sector with that key already exists" });
+  res.json({ sector: rows[0] });
+});
+
+app.patch("/api/admin/sectors/:id", async (req, res) => {
+  const a = await requireAdmin(req, res); if (!a) return;
+  const b = req.body || {}, sets = [], vals = [];
+  const put = (col, v) => { vals.push(v); sets.push(`${col}=$${vals.length}`); };
+  if (b.title != null)  put("title",  String(b.title).trim().slice(0, 120));
+  if (b.body != null)   put("body",   String(b.body).slice(0, 20000));
+  if (b.sort != null)   put("sort",   parseInt(b.sort, 10) || 0);
+  if (b.active != null) put("active", !!b.active);
+  if (!sets.length) return res.status(400).json({ error: "nothing to change" });
+  sets.push(`updated_at = now()`);
+  vals.push(req.params.id);
+  const { rows } = await q(`UPDATE site_sectors SET ${sets.join(",")} WHERE id=$${vals.length} RETURNING *`, vals);
+  if (!rows[0]) return res.status(404).json({ error: "no such sector" });
+  res.json({ sector: rows[0] });
+});
+
+app.delete("/api/admin/sectors/:id", async (req, res) => {
+  const a = await requireAdmin(req, res); if (!a) return;
+  await q(`DELETE FROM site_sectors WHERE id=$1`, [req.params.id]);
+  res.json({ ok: true });
+});
+
+/* Restores any seeded sector that was deleted. It never touches one that is
+   still there, so edits are safe. */
+app.post("/api/admin/sectors/restore", async (req, res) => {
+  const a = await requireAdmin(req, res); if (!a) return;
+  const before = (await q(`SELECT count(*)::int n FROM site_sectors`)).rows[0].n;
+  await seedSectors();
+  const after = (await q(`SELECT count(*)::int n FROM site_sectors`)).rows[0].n;
+  res.json({ ok: true, restored: after - before });
+});
+
+/* What NABRA's own phone agent is told. Admin-only: it is the prompt, and
+   there is no reason for it to be a public endpoint. */
+app.get("/api/admin/line-prompt", async (req, res) => {
+  const a = await requireAdmin(req, res); if (!a) return;
+  res.json({ prompt: await nabraLinePrompt() });
+});
+
+/* The prompt behind our own number. Same sectors as the website assistant,
+   with the part that only makes sense out loud on a phone call. */
+async function nabraLinePrompt() {
+  const brief = await siteBrief();
+  return `You are the agent that answers NABRA's own phone line. NABRA sells an AI phone agent to businesses in Egypt, and you are an example of the product you are describing. Say so if anyone asks: you are an AI, not a person.
+
+Greet in Egyptian Arabic and switch to English or Modern Standard Arabic the moment the caller does.
+
+WORK OUT WHY THEY ARE CALLING, from what they say, in the first few seconds. There is no press-one menu. A caller usually wants one of these:
+
+SALES — what it costs, whether it would work for their business, how it handles their kind of calls. Answer from what you know, take their name, their business and their number, and say somebody will follow up. Do not quote a price you were not given.
+SETTING IT UP — they already have an account and want to know how to connect a number, write the knowledge, or go live. Explain what the steps are in general terms, then tell them the exact configuration is in their account after they sign in. Never read out SIP or trunk settings on this call.
+A WALKTHROUGH — they want to be shown the product. Take their name, their number, their business and a time that suits them, and say we will come back to them to confirm it.
+SUPPORT — something is not working. Get their name, their number, what they were doing and what happened, and say the team will come back to them.
+SOMETHING ELSE — anything the knowledge below does not cover. Say plainly that it is not something you have, take their name and number, and say a person will come back to them.
+
+If they ask for a specific person, or say it is urgent, take their name, number and what it is about and say you will pass it to the team straight away. Do not transfer them mid-call unless you were set up to.
+
+EVERYTHING YOU KNOW ABOUT NABRA IS BELOW. Nothing outside it is yours to say.
+
+${brief}
+
+ON THE PHONE
+Keep every answer to a couple of sentences. A caller cannot skim.
+Read a number, a price or an email slowly and offer to repeat it.
+Never invent a price, a date, a customer name or a feature.
+Never claim to see their account.
+At the end, read back the name and number you took, and confirm what happens next.`;
+}
+
+async function ownedAgent(tenantId, agentId) {
+  const { rows } = await q(`SELECT * FROM agents WHERE id=$1 AND tenant_id=$2`, [agentId, tenantId]);
+  return rows[0] || null;
+}
+
+app.get("/api/me/agents/:id/setups", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const a = await ownedAgent(t.id, req.params.id);
+  if (!a) return res.status(404).json({ error: "That agent is not on your account." });
+  const { rows } = await q(`SELECT * FROM setups WHERE agent_id=$1 ORDER BY sort, id`, [a.id]);
+  res.json({ setups: rows, routing: a.routing || { mode: "hybrid" } });
+});
+
+app.post("/api/me/agents/:id/setups", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const a = await ownedAgent(t.id, req.params.id);
+  if (!a) return res.status(404).json({ error: "That agent is not on your account." });
+  const b = req.body || {};
+  const name = String(b.name || "").trim().slice(0, 80);
+  if (!name) return res.status(400).json({ error: "Give the setup a name, such as Sales or Reservations." });
+  const { rows: n } = await q(`SELECT COALESCE(MAX(sort),-1)+1 AS s FROM setups WHERE agent_id=$1`, [a.id]);
+  const { rows } = await q(
+    `INSERT INTO setups(tenant_id,agent_id,name,description,greeting,instructions,knowledge,rules,business,voice,transfer_to,intents,dtmf_key,sort)
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+    [t.id, a.id, name, String(b.description||"").slice(0,300), String(b.greeting||"").slice(0,600),
+     String(b.instructions||"").slice(0,8000), String(b.knowledge||"").slice(0,20000),
+     String(b.rules||"").slice(0,8000), b.business || {},
+     VOICES[b.voice_key] ? { key: b.voice_key } : {},
+     String(b.transfer_to||"").slice(0,40) || null,
+     Array.isArray(b.intents) ? b.intents.map(s=>String(s).slice(0,40)).slice(0,20) : [],
+     b.dtmf_key ? String(b.dtmf_key).slice(0,1) : null, n[0].s]);
+  res.json({ setup: rows[0] });
+});
+
+app.patch("/api/me/setups/:id", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const b = req.body || {};
+  const sets = [], vals = [];
+  const put = (col, v) => { sets.push(`${col}=$${sets.length + 3}`); vals.push(v); };
+  if (b.name != null)         put("name", String(b.name).trim().slice(0,80));
+  if (b.description != null)  put("description", String(b.description).slice(0,300));
+  if (b.greeting != null)     put("greeting", String(b.greeting).slice(0,600));
+  if (b.instructions != null) put("instructions", String(b.instructions).slice(0,8000));
+  if (b.knowledge != null)    put("knowledge", String(b.knowledge).slice(0,20000));
+  if (b.rules != null)        put("rules", String(b.rules).slice(0,8000));
+  if (b.business != null)     put("business", b.business);
+  if (b.voice_key != null)    put("voice", VOICES[b.voice_key] ? { key: b.voice_key } : {});
+  if (b.transfer_to != null)  put("transfer_to", String(b.transfer_to).slice(0,40) || null);
+  if (b.intents != null)      put("intents", Array.isArray(b.intents) ? b.intents.map(s=>String(s).slice(0,40)).slice(0,20) : []);
+  if (b.dtmf_key != null)     put("dtmf_key", b.dtmf_key ? String(b.dtmf_key).slice(0,1) : null);
+  if (b.active != null)       put("active", !!b.active);
+  if (b.sort != null)         put("sort", parseInt(b.sort,10) || 0);
+  if (!sets.length) return res.status(400).json({ error: "Nothing to update." });
+  sets.push("updated_at=now()");
+  const { rows } = await q(`UPDATE setups SET ${sets.join(",")} WHERE id=$1 AND tenant_id=$2 RETURNING *`,
+    [req.params.id, t.id, ...vals]);
+  if (!rows.length) return res.status(404).json({ error: "That setup is not on your account." });
+  res.json({ setup: rows[0] });
+});
+
+app.delete("/api/me/setups/:id", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const { rows: cnt } = await q(
+    `SELECT COUNT(*)::int AS n FROM setups WHERE agent_id=(SELECT agent_id FROM setups WHERE id=$1 AND tenant_id=$2)`,
+    [req.params.id, t.id]);
+  if (cnt[0] && cnt[0].n <= 1)
+    return res.status(400).json({ error: "An agent needs at least one setup. Rename this one instead of deleting it." });
+  const { rowCount } = await q(`DELETE FROM setups WHERE id=$1 AND tenant_id=$2`, [req.params.id, t.id]);
+  if (!rowCount) return res.status(404).json({ error: "That setup is not on your account." });
+  res.json({ ok: true });
+});
+
+/* How this agent decides which flow a caller wants. */
+app.patch("/api/me/agents/:id/routing", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const a = await ownedAgent(t.id, req.params.id);
+  if (!a) return res.status(404).json({ error: "That agent is not on your account." });
+  const b = req.body || {};
+  const modes = ["ai", "dtmf", "hybrid"];
+  if (b.mode && !modes.includes(b.mode)) return res.status(400).json({ error: "Unknown routing mode." });
+  const routing = Object.assign({ mode: "hybrid" }, a.routing || {}, 
+    b.mode ? { mode: b.mode } : {}, b.menu_greeting != null ? { menu_greeting: String(b.menu_greeting).slice(0,600) } : {});
+  const { rows } = await q(`UPDATE agents SET routing=$3, updated_at=now() WHERE id=$1 AND tenant_id=$2 RETURNING routing`,
+    [a.id, t.id, routing]);
+  res.json({ routing: rows[0].routing });
 });
 
 /* ------------------------------------------------------------ bookings */
@@ -1251,7 +1778,7 @@ app.post("/api/admin/tenants/:id/status", async (req, res) => {
    force and a stuck call bills until the caller's carrier drops it. */
 async function applyCallLimits(assistantId) {
   if (!cfg("VAPI_API_KEY") || !assistantId) return { skipped: true };
-  const r = await fetch(`https://api.vapi.ai/assistant/${assistantId}`, {
+  const r = await fetch(`${cfg("VAPI_BASE")}/assistant/${assistantId}`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${cfg("VAPI_API_KEY")}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -1270,6 +1797,346 @@ async function applyCallLimits(assistantId) {
   if (!r.ok) throw new Error("vapi PATCH " + assistantId + " → " + r.status);
   return { applied: true };
 }
+
+
+/* ============================================================
+   OUTBOUND — PLACING THE CALLS
+   ------------------------------------------------------------
+   Inbound works because Vapi rings our webhook. Outbound is the
+   other way round: something here has to ask Vapi to dial, and
+   this is that something.
+
+   An agent can dial when all of these are true, and the queue
+   screen says plainly which one is missing:
+     · it is live and its direction is outbound
+     · it has a Vapi assistant id (the agent itself)
+     · it has a Vapi phone number id (the trunk, set by us)
+     · outbound is not paused, and the clock is inside its window
+
+   Everything is per agent, so one customer's campaign can never
+   consume another's concurrency.
+   ============================================================ */
+
+const DIAL = {
+  tickMs:        20_000,   /* how often we look for work */
+  stuckMin:      30,       /* a 'calling' row with no webhook this long is unstuck */
+  backoffMin:    20,       /* wait this long before a second attempt */
+  maxPerTick:    10,       /* ceiling per agent per tick, so one agent cannot hog a tick */
+};
+
+/* Cairo wall-clock, because a calling window means the hours where the person
+   being rung actually lives, not wherever this container happens to run. */
+function cairoNow() {
+  const f = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Cairo", hour12: false,
+    weekday: "short", hour: "2-digit", minute: "2-digit",
+  });
+  const p = Object.fromEntries(f.formatToParts(new Date()).map(x => [x.type, x.value]));
+  const days = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return { day: days[p.weekday], mins: Number(p.hour) * 60 + Number(p.minute) };
+}
+
+const hhmm = s => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || "").trim());
+  return m ? Math.min(1439, Number(m[1]) * 60 + Number(m[2])) : null;
+};
+
+/* Is this agent allowed to dial right now? Returns a reason when it is not, so
+   the dashboard can say why instead of showing a queue that silently does
+   nothing. */
+function dialWindow(ob) {
+  const o = ob || {};
+  if (o.paused !== false) return { ok: false, why: "Outbound is paused." };
+  const from = hhmm(o.from) ?? 600, to = hhmm(o.to) ?? 1080;
+  const days = Array.isArray(o.days) && o.days.length ? o.days : [0, 1, 2, 3, 4, 6];
+  const now = cairoNow();
+  if (!days.includes(now.day)) return { ok: false, why: "Not a calling day." };
+  const inside = from <= to ? (now.mins >= from && now.mins < to)
+                            : (now.mins >= from || now.mins < to);   /* a window over midnight */
+  if (!inside) return { ok: false, why: `Outside the calling window (${o.from || "10:00"}–${o.to || "18:00"} Cairo time).` };
+  return { ok: true };
+}
+
+/* Everything that would stop this agent dialling, in the order a customer
+   would fix them. Used by the runner and by the queue screen, so the two can
+   never disagree about why nothing is happening. */
+function dialBlockers(agent) {
+  const out = [];
+  if (!cfg("VAPI_API_KEY"))          out.push("The platform is not connected to Vapi yet.");
+  if (agent.direction !== "outbound") out.push("This agent is set to answer calls, not make them.");
+  if (agent.status !== "live")        out.push("The agent is not deployed.");
+  if (!agent.vapi_assistant_id)       out.push("The agent has no voice assistant yet.");
+  if (!agent.vapi_phone_number_id)    out.push("Your line is not connected yet, so there is no number to call from.");
+  if (!String(agent.script || "").trim()) out.push("There is no outbound script.");
+  const w = dialWindow(agent.outbound);
+  if (!w.ok) out.push(w.why);
+  return out;
+}
+
+/* Ask Vapi to place one call. Returns its call id, or throws with something a
+   human can read. */
+async function vapiDial({ assistantId, phoneNumberId, to, row, agent }) {
+  const r = await fetch(`${cfg("VAPI_BASE")}/call`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${cfg("VAPI_API_KEY")}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      assistantId,
+      phoneNumberId,
+      customer: { number: to, name: row.name || undefined },
+      /* read back in the webhook, so the finished call lands on the right row
+         without us having to match on phone numbers */
+      metadata: { nabra_queue_id: row.id, nabra_tenant_id: row.tenant_id, nabra_agent_id: row.agent_id },
+      /* anything the customer wrote about this person, given to the agent for
+         this call only. The script itself lives on the assistant. */
+      assistantOverrides: row.note
+        ? { variableValues: { lead_name: row.name || "", lead_note: row.note } }
+        : { variableValues: { lead_name: row.name || "" } },
+    }),
+  });
+  const text = await r.text();
+  if (!r.ok) {
+    let why = text.slice(0, 300);
+    try { const j = JSON.parse(text); why = (Array.isArray(j.message) ? j.message.join("; ") : j.message) || why; } catch (_) {}
+    throw new Error(`Vapi refused the call (${r.status}): ${why}`);
+  }
+  let j = {}; try { j = JSON.parse(text); } catch (_) {}
+  return j.id || null;
+}
+
+/* One pass over one agent's queue. */
+async function dialAgent(agent) {
+  if (dialBlockers(agent).length) return 0;
+  const ob = agent.outbound || {};
+  const concurrency = Math.max(1, Math.min(10, Number(ob.concurrency) || 1));
+
+  const { rows: busy } = await q(
+    `SELECT count(*)::int n FROM outbound_queue WHERE agent_id=$1 AND status='calling'`, [agent.id]);
+  const room = Math.min(concurrency - busy[0].n, DIAL.maxPerTick);
+  if (room <= 0) return 0;
+
+  /* Claim the rows and mark them 'calling' in the same transaction. SKIP LOCKED
+     means a second gateway instance takes different rows rather than waiting,
+     and never the same person twice. */
+  const c = await pool.connect();
+  let claimed = [];
+  try {
+    await c.query("BEGIN");
+    const { rows } = await c.query(
+      `SELECT * FROM outbound_queue
+        WHERE agent_id=$1 AND status='waiting' AND (not_before IS NULL OR not_before <= now())
+        ORDER BY id
+        LIMIT $2
+        FOR UPDATE SKIP LOCKED`, [agent.id, room]);
+    if (rows.length) {
+      await c.query(`UPDATE outbound_queue SET status='calling', attempts=attempts+1,
+                            dialled_at=now(), updated_at=now()
+                      WHERE id = ANY($1)`, [rows.map(r => r.id)]);
+      claimed = rows;
+    }
+    await c.query("COMMIT");
+  } catch (e) {
+    try { await c.query("ROLLBACK"); } catch (_) {}
+    console.error("[outbound] claim failed:", e.message);
+    return 0;
+  } finally { c.release(); }
+
+  let placed = 0;
+  for (const row of claimed) {
+    try {
+      const callId = await vapiDial({
+        assistantId: agent.vapi_assistant_id,
+        phoneNumberId: agent.vapi_phone_number_id,
+        to: row.phone, row, agent,
+      });
+      await q(`UPDATE outbound_queue SET vapi_call_id=$1, last_error=NULL, updated_at=now() WHERE id=$2`,
+        [callId, row.id]);
+      placed++;
+    } catch (e) {
+      const maxA = Math.max(1, Number(ob.max_attempts) || 2);
+      const done = row.attempts + 1 >= maxA;
+      await q(`UPDATE outbound_queue
+                  SET status=$1, last_error=$2, not_before=$3, updated_at=now(),
+                      finished_at = CASE WHEN $1='failed' THEN now() ELSE finished_at END
+                WHERE id=$4`,
+        [done ? "failed" : "waiting", String(e.message).slice(0, 400),
+         done ? null : new Date(Date.now() + DIAL.backoffMin * 60_000), row.id]);
+      console.error(`[outbound] row ${row.id}:`, e.message);
+    }
+  }
+  return placed;
+}
+
+/* Rows that were dialled but whose call never reported back. Without this they
+   would hold a concurrency slot for ever and the queue would quietly stall. */
+async function unstickOutbound() {
+  const { rows } = await q(
+    `UPDATE outbound_queue
+        SET status = CASE WHEN attempts >= 2 THEN 'failed' ELSE 'waiting' END,
+            last_error = 'No result came back from the call, so it was released.',
+            not_before = now() + interval '10 minutes',
+            updated_at = now()
+      WHERE status='calling' AND dialled_at < now() - ($1 || ' minutes')::interval
+      RETURNING id`, [String(DIAL.stuckMin)]);
+  if (rows.length) console.warn(`[outbound] released ${rows.length} stuck row(s)`);
+}
+
+let dialTimer = null, dialling = false;
+async function dialTick() {
+  if (dialling) return;                 /* a slow tick must not overlap the next */
+  dialling = true;
+  try {
+    await unstickOutbound();
+    if (!cfg("VAPI_API_KEY")) return;
+    const { rows: agents } = await q(
+      `SELECT a.* FROM agents a
+         JOIN tenants t ON t.id = a.tenant_id
+        WHERE a.direction='outbound' AND a.status='live'
+          AND a.vapi_assistant_id IS NOT NULL AND a.vapi_phone_number_id IS NOT NULL
+          AND t.status='active'
+          AND EXISTS (SELECT 1 FROM outbound_queue o
+                       WHERE o.agent_id=a.id AND o.status='waiting'
+                         AND (o.not_before IS NULL OR o.not_before <= now()))`);
+    for (const a of agents) {
+      try { await dialAgent(a); }
+      catch (e) { console.error(`[outbound] agent ${a.id}:`, e.message); }
+    }
+  } catch (e) {
+    console.error("[outbound] tick:", e.message);
+  } finally { dialling = false; }
+}
+
+function startDialler() {
+  if (dialTimer) return;
+  dialTimer = setInterval(dialTick, DIAL.tickMs);
+  if (dialTimer.unref) dialTimer.unref();
+  console.log(`outbound dialler running every ${DIAL.tickMs / 1000}s`);
+}
+
+/* ---- the customer's view of their queue ---- */
+
+/* "Mona, +20 100 123 4567, called last week" — one person per line, in
+   whatever order the columns happen to be, because asking a restaurant owner
+   to produce a correctly ordered CSV is asking them not to bother. */
+function parsePeople(text) {
+  const out = [], seen = new Set();
+  for (const raw of String(text || "").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    const parts = line.split(/[,;\t]/).map(x => x.trim()).filter(Boolean);
+    if (!parts.length) continue;
+    /* the phone is whichever field looks like a phone */
+    let pi = parts.findIndex(x => /^[+()\d][\d\s()+-]{6,}$/.test(x));
+    if (pi < 0) continue;                                   /* no number, nothing to dial */
+    const phone = parts[pi].replace(/[^\d+]/g, "");
+    if (phone.replace(/\D/g, "").length < 7) continue;
+    const rest = parts.filter((_, i) => i !== pi);
+    const key = phone;
+    if (seen.has(key)) continue;                            /* the same person twice in one paste */
+    seen.add(key);
+    out.push({ name: (rest[0] || "").slice(0, 120), phone: phone.slice(0, 32), note: rest.slice(1).join(", ").slice(0, 400) });
+  }
+  return out;
+}
+
+app.get("/api/me/agents/:id/outbound", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const a = await ownedAgent(t.id, req.params.id);
+  if (!a) return res.status(404).json({ error: "That agent does not exist on your account." });
+  const { rows: counts } = await q(
+    `SELECT status, count(*)::int n FROM outbound_queue WHERE agent_id=$1 GROUP BY status`, [a.id]);
+  const { rows: list } = await q(
+    `SELECT id,name,phone,note,status,attempts,outcome,summary,last_error,dialled_at,finished_at,created_at
+       FROM outbound_queue WHERE agent_id=$1 ORDER BY
+         CASE status WHEN 'calling' THEN 0 WHEN 'waiting' THEN 1 ELSE 2 END, id DESC
+      LIMIT 300`, [a.id]);
+  res.json({
+    queue: list,
+    counts: Object.fromEntries(counts.map(c => [c.status, c.n])),
+    settings: a.outbound || {},
+    /* why nothing is dialling, if nothing is dialling */
+    blockers: dialBlockers(a),
+    direction: a.direction,
+  });
+});
+
+app.post("/api/me/agents/:id/outbound", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const a = await ownedAgent(t.id, req.params.id);
+  if (!a) return res.status(404).json({ error: "That agent does not exist on your account." });
+  const b = req.body || {};
+  const people = Array.isArray(b.people)
+    ? b.people.map(p => ({ name: String(p.name || "").slice(0, 120),
+                           phone: String(p.phone || "").replace(/[^\d+]/g, "").slice(0, 32),
+                           note: String(p.note || "").slice(0, 400) }))
+               .filter(p => p.phone.replace(/\D/g, "").length >= 7)
+    : parsePeople(b.text);
+  if (!people.length)
+    return res.status(400).json({ error: "No phone numbers were found in that. One person per line, with the number anywhere on the line." });
+  if (people.length > 2000)
+    return res.status(400).json({ error: "That is more than 2,000 people in one go. Split it up." });
+
+  /* Somebody already waiting is not queued twice, so pasting the same list
+     again adds only what is new rather than ringing everyone a second time. */
+  const { rows } = await q(
+    `INSERT INTO outbound_queue(tenant_id,agent_id,name,phone,note)
+     SELECT $1,$2,x.name,x.phone,x.note
+       FROM jsonb_to_recordset($3::jsonb) AS x(name text, phone text, note text)
+      WHERE NOT EXISTS (
+        SELECT 1 FROM outbound_queue o
+         WHERE o.agent_id=$2 AND o.phone=x.phone AND o.status IN ('waiting','calling'))
+     RETURNING id`,
+    [t.id, a.id, JSON.stringify(people)]);
+  res.json({ added: rows.length, seen: people.length, skipped: people.length - rows.length });
+});
+
+app.patch("/api/me/agents/:id/outbound", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const a = await ownedAgent(t.id, req.params.id);
+  if (!a) return res.status(404).json({ error: "That agent does not exist on your account." });
+  const b = req.body || {}, cur = a.outbound || {};
+  const next = { ...cur };
+  if (b.paused != null)      next.paused = !!b.paused;
+  if (b.from && hhmm(b.from)!=null) next.from = b.from;
+  if (b.to   && hhmm(b.to)!=null)   next.to   = b.to;
+  if (Array.isArray(b.days)) next.days = b.days.map(Number).filter(d => d >= 0 && d <= 6);
+  if (b.concurrency != null) next.concurrency  = Math.max(1, Math.min(10, parseInt(b.concurrency, 10) || 1));
+  if (b.max_attempts != null)next.max_attempts = Math.max(1, Math.min(5,  parseInt(b.max_attempts, 10) || 2));
+  const { rows } = await q(`UPDATE agents SET outbound=$1, updated_at=now() WHERE id=$2 RETURNING *`,
+    [JSON.stringify(next), a.id]);
+  res.json({ settings: rows[0].outbound, blockers: dialBlockers(rows[0]) });
+});
+
+app.post("/api/me/outbound/:rowId/cancel", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const { rows } = await q(
+    `UPDATE outbound_queue SET status='cancelled', finished_at=now(), updated_at=now()
+      WHERE id=$1 AND tenant_id=$2 AND status='waiting' RETURNING id`, [req.params.rowId, t.id]);
+  if (!rows.length) return res.status(404).json({ error: "Nothing waiting with that id. A call already placed cannot be unmade." });
+  res.json({ ok: true });
+});
+
+app.post("/api/me/agents/:id/outbound/clear", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const a = await ownedAgent(t.id, req.params.id);
+  if (!a) return res.status(404).json({ error: "That agent does not exist on your account." });
+  /* only what has not been dialled: a call that happened stays on the record */
+  const { rows } = await q(
+    `UPDATE outbound_queue SET status='cancelled', finished_at=now(), updated_at=now()
+      WHERE agent_id=$1 AND status='waiting' RETURNING id`, [a.id]);
+  res.json({ cancelled: rows.length });
+});
+
+/* ---- the one thing only we can set: which Vapi number the agent dials from ---- */
+app.post("/api/admin/agents/:id/phone-number", async (req, res) => {
+  const adm = await requireAdmin(req, res); if (!adm) return;
+  const id = String((req.body || {}).vapi_phone_number_id || "").trim();
+  const { rows } = await q(`UPDATE agents SET vapi_phone_number_id=$1, updated_at=now() WHERE id=$2 RETURNING id, name, tenant_id`,
+    [id || null, req.params.id]);
+  if (!rows.length) return res.status(404).json({ error: "no such agent" });
+  await q(`INSERT INTO events(tenant_id,kind,detail) VALUES($1,'outbound_number_set',$2)`,
+    [rows[0].tenant_id, JSON.stringify({ by: adm.email, agent: rows[0].id, set: !!id })]);
+  res.json({ ok: true, agent: rows[0], set: !!id });
+});
 
 app.post("/api/admin/tenants/:id/assistants", async (req, res) => {
   /* attach the Vapi assistant id(s) you created for this customer —
@@ -1372,7 +2239,19 @@ app.post("/api/vapi/webhook", async (req, res) => {
     const { rows } = assistantId
       ? await q(`SELECT id FROM tenants WHERE $1 = ANY(vapi_assistant_ids)`, [assistantId])
       : { rows: [] };
-    const tenantId = rows.length ? rows[0].id : null;
+
+    /* A call we placed ourselves carries its queue row id. That row already
+       records whose campaign it was, so it answers the ownership question even
+       when the tenant's assistant list has drifted. We read the tenant from
+       OUR row rather than from the webhook body: the body is remote input, and
+       the row is not forgeable. */
+    const qid = Number((call.metadata && call.metadata.nabra_queue_id) || 0);
+    const { rows: qr } = qid
+      ? await q(`SELECT * FROM outbound_queue WHERE id=$1`, [qid])
+      : { rows: [] };
+    const qrow = qr[0] || null;
+
+    const tenantId = rows.length ? rows[0].id : (qrow ? qrow.tenant_id : null);
     const durS = Math.round(Number(msg.durationSeconds || call.durationSeconds || 0));
     await q(`INSERT INTO calls(tenant_id,vapi_call_id,assistant_id,direction,from_number,duration_s,outcome,summary,transcript,payload)
              VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
@@ -1391,10 +2270,40 @@ app.post("/api/vapi/webhook", async (req, res) => {
        store nothing rather than inventing a lead. */
     let agentRow = null;
     if (tenantId && assistantId) {
-      const { rows: ar } = await q(`SELECT id FROM agents WHERE tenant_id=$1 AND vapi_assistant_id=$2`, [tenantId, assistantId]);
+      const { rows: ar } = await q(`SELECT * FROM agents WHERE tenant_id=$1 AND vapi_assistant_id=$2`, [tenantId, assistantId]);
       agentRow = ar[0] || null;
-      if (agentRow) await q(`UPDATE calls SET agent_id=$1 WHERE vapi_call_id=$2`, [agentRow.id, call.id || null]);
     }
+    /* A call we placed knows its agent outright, which also covers the case
+       where two agents share one assistant id. */
+    if (!agentRow && qrow) {
+      const { rows: ar } = await q(`SELECT * FROM agents WHERE id=$1`, [qrow.agent_id]);
+      agentRow = ar[0] || null;
+    }
+    if (agentRow) await q(`UPDATE calls SET agent_id=$1 WHERE vapi_call_id=$2`, [agentRow.id, call.id || null]);
+    /* If this call was one we placed, close its queue row. The id travels on
+       the call's own metadata, so there is no guessing from phone numbers and
+       no chance of crediting the result to the wrong person. */
+    if (qrow) {
+      {
+        const { rows: cr } = await q(`SELECT id FROM calls WHERE vapi_call_id=$1`, [call.id || null]);
+        const outcome = msg.endedReason || (msg.analysis && msg.analysis.successEvaluation) || null;
+        /* Vapi reports why it ended; some reasons mean nobody was reached, and
+           those are worth another go rather than being written off as done. */
+        const unreached = /no-answer|busy|voicemail|customer-did-not-answer|failed|rejected/i.test(String(msg.endedReason || ""));
+        const maxA = Math.max(1, Number(((agentRow && agentRow.outbound) || {}).max_attempts) || 2);
+        const retry = unreached && qrow.attempts < maxA;
+        await q(`UPDATE outbound_queue
+                    SET status=$1, outcome=$2, summary=$3, call_id=$4,
+                        not_before=$5, finished_at=$6, updated_at=now()
+                  WHERE id=$7`,
+          [retry ? "waiting" : "done",
+           outcome, msg.summary || (msg.analysis && msg.analysis.summary) || null,
+           cr.length ? cr[0].id : null,
+           retry ? new Date(Date.now() + (Number(((agentRow && agentRow.outbound) || {}).gap_min) || 45) * 60_000) : null,
+           retry ? null : new Date(), qid]);
+      }
+    }
+
     const sd = (msg.analysis && msg.analysis.structuredData) || null;
     if (tenantId && sd && (sd.name || sd.phone)) {
       const { rows: cr } = await q(`SELECT id FROM calls WHERE vapi_call_id=$1`, [call.id || null]);
@@ -1406,6 +2315,28 @@ app.post("/api/vapi/webhook", async (req, res) => {
          sd.intent || null,
          sd.summary || msg.summary || null]);
       await track(tenantId, "first_lead", { call: call.id || null });
+
+      /* Which flow handled this call. Vapi can report it as structured data or
+         as its own assistant id when a setup eventually has one of its own;
+         otherwise fall back to the agent's first active setup, which is the
+         correct answer for every single-flow agent. */
+      let setupId = null;
+      if (agentRow) {
+        const want = (sd && (sd.setup || sd.department || sd.flow)) || null;
+        const { rows: su } = await q(
+          `SELECT id, name, vapi_assistant_id FROM setups WHERE agent_id=$1 AND active ORDER BY sort, id`,
+          [agentRow.id]);
+        if (su.length) {
+          const byAssistant = su.find(s => s.vapi_assistant_id && s.vapi_assistant_id === assistantId);
+          const byName = want ? su.find(s => s.name.toLowerCase() === String(want).toLowerCase()) : null;
+          setupId = (byAssistant || byName || su[0]).id;
+        }
+      }
+
+      if (setupId && call.id) {
+        await q(`UPDATE calls SET setup_id=$2, agent_id=COALESCE(agent_id,$3) WHERE vapi_call_id=$1`,
+          [call.id, setupId, agentRow ? agentRow.id : null]).catch(() => {});
+      }
 
       /* An order is a different shape of call: items and an address, no time.
          Only captured when the owner switched orders on for this agent. */
@@ -1560,11 +2491,26 @@ app.post("/api/pay/webhook", async (req, res) => {
 });
 
 /* ------------------------------------------------------------ FX proxy */
+/* The FX engine knows the Central Bank rate, our margin on top, the live
+   buffered rate and how far the billing rate has drifted from it. The public
+   site needs exactly one of those — the rate we bill at — and the rest is our
+   commercial position. Anyone can read a network response, so the proxy drops
+   the internals here rather than trusting the page not to display them.
+   An admin asking gets the full picture. */
+const FX_PUBLIC = ["date", "billingRate", "stale"];
 app.get("/api/fx/:what(current|convert|history)", async (req, res) => {
   try {
     const u = new URL("/api/fx/" + req.params.what, cfg("FX_SERVICE_URL"));
     for (const [k, v] of Object.entries(req.query)) u.searchParams.set(k, v);
-    const r = await fetch(u); res.status(r.status).json(await r.json());
+    const r = await fetch(u);
+    const body = await r.json();
+    const t = await currentTenant(req).catch(() => null);
+    if (r.ok && req.params.what === "current" && !(t && t.role === "admin")) {
+      const slim = {};
+      for (const k of FX_PUBLIC) if (body[k] !== undefined) slim[k] = body[k];
+      return res.status(r.status).json(slim);
+    }
+    res.status(r.status).json(body);
   } catch { res.status(502).json({ error: "FX service unreachable" }); }
 });
 async function fxConvertUSD(usd) {
@@ -1633,7 +2579,7 @@ const planLine = isUp && co
 <title>${isUp ? "Create your account" : "Log in"} — NABRA</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Chivo+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-:root{--bone:#EEF2F9;--fg:#163466;--mute:#4A5F86;--rule:rgba(22,52,102,.12);--ember:#C08A2E}
+:root{--bone:#EEF2F9;--fg:#163466;--mute:#4A5F86;--rule:rgba(22,52,102,.12);--ember:#2F6BFF}
 *{box-sizing:border-box;margin:0}body{background:var(--bone);color:var(--fg);font-family:'Plus Jakarta Sans',sans-serif;
 display:grid;place-items:center;min-height:100vh;padding:1.5rem}
 .card{width:100%;max-width:400px;border:1px solid var(--rule);border-radius:16px;padding:2rem;background:#fff}
@@ -1695,7 +2641,7 @@ app.use((req, res) => {
 <style>html{background:#EEF2F9!important;color-scheme:only light!important}
 body{background:#EEF2F9!important;color:#163466!important;font-family:system-ui,sans-serif;
 display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:2rem}
-a{color:#C08A2E}</style></head><body><div>
+a{color:#2F6BFF}</style></head><body><div>
 <h1 style="font-weight:400;font-size:1.6rem;margin:0 0 .5rem">This page does not exist</h1>
 <p style="color:#4A5F86;margin:0 0 1.2rem">The link may be old, or mistyped.</p>
 <a href="/">Back to the site</a></div></body></html>`);
@@ -1705,6 +2651,7 @@ a{color:#C08A2E}</style></head><body><div>
 migrate()
   .then(loadConf)
   .then(() => app.listen(CFG.PORT, () => console.log(`NABRA gateway on :${CFG.PORT} — payments: ${CFG.PAYMENTS_MODE}`)))
+  .then(startDialler)
   .catch(e => { console.error("migrate failed:", e.message); process.exit(1); });
 
 module.exports = { app, sign, verify, hashPw, checkPw };
