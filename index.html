@@ -406,6 +406,10 @@ html[dir="rtl"] .talk-btn{padding:.95rem 1.15rem .95rem 1.5rem}
 .hero-actions{display:flex;flex-wrap:wrap;gap:1.2rem;align-items:center}
 .hero-actions .plain{font-size:.9rem;color:var(--fg-mute);border-bottom:1px solid var(--rule);padding-bottom:2px;transition:color .3s,border-color .3s}
 .hero-actions .plain:hover{color:var(--fg);border-color:var(--fg)}
+.hero-price{margin-top:1.1rem;font-size:.92rem;color:var(--fg-mute)}
+.hero-price a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:2px;transition:color .3s,border-color .3s}
+.hero-price a:hover{color:var(--fg);border-color:var(--fg)}
+.hero-price b{color:var(--fg);font-weight:650}
 .hero-support{
   margin-top:1.6rem;font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;
   text-transform:uppercase;color:var(--fg-faint);
@@ -1665,6 +1669,12 @@ html[dir="rtl"] .lang-menu button{text-align:start}
           See how it works</a>
       </div>
 
+      <!-- The price, on the first screen. Hiding it until someone scrolls to
+           the plans made NABRA read like something you have to ask about
+           before you can buy. -->
+      <p class="hero-price"><a href="#plans"><span data-i18n="hero.fromPre">Plans from</span>
+        <b id="heroFrom">$49</b> <span data-i18n="hero.fromPost">a month · see what is included</span></a></p>
+
       <!-- Three facts, not a sentence of them. The reference puts these under
            the fold of the first screen as icons; a mono strip of the same words
            read as fine print and nobody looked at it. -->
@@ -1986,7 +1996,7 @@ html[dir="rtl"] .lang-menu button{text-align:start}
       <div class="plan">
         <div class="pn" data-i18n="pl.3n">Enterprise</div>
         <p class="pd" data-i18n="pl.3d">High call volume, your own voice, and terms that fit procurement.</p>
-        <div class="pprice"><span class="amt" id="p3">—</span></div>
+        <div class="pprice"><span class="amt" id="p3"><span class="was" id="p3w"></span><span id="p3a">—</span></span><span class="per" id="p3per" data-i18n="pl.per">per month</span></div>
         <p class="egpline" id="p3e"></p>
         <p class="yline" id="p3y"></p>
         <ul>
@@ -1996,7 +2006,7 @@ html[dir="rtl"] .lang-menu button{text-align:start}
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.3f4">Custom integrations and SLA</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="pl.3f5">Dedicated onboarding</span></li>
         </ul>
-        <button class="btn btn-ghost" data-buy="enterprise" data-i18n="pl.contact">Talk to sales</button>
+        <button class="btn btn-ghost" data-buy="enterprise" data-i18n="pl.start">Start now</button>
       </div>
     </div>
 
@@ -2191,7 +2201,7 @@ en:{
   "hero.sub":"AI voice agents for real businesses. Inbound and outbound calls, handled end to end, in English, Arabic and Egyptian Arabic.",
   "chip.en":"English","chip.ar":"العربية الفصحى","chip.eg":"مصري — Masri","chip.mix":"عربي + English",
   "hero.cta1":"Talk to the AI →","hero.cta2":"See how it works",
-  "hero.ctaStart":"Create your agent","hf.1":"Inbound + outbound","hf.2":"Masri, Arabic, English","hf.3":"Built for real businesses","hero.callus":"Or hear it yourself \u2014 call","hero.callnote":"It is the same agent this page is about.","nav.start":"Create agent","vid.eyebrow":"See it working","vid.h":"Watch it, rather than read about it.","vid.p":"Short films, no sign-up needed. Each one is a few minutes.","nav.watch":"Watch",
+  "hero.ctaStart":"Create your agent","hero.fromPre":"Plans from","hero.fromPost":"a month \u00b7 see what is included","hf.1":"Inbound + outbound","hf.2":"Masri, Arabic, English","hf.3":"Built for real businesses","hero.callus":"Or hear it yourself \u2014 call","hero.callnote":"It is the same agent this page is about.","nav.start":"Create agent","vid.eyebrow":"See it working","vid.h":"Watch it, rather than read about it.","vid.p":"Short films, no sign-up needed. Each one is a few minutes.","nav.watch":"Watch",
   "band.h":"Your agent can be answering this afternoon.",
   "band.p":"Pick a plan, teach it your business, test it on your own phone. No integration project, no engineer.",
   "band.cta":"Create your agent","band.alt":"Or talk to it first",
@@ -2273,7 +2283,7 @@ ar:{
   "hero.sub":"مكالمات واردة وصادرة يديرها وكيل صوتي من أولها لآخرها، ويفهم العربية المصرية كما تُنطق حقاً — بسرعتها، وبكلماتها الإنجليزية المتداخلة.",
   "chip.en":"الإنجليزية","chip.ar":"العربية الفصحى","chip.eg":"المصرية","chip.mix":"عربي + إنجليزي",
   "hero.cta1":"اضغط وتحدث","hero.cta2":"شاهد مسار المكالمة",
-  "hero.ctaStart":"أنشئ وكيلك","hf.1":"وارد وصادر","hf.2":"مصري، عربي، إنجليزي","hf.3":"للأعمال الحقيقية","hero.callus":"أو اسمعه بنفسك — اتصل على","hero.callnote":"هو نفس الوكيل الذي تتحدث عنه هذه الصفحة.","nav.start":"أنشئ وكيلك","vid.eyebrow":"شاهده وهو يعمل","vid.h":"شاهده بدلاً من أن تقرأ عنه.","vid.p":"مقاطع قصيرة، بلا تسجيل. كل واحد منها دقائق معدودة.","nav.watch":"شاهد",
+  "hero.ctaStart":"أنشئ وكيلك","hero.fromPre":"الخطط تبدأ من","hero.fromPost":"شهرياً · اعرف ما تتضمنه","hf.1":"وارد وصادر","hf.2":"مصري، عربي، إنجليزي","hf.3":"للأعمال الحقيقية","hero.callus":"أو اسمعه بنفسك — اتصل على","hero.callnote":"هو نفس الوكيل الذي تتحدث عنه هذه الصفحة.","nav.start":"أنشئ وكيلك","vid.eyebrow":"شاهده وهو يعمل","vid.h":"شاهده بدلاً من أن تقرأ عنه.","vid.p":"مقاطع قصيرة، بلا تسجيل. كل واحد منها دقائق معدودة.","nav.watch":"شاهد",
   "band.h":"وكيلك ممكن يرد بعد الظهر.",
   "band.p":"اختر خطة، علّمه نشاطك، وجرّبه على هاتفك. بلا مشروع تكامل وبلا مهندس.",
   "band.cta":"أنشئ وكيلك","band.alt":"أو تحدث إليه أولاً",
@@ -2355,7 +2365,7 @@ eg:{
   "hero.sub":"مكالمات داخلة وخارجة، وكيل صوتي بيمسكها من أولها لآخرها وبيفهم المصري زي ما بيتقال بالظبط — بسرعته، وبالكلمات الإنجليزي اللي بتيجي في نص الجملة.",
   "chip.en":"إنجليزي","chip.ar":"عربي فصحى","chip.eg":"مصري","chip.mix":"عربي + إنجليزي",
   "hero.cta1":"دوس واتكلم","hero.cta2":"شوف المكالمة ماشية إزاي",
-  "hero.ctaStart":"اعمل وكيلك","hf.1":"داخل وخارج","hf.2":"مصري، عربي، إنجليزي","hf.3":"للشغل الحقيقي","hero.callus":"أو اسمعه بنفسك — كلّم","hero.callnote":"ده نفس الوكيل اللي الصفحة بتتكلم عنه.","nav.start":"اعمل وكيلك","vid.eyebrow":"شوفه وهو شغال","vid.h":"شوفه بدل ما تقرا عنه.","vid.p":"فيديوهات قصيرة، من غير تسجيل. كل واحد كام دقيقة.","nav.watch":"شوف",
+  "hero.ctaStart":"اعمل وكيلك","hero.fromPre":"الخطط من","hero.fromPost":"في الشهر · شوف فيها إيه","hf.1":"داخل وخارج","hf.2":"مصري، عربي، إنجليزي","hf.3":"للشغل الحقيقي","hero.callus":"أو اسمعه بنفسك — كلّم","hero.callnote":"ده نفس الوكيل اللي الصفحة بتتكلم عنه.","nav.start":"اعمل وكيلك","vid.eyebrow":"شوفه وهو شغال","vid.h":"شوفه بدل ما تقرا عنه.","vid.p":"فيديوهات قصيرة، من غير تسجيل. كل واحد كام دقيقة.","nav.watch":"شوف",
   "band.h":"وكيلك ممكن يرد بعد الضهر.",
   "band.p":"اختار خطة، علّمه شغلك، وجربه على تليفونك. من غير مشروع تكامل ومن غير مهندس.",
   "band.cta":"اعمل وكيلك","band.alt":"أو كلمه الأول",
@@ -2636,9 +2646,15 @@ const PRICING = {
     updated:   "2026-08-10"
   },
   plans: {
-    starter:    { usd: null },
-    growth:     { usd: null },
-    enterprise: { usd: null }   // null renders "Talk to us"
+    /* The real published prices, so the cards show a number on the first
+       paint. They used to be null, which rendered "On request" on every plan
+       until a fetch came back — and for good on a page served without the
+       gateway. A buyer who cannot see a price does not buy.
+       KEEP IN LOCKSTEP with PLAN_USD in gateway.js; the server overwrites
+       these a moment later anyway, so the server is still the authority. */
+    starter:    { usd: 49 },
+    growth:     { usd: 129 },
+    enterprise: { usd: 399 }   // null would render "Talk to us"
   },
   annualMonthsFree: 2,    // yearly bundle = pay (12 - this) months. 2 → pay 10, get 12.
                           // KEEP IN LOCKSTEP with planUSD() in gateway.js
@@ -2720,6 +2736,11 @@ function renderPricing(){
       if(ylin) ylin.textContent="";
     }
   });
+  const from = document.getElementById("heroFrom");
+  if(from){
+    const real = Object.values(PRICING.plans).map(p=>p.usd).filter(v=>v!=null);
+    if(real.length) from.textContent = money(Math.min(...real));
+  }
   const pill = document.getElementById("cycSave");
   if(pill) pill.textContent = t("pl.savepill").replace("{p}", annualPct());
   document.querySelectorAll("[data-plancyc]").forEach(b=> b.setAttribute("aria-pressed", String(b.dataset.plancyc===planCyc)));

@@ -316,6 +316,7 @@ function openDrawer(id){
     <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.9rem 0 1.1rem">
       <span class="tag">${esc(t.plan)} · ${esc(t.cycle)}</span>
       <span class="tag ${t.status==="active"?"on":t.status==="suspended"?"hot":"dim"}">${t.status}</span>
+      ${t.comp?`<span class="tag on">on the house</span>`:""}
       <span class="tag dim">${(t.minutes_used||0).toLocaleString()} min</span>
     </div>
     <div class="fld"><label>Vapi assistant IDs — comma separated. This mapping routes end-of-call webhooks to this customer.</label>
@@ -325,10 +326,13 @@ function openDrawer(id){
     <div style="border-top:1px solid var(--rule);margin:1.3rem 0;padding-top:1.2rem;display:flex;gap:.5rem;flex-wrap:wrap">
       ${t.status!=="active"?`<button class="btn" data-st="active">Activate</button>`:""}
       ${t.status!=="suspended"?`<button class="btn warn" data-st="suspended">Suspend</button>`:""}
+      <button class="btn ghost" data-comp="${t.comp?"0":"1"}">${t.comp?"Start billing them":"Give it free"}</button>
       <button class="btn ghost" id="dImp">Open their console</button>
       <button class="btn ghost" id="dClose">Close</button>
     </div>
-    <p class="note">Activate: use after a manual payment or to end a suspension. Suspend: stops logins immediately; nothing is deleted, and their data stays on the retention schedule.</p>`;
+    <p class="note">Activate: use after a payment taken outside the card page, or to end a suspension.
+    Suspend: pauses any live agent straight away so it stops answering calls — nothing is deleted, and they can still sign in to settle up.
+    Give it free: full access, never billed and never asked to pay. Use it for your own accounts and anyone you comp.</p>`;
   $("#drawer").classList.add("open"); $("#scrim").classList.add("open");
   $("#dClose").addEventListener("click",closeDrawer);
   $("#dImp").addEventListener("click",()=>impersonate(t.id));
@@ -337,6 +341,12 @@ function openDrawer(id){
     const r=await api(`/api/admin/tenants/${t.id}/assistants`,{method:"POST",body:JSON.stringify({ids})});
     t.vapi_assistant_ids=ids; toast(r?"Mapping saved":"Demo mode — saved locally"); vCustomers();
   });
+  $$("#drawer [data-comp]").forEach(b=>b.addEventListener("click",async()=>{
+    const on = b.dataset.comp==="1";
+    const r=await api(`/api/admin/tenants/${t.id}/comp`,{method:"POST",body:JSON.stringify({comp:on})});
+    t.comp=on; if(on) t.status="active";
+    toast(r?(on?"On the house":"Billing resumed"):"Demo mode — updated locally"); closeDrawer(); vCustomers();
+  }));
   $$("#drawer [data-st]").forEach(b=>b.addEventListener("click",async()=>{
     const r=await api(`/api/admin/tenants/${t.id}/status`,{method:"POST",body:JSON.stringify({status:b.dataset.st})});
     t.status=b.dataset.st; toast(r?"Status updated":"Demo mode — updated locally"); closeDrawer(); vCustomers();

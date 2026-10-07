@@ -249,6 +249,33 @@ textarea{min-height:110px;resize:vertical;line-height:1.55}
 html[dir="rtl"] .sub{margin:.1rem 1.4rem .2rem 0}
 .sub[hidden]{display:none}
 
+/* ---- what this agent is for ---- */
+.kinds{display:grid;gap:.5rem;margin-top:.9rem}
+@media(min-width:560px){.kinds{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1100px){.kinds{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kind{display:flex;gap:.65rem;align-items:center;padding:.7rem .8rem;border:1px solid var(--rule);
+  border-radius:9px;background:var(--bone-hi);cursor:pointer;text-align:start;font:inherit;color:var(--fg);
+  transition:border-color .2s,background .2s}
+.kind:hover{border-color:var(--ember-lit)}
+.kind[aria-checked="true"]{border-color:var(--ember-mid);background:var(--ember-wash);box-shadow:inset 0 0 0 1px var(--ember-mid)}
+.kind .ki{font-size:1.1rem;line-height:1;flex:none;width:1.6rem;text-align:center}
+.kind b{font-size:.92rem;font-weight:600}
+.kind small{display:block;font-size:.8rem;color:var(--fg-mute);line-height:1.4;margin-top:.1rem}
+
+/* ---- which agent, and adding or removing one ---- */
+.agentbar{display:flex;gap:.8rem;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  margin-bottom:1.1rem;padding:.7rem .85rem;border:1px solid var(--rule);border-radius:10px;background:var(--bone-hi)}
+.agentbar[hidden]{display:none}
+.ab-list{display:flex;gap:.4rem;flex-wrap:wrap;min-width:0}
+.ab-list button{padding:.38rem .8rem;border:1px solid var(--rule);border-radius:99px;background:transparent;
+  font:inherit;font-size:.84rem;color:var(--fg-mute);cursor:pointer;white-space:nowrap}
+.ab-list button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff;font-weight:500}
+.ab-act{display:flex;gap:.5rem;flex-wrap:wrap}
+.ab-act .btn{padding:.42rem .9rem;font-size:.82rem}
+.btn.danger{color:#A32018;border-color:rgba(163,32,24,.3)}
+.btn.danger:hover{border-color:#A32018;background:rgba(163,32,24,.06)}
+@media(max-width:560px){.agentbar{flex-direction:column;align-items:stretch}.ab-act .btn{flex:1}}
+
 /* delivery zones: an area can stand alone with one fee, or hold zones that
    each carry their own. The nesting is one level deep on purpose. */
 .zone{border:1px solid var(--rule);border-radius:3px;background:var(--bone-hi);
@@ -446,8 +473,26 @@ html[dir="rtl"] .sub{margin:.1rem 1.4rem .2rem 0}
     <h1>Teach the agent</h1>
     <p class="sub">Everything here goes into how it answers. Write it the way you would brief a new employee on their first day.</p>
 
+    <!-- Which agent is being edited, and a way to add or remove one. Hidden
+         until there is more than one, so a single-agent account is not shown
+         a switcher with one thing in it. -->
+    <div class="agentbar" id="agentBar" hidden>
+      <div class="ab-list" id="agentList"></div>
+      <div class="ab-act">
+        <button class="btn ghost" id="agentNew" type="button">+ New agent</button>
+        <button class="btn ghost danger" id="agentDel" type="button">Delete this agent</button>
+      </div>
+    </div>
+
     <div class="cols">
       <div>
+        <div class="card" id="kindCard">
+          <h2>What is this agent for?</h2>
+          <p class="hint">It decides what the agent is asked to handle and what the form below shows you.
+          A restaurant needs delivery zones and tables; an estate agent needs neither. You can change it later.</p>
+          <div class="kinds" id="kindGrid" role="radiogroup" aria-label="What this agent is for"></div>
+        </div>
+
         <div class="card">
           <h2>The business</h2>
           <div class="two">
@@ -768,6 +813,196 @@ Do not discuss other restaurants.</textarea>
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const val = id => ($("#"+id) ? $("#"+id).value.trim() : "");
+
+/* ============================================================
+   WHAT THIS AGENT IS FOR
+   ------------------------------------------------------------
+   The form used to be a restaurant with the serial numbers filed
+   off: a worked Zooba example, seats and tables, delivery zones,
+   a menu. A real estate office or a clinic had to read past all
+   of that and work out which half applied to them.
+
+   A kind decides three things, and nothing else:
+     · which capabilities are even offered (a letting agent has
+       no delivery zones; a shop has no tables)
+     · what the shared fields are CALLED — the same capacity
+       number is "people you can seat", "appointments at once"
+       or "viewings at once" depending on who is reading it
+     · the worked example that fills the form
+
+   The data model underneath does not change, so an agent built
+   as one kind and switched to another keeps everything it had.
+   ============================================================ */
+const KINDS = {
+  restaurant: {
+    label:"Restaurant or café", icon:"🍽",
+    type:"Egyptian street food restaurant",
+    book:true, orders:true, capacity:true,
+    bookWord:"bookings", bookNoun:"a table",
+    seatLabel:"How many people can you seat at once?",
+    placeLabel:"How many tables?", placeNoun:"tables",
+    placeHint:"Leave blank if you do not count tables.",
+    bookBlurb:"Tables and reservations. Uses the hours and capacity set above.",
+    greeting:"Zooba Zamalek, good evening. How can I help you?",
+    name:"Zooba Zamalek",
+    hours:"Daily 9am to 2am. Kitchen closes 1:30am.",
+    seats:40, places:10, slot:90,
+    knowledge:`DELIVERY: 45 to 60 minutes. Where we deliver and what each area costs is set in the delivery zones below, so it is not repeated here.
+TABLES: We take reservations for 2 to 8 people. Larger groups need a manager to approve. Ground floor and terrace. Terrace is smoking, inside is not.
+POPULAR DISHES: Taameya sandwich 45, Koshary 70, Hawawshi 95, Molokhia with rice 110, Om Ali 60. Vegetarian options on every section of the menu.
+PAYMENT: Cash, card, Instapay. No cheques.
+NOT AVAILABLE: We do not do catering for weddings.`,
+    rules:`Never invent a dish or a price that is not written above.
+Never promise a delivery time faster than 45 minutes.
+If someone is unhappy, apologise once, take their number, and say the manager will call.`,
+  },
+
+  realestate: {
+    label:"Real estate", icon:"🏢",
+    type:"real estate brokerage",
+    book:true, orders:false, capacity:true,
+    bookWord:"viewings", bookNoun:"a viewing",
+    seatLabel:"How many viewings can you run at once?",
+    placeLabel:"How many agents are available?", placeNoun:"agents",
+    placeHint:"Used so two viewings are not booked onto one person.",
+    bookBlurb:"Property viewings. Uses the hours and availability set above.",
+    greeting:"Good morning, this is the sales office. How can I help?",
+    name:"Nile View Properties",
+    hours:"Saturday to Thursday, 10am to 7pm. Closed Friday.",
+    seats:0, places:3, slot:60,
+    knowledge:`WHAT WE SELL: Apartments and villas in New Cairo, Sheikh Zayed and the North Coast. Resale and new launches.
+CURRENT STOCK: 2-bed apartments in Madinaty from 3.4m EGP. Villas in Sodic East from 11m. North Coast chalets, delivery 2027.
+PAYMENT PLANS: Most developers take 10 to 15 per cent down over 7 to 8 years. Exact plans change monthly, so never quote one as final.
+VIEWINGS: We run viewings from the office. A client should bring ID. Compound access needs 24 hours notice.
+WHAT WE DO NOT DO: We are not a rental agency and we do not handle commercial or industrial land.`,
+    rules:`Never quote a final price or a payment plan as confirmed: say it is indicative and a consultant will confirm.
+Never say a unit is reserved or available without checking — take the details and say someone will confirm.
+Always ask the budget range and the timeline before offering a viewing.`,
+  },
+
+  clinic: {
+    label:"Clinic or doctor", icon:"🩺",
+    type:"dental clinic",
+    book:true, orders:false, capacity:true,
+    bookWord:"appointments", bookNoun:"an appointment",
+    seatLabel:"How many patients at once?",
+    placeLabel:"How many rooms or chairs?", placeNoun:"rooms",
+    placeHint:"So two patients are not booked into one room.",
+    bookBlurb:"Patient appointments. Uses the hours and rooms set above.",
+    greeting:"Smile Dental, good morning. How can I help you?",
+    name:"Smile Dental",
+    hours:"Saturday to Thursday, 11am to 9pm. Closed Friday.",
+    seats:0, places:3, slot:45,
+    knowledge:`WHAT WE DO: General dentistry, cleaning, whitening, fillings, root canal, crowns, braces assessment.
+CONSULTATION: 300 EGP, taken off the treatment if the patient goes ahead the same week.
+DOCTORS: Dr Hala on Saturday, Monday and Wednesday. Dr Karim on Sunday, Tuesday and Thursday.
+APPOINTMENTS: 45 minutes as standard. A first visit is an assessment, not treatment.
+WHAT WE DO NOT DO: No surgery under general anaesthetic, and no emergency out-of-hours service.`,
+    rules:`Never give medical or dental advice, a diagnosis, or an opinion on symptoms. Book the appointment and let the doctor advise.
+Never quote a treatment price beyond the consultation fee.
+If someone describes severe pain, bleeding or swelling, tell them to go to a hospital and do not take a booking instead.`,
+  },
+
+  salon: {
+    label:"Salon, barber or spa", icon:"💈",
+    type:"hair salon",
+    book:true, orders:false, capacity:true,
+    bookWord:"appointments", bookNoun:"an appointment",
+    seatLabel:"How many clients at once?",
+    placeLabel:"How many chairs or stations?", placeNoun:"chairs",
+    placeHint:"So two clients are not booked onto one chair.",
+    bookBlurb:"Client appointments. Uses the hours and chairs set above.",
+    greeting:"Good afternoon, thanks for calling. How can I help?",
+    name:"The Grooming Room",
+    hours:"Daily 11am to 10pm.",
+    seats:0, places:4, slot:60,
+    knowledge:`SERVICES: Cut 250, cut and beard 350, colour from 900, keratin from 2500, kids cut 150.
+STAFF: Ask who the client usually sees. Omar and Mariam both take walk-ins when free.
+TIMING: A cut is an hour. Colour and keratin are two to three hours, so never book those back to back.
+WHAT WE DO NOT DO: No nails, no makeup, no home visits.`,
+    rules:`Never promise a specific stylist without checking the diary — offer the time, not the person.
+Never quote a colour or keratin price as final: it depends on hair length, so say "from".`,
+  },
+
+  shop: {
+    label:"Shop or online store", icon:"🛍",
+    type:"home and kitchen shop",
+    book:false, orders:true, capacity:false,
+    bookWord:"bookings", bookNoun:"a booking",
+    seatLabel:"", placeLabel:"", placeNoun:"places", placeHint:"",
+    bookBlurb:"Appointments or collections, if you take them.",
+    greeting:"Good afternoon, thanks for calling. How can I help?",
+    name:"Beit Kitchenware",
+    hours:"Daily 10am to 10pm.",
+    seats:0, places:0, slot:30,
+    knowledge:`WHAT WE SELL: Kitchenware, glassware, storage and small appliances. Egyptian and imported.
+STOCK: If a caller asks for something specific, take the item and their number and say we will confirm stock. Never promise an item is in stock.
+RETURNS: 14 days, unused, with the receipt. Appliances carry the manufacturer warranty.
+PAYMENT: Cash on delivery, card on delivery, and Instapay.`,
+    rules:`Never confirm that an item is in stock. Take the request and say we will come back to confirm.
+Never quote a price that is not written above.`,
+  },
+
+  gym: {
+    label:"Gym or studio", icon:"🏋",
+    type:"fitness studio",
+    book:true, orders:false, capacity:true,
+    bookWord:"class bookings", bookNoun:"a place in a class",
+    seatLabel:"How many people in a class?",
+    placeLabel:"How many studios or rooms?", placeNoun:"studios",
+    placeHint:"Leave blank if you only run one at a time.",
+    bookBlurb:"Class places. Uses the hours and class size set above.",
+    greeting:"Hello, thanks for calling. How can I help?",
+    name:"Form Studio",
+    hours:"Daily 7am to 10pm.",
+    seats:14, places:2, slot:60,
+    knowledge:`CLASSES: Reformer pilates, mat pilates, strength, and a beginners class on Saturdays.
+MEMBERSHIP: Single class 300, ten classes 2500, monthly unlimited 3800.
+RULES: Arrive ten minutes early. A missed class with less than four hours notice is counted.
+WHAT WE DO NOT DO: No personal training, no sauna, no pool.`,
+    rules:`Never promise a specific instructor.
+Never give training, injury or nutrition advice. Take the booking and let the coach advise.`,
+  },
+
+  services: {
+    label:"Services and maintenance", icon:"🛠",
+    type:"home maintenance company",
+    book:true, orders:false, capacity:true,
+    bookWord:"job bookings", bookNoun:"a visit",
+    seatLabel:"", placeLabel:"How many teams are out at once?", placeNoun:"teams",
+    placeHint:"So two jobs are not booked onto one team.",
+    bookBlurb:"Site visits and job bookings. Uses the hours and teams set above.",
+    greeting:"Good morning, how can I help?",
+    name:"Masr Maintenance",
+    hours:"Saturday to Thursday, 9am to 6pm.",
+    seats:0, places:3, slot:120,
+    knowledge:`WHAT WE DO: Air conditioning service and installation, plumbing, electrical, and general handyman work.
+AREAS: Cairo and Giza. We do not travel outside them.
+CALL-OUT: 250 EGP for the visit and the assessment, taken off the job if the customer goes ahead.
+TIMING: We give a morning or afternoon window, never an exact hour.
+WHAT WE DO NOT DO: No structural work, no gas lines, no lifts.`,
+    rules:`Never quote a price for the work itself, only the call-out fee. The technician quotes on site.
+Never promise an exact arrival time. Offer a morning or afternoon window.
+Always take the address and a landmark, and ask whether anyone will be home.`,
+  },
+
+  other: {
+    label:"Something else", icon:"✴",
+    type:"",
+    book:true, orders:true, capacity:true,
+    bookWord:"bookings", bookNoun:"a booking",
+    seatLabel:"How many people can you take at once?",
+    placeLabel:"How many rooms, tables or places?", placeNoun:"places",
+    placeHint:"Leave blank if there is no limit.",
+    bookBlurb:"Bookings and appointments. Uses the hours and capacity set above.",
+    greeting:"",
+    name:"", hours:"", seats:0, places:0, slot:60,
+    knowledge:"", rules:"",
+  },
+};
+const KIND_ORDER = ["restaurant","realestate","clinic","salon","shop","gym","services","other"];
+let KIND = "restaurant";
+const kind = () => KINDS[KIND] || KINDS.other;
 
 /* ---------------- steps ---------------- */
 function go(n){
@@ -1150,6 +1385,100 @@ function zoneSentence(){
   return out.join("\n");
 }
 
+
+/* ---- the picker, and what choosing a kind actually changes ---- */
+function drawKinds(){
+  const g=$("#kindGrid"); if(!g) return;
+  g.innerHTML = KIND_ORDER.map(k=>{
+    const x=KINDS[k];
+    const can=[x.book?x.bookWord:null, x.orders?"orders and delivery":null].filter(Boolean).join(" · ")
+      || "answers and takes messages";
+    return `<button type="button" class="kind" role="radio" data-kind="${k}" aria-checked="${k===KIND}">
+      <span class="ki" aria-hidden="true">${x.icon}</span>
+      <span><b>${escZ(x.label)}</b><small>${escZ(can)}</small></span>
+    </button>`;
+  }).join("");
+  $$("#kindGrid .kind").forEach(b=>b.addEventListener("click",()=>setKind(b.dataset.kind,true)));
+}
+
+/* Relabel and hide, rather than branch the form. Everything a kind touches is
+   wording or visibility — the fields underneath are the same, so switching
+   kind never throws away what somebody already typed. */
+function applyKind(){
+  const x=kind();
+
+  $$("#kindGrid .kind").forEach(b=>b.setAttribute("aria-checked", String(b.dataset.kind===KIND)));
+
+  /* capability toggles: offer only what this kind can actually do */
+  const bookOpt  = $("#oBook")  && $("#oBook").closest(".opt");
+  const orderOpt = $("#oOrders")&& $("#oOrders").closest(".opt");
+  if(bookOpt){
+    bookOpt.hidden = !x.book;
+    const sm=bookOpt.querySelector("small"); if(sm) sm.textContent = x.bookBlurb;
+    const bb=bookOpt.querySelector("b");     if(bb) bb.textContent = "Take " + x.bookWord;
+    if(!x.book && $("#oBook").checked){ $("#oBook").checked=false; }
+  }
+  if(orderOpt){
+    orderOpt.hidden = !x.orders;
+    if(!x.orders && $("#oOrders").checked){ $("#oOrders").checked=false; }
+  }
+  const bookSub=$("#bookOpts"), orderSub=$("#orderOpts");
+  if(bookSub)  bookSub.hidden  = !x.book  || !($("#oBook")||{}).checked;
+  if(orderSub) orderSub.hidden = !x.orders|| !($("#oOrders")||{}).checked;
+
+  /* capacity: the same two numbers, named for whoever is reading them */
+  const capWrap = $("#cSeats") && $("#cSeats").closest(".two");
+  if(capWrap) capWrap.hidden = !x.capacity;
+  const lab = (id,txt)=>{ const l=document.querySelector(`label[for="${id}"]`); if(l) l.textContent=txt; };
+  const seatBox = $("#cSeats") && $("#cSeats").closest("div");
+  if(seatBox) seatBox.hidden = !x.seatLabel;
+  if(x.seatLabel)  lab("cSeats", x.seatLabel);
+  if(x.placeLabel) lab("cTables", x.placeLabel);
+  const ph = $("#cTables") && $("#cTables").parentElement.querySelector(".hint");
+  if(ph && x.placeHint) ph.textContent = x.placeHint;
+
+  /* the review-before-confirm line talks about bookings by name */
+  const rev=$("#oReview") && $("#oReview").closest(".opt");
+  if(rev){ const b=rev.querySelector("b"); if(b) b.textContent = `I approve every ${x.bookWord.replace(/s$/,"")} myself`; }
+
+  if(typeof paintGaps==="function") paintGaps();
+  if(typeof queueSave==="function") queueSave();
+}
+
+/* Choosing a kind fills the form with that trade's worked example — but only
+   over fields the customer has not already written in. Wiping someone's own
+   text because they changed their mind about a label would be unforgivable. */
+function setKind(k, fill){
+  if(!KINDS[k]) k="other";
+  const wasExample = isUntouched();
+  KIND=k;
+  const x=kind();
+  if(fill && wasExample){
+    const set=(id,v)=>{ const e=$("#"+id); if(e && v!=null) e.value=v; };
+    set("bName",x.name); set("bType",x.type); set("bHours",x.hours);
+    set("bGreet",x.greeting); set("bKnow",x.knowledge); set("bRules",x.rules);
+    if($("#cSeats"))  $("#cSeats").value  = x.seats  || "";
+    if($("#cTables")) $("#cTables").value = x.places || "";
+    if($("#cSlot"))   $("#cSlot").value   = String(x.slot||60);
+    if($("#oBook"))   $("#oBook").checked   = !!x.book;
+    if($("#oOrders")) $("#oOrders").checked = false;
+    if(typeof ZONES!=="undefined"){ ZONES = k==="restaurant" ? ZONES : []; if(typeof drawZones==="function") drawZones(); }
+  }
+  applyKind();
+}
+
+/* Is the form still one of our examples, or has somebody written their own
+   business into it? Compared against every preset, because they may have
+   switched kind once already. */
+function isUntouched(){
+  const n=val("bName"), kn=(($("#bKnow")||{}).value||"").trim();
+  if(!n && !kn) return true;
+  return KIND_ORDER.some(k=>{
+    const x=KINDS[k];
+    return (x.name && n===x.name) || (x.knowledge && kn===x.knowledge.trim());
+  });
+}
+
 /* what this agent is actually for, in its own words */
 function jobSentence(){
   const book=!!($("#oBook")||{}).checked, ord=!!($("#oOrders")||{}).checked;
@@ -1157,6 +1486,7 @@ function jobSentence(){
   const zones=zoneSentence(), min=val("oMin"), links=val("oLinks");
   const out=[];
 
+  const K=kind();
   if(book && ord){
     out.push("This one line handles both bookings and orders. Work out which the caller wants from what they say: "
       + "a time, a day or a number of people means a booking; dishes, delivery or an address means an order. "
@@ -1166,8 +1496,8 @@ function jobSentence(){
     out.push("This line takes delivery and collection orders. You do not take bookings. "
       + "If someone asks for a table or an appointment, say so plainly and offer to take an order instead.");
   } else if(book){
-    out.push("This line takes bookings. You do not take food orders. "
-      + "If someone tries to order, say this line is for bookings, and still answer any question they have.");
+    out.push(`This line takes ${K.bookWord}. It does not take orders. `
+      + `If someone tries to order something, say this line is for ${K.bookWord}, and still answer any question they have.`);
   } else {
     /* Neither switched on: the agent answers and captures, nothing more. Saying
        it takes bookings here would have it promise something nobody records. */
@@ -1176,10 +1506,10 @@ function jobSentence(){
       + "whatever else they ask.");
   }
 
-  /* The menu is knowledge either way: a caller deciding whether to book asks
-     what is on it, and refusing to answer loses the booking. */
-  out.push("Whatever this line is for, answer questions about the menu, the prices and what you offer, using the "
-    + "notes you were given. Knowing the menu is not the same as taking an order.");
+  /* What you offer is knowledge either way: a caller deciding whether to book
+     asks about it first, and refusing to answer loses the booking. */
+  out.push("Whatever this line is for, answer questions about what you offer and what it costs, using the "
+    + "notes you were given. Knowing the answer is not the same as taking an order.");
 
   if(ord){
     out.push("For an order, collect the items, the address, a phone number and the name, then read the whole order back before you finish.");
@@ -1202,10 +1532,11 @@ function capacitySentence(){
   const seats=parseInt(($("#cSeats")||{}).value||"0",10)||0;
   const tables=parseInt(($("#cTables")||{}).value||"0",10)||0;
   const slot=parseInt(($("#cSlot")||{}).value||"90",10);
-  if(!seats && !tables) return "There is no stated limit on how many bookings can overlap, so do not refuse on capacity.";
+  const K=kind();
+  if(!seats && !tables) return `There is no stated limit on how many ${K.bookWord} can overlap, so do not refuse on capacity.`;
   const bits=[];
-  if(seats) bits.push(`${seats} people can be seated at any one time`);
-  if(tables) bits.push(`there are ${tables} tables or places`);
+  if(seats) bits.push(`${seats} people can be taken at any one time`);
+  if(tables) bits.push(`there are ${tables} ${K.placeNoun || "places"}`);
   return `${bits.join(", and ")}. A booking holds its place for about ${slot} minutes, so a slot frees up after that.`;
 }
 
@@ -1429,7 +1760,7 @@ function collect(){
     channel: "voice",
     direction: mode==="out" ? "outbound" : "inbound",
     lang: val("bLang")||"match",
-    business:{ name:val("bName"), type:val("bType"), hours:val("bHours"), greeting:val("bGreet"),
+    business:{ kind:KIND, name:val("bName"), type:val("bType"), hours:val("bHours"), greeting:val("bGreet"),
                open_hours:HOURS,
                last_booking_min:parseInt(($("#hLast")||{}).value||"30",10),
                lead_time_min:parseInt(($("#hLead")||{}).value||"60",10),
@@ -1571,9 +1902,13 @@ async function save(){
     const body=collect();
     const d = agentId ? await api("/api/me/agents/"+agentId,"PATCH",body)
                       : await api("/api/me/agents","POST",body);
+    const created = !agentId;
     agentId=d.agent.id;
     paintReadiness(d.agent.readiness, d.agent.status);
-    bar("saved","Saved to your account");
+    /* keep the switcher honest: a newly created agent has to appear in it, and
+       a rename has to show up there too */
+    await refreshAgents(agentId);
+    bar("saved", created ? "Agent created and saved" : "Saved to your account");
   }catch(e){
     if(!online){ bar("err","Not signed in, so nothing is being saved. Everything else works."); return; }
     bar("err", e.message);
@@ -1596,12 +1931,10 @@ const queueSave=()=>{ clearTimeout(saveTimer); saveTimer=setTimeout(save, 900); 
     btn.disabled=true; btn.textContent="Saving…";
     clearTimeout(saveTimer);                       // no racing autosave
     try{
-      const body=collect();
-      const d = agentId ? await api("/api/me/agents/"+agentId,"PATCH",body)
-                        : await api("/api/me/agents","POST",body);
-      agentId=d.agent.id;
-      paintReadiness(d.agent.readiness, d.agent.status);
-      bar("saved","Saved to your account");
+      /* one save path. This button used to repeat save()'s body, so anything
+         added to save() — like refreshing the agent switcher after a create —
+         silently did not happen when somebody pressed Save. */
+      await save();
       btn.textContent="Saved ✓";
       setTimeout(()=>{ btn.textContent=was; btn.disabled=false; busy=false; }, 1600);
     }catch(e){
@@ -1799,50 +2132,159 @@ async function markTested(){
 }
 
 /* load an existing agent if the customer already started one */
+
+/* ============================================================
+   MORE THAN ONE AGENT
+   ------------------------------------------------------------
+   This screen used to bind to agents[0] and nothing else, so a
+   second agent could be created through the API but never
+   opened, and none could be removed. The bar at the top switches
+   between them, adds one, and deletes one.
+
+   Deleting asks the server what it would take with it first, so
+   the confirm names real numbers instead of a vague warning, and
+   a live agent has to be paused before it can go.
+   ============================================================ */
+let AGENTS = [];
+
+function drawAgents(){
+  const bar=$("#agentBar"), list=$("#agentList"); if(!bar||!list) return;
+  /* one agent and no history needs no switcher; the New button still shows */
+  bar.hidden = !online;
+  list.innerHTML = AGENTS.map(a=>
+    `<button type="button" data-agent="${a.id}" aria-pressed="${String(a.id)===String(agentId)}">
+       ${escZ(a.name||"Untitled")}${a.status==="live"?" ·":""}</button>`).join("")
+    || `<span class="hint">No agent saved yet</span>`;
+  $$("#agentList [data-agent]").forEach(b=>b.addEventListener("click",()=>openAgent(b.dataset.agent)));
+  const del=$("#agentDel"); if(del) del.disabled = !agentId;
+}
+
+/* Load one agent into the form. Same code path the boot uses, so a switch
+   and a reload put exactly the same thing on screen. */
+function fillForm(a){
+  agentId = a.id;
+  const b=a.business||{}, c=a.channel_cfg||{};
+  const set=(id,v)=>{ const el=$("#"+id); if(el) el.value = (v==null?"":v); };
+  KIND = (b.kind && KINDS[b.kind]) ? b.kind : KIND;
+  set("bName",b.name); set("bType",b.type); set("bHours",b.hours); set("bGreet",b.greeting);
+  set("bKnow",a.knowledge); set("bRules",a.rules); set("bScript",a.script);
+  if(b.open_hours){ HOURS=b.open_hours; drawHours(); }
+  if($("#hLast")) $("#hLast").value=String(b.last_booking_min ?? 30);
+  if($("#hLead")) $("#hLead").value=String(b.lead_time_min ?? 60);
+  if($("#cSeats")) $("#cSeats").value=String(b.seats||"");
+  if($("#cTables")) $("#cTables").value=String(b.tables||"");
+  if($("#cSlot")) $("#cSlot").value=String(b.slot_min||90);
+  if($("#oBook")) $("#oBook").checked = b.take_bookings !== false;
+  if($("#oOrders")) $("#oOrders").checked = !!b.take_orders;
+  if($("#oReview")) $("#oReview").checked = !!b.review_bookings;
+  if(Array.isArray(b.delivery_zones)) ZONES=normZones(b.delivery_zones);
+  else if(b.delivery_areas) ZONES=String(b.delivery_areas).split(",").map(x=>x.trim()).filter(Boolean).map(n=>({name:n,fee:"",subs:[]}));
+  else ZONES=[];
+  drawZones();
+  set("oMin",b.min_order); set("oLinks",b.links);
+  set("bXfer",a.transfer_to); set("bLang",a.lang);
+  set("num",c.number); set("host",c.host); set("user",c.user);
+  if(c.wa){ set("waId",c.wa.phone_number_id); set("waTpl",c.wa.template);
+            if($("#waLang") && c.wa.lang) $("#waLang").value=c.wa.lang; }
+  drawKinds(); applyKind(); syncRoute();
+  paintReadiness(a.readiness, a.status);
+  loadSetups();
+  paintGaps();
+}
+
+async function openAgent(id){
+  const a = AGENTS.find(x=>String(x.id)===String(id));
+  if(!a) return;
+  fillForm(a); drawAgents();
+  bar("saved",`Editing ${a.name||"this agent"}`);
+  go(2);
+}
+
+async function refreshAgents(keep){
+  try{
+    const d=await api("/api/me/agents");
+    AGENTS = d.agents||[];
+  }catch(_){ AGENTS=[]; }
+  if(keep && AGENTS.some(a=>String(a.id)===String(keep))) agentId=keep;
+  drawAgents();
+}
+
+(function wireAgentBar(){
+  const add=$("#agentNew"), del=$("#agentDel");
+
+  if(add) add.addEventListener("click", async ()=>{
+    if(!online){ bar("err","Sign in to add an agent."); return; }
+    /* A new agent starts empty and unsaved, with the kind picker waiting.
+       It is written to the server on the first save like any other. */
+    agentId=null;
+    KIND="other";
+    ["bName","bType","bHours","bGreet","bKnow","bRules","bScript","bXfer","num","host","user","oMin","oLinks"]
+      .forEach(id=>{ const e=$("#"+id); if(e) e.value=""; });
+    if($("#cSeats")) $("#cSeats").value="";
+    if($("#cTables")) $("#cTables").value="";
+    if($("#oBook")) $("#oBook").checked=true;
+    if($("#oOrders")) $("#oOrders").checked=false;
+    if($("#oReview")) $("#oReview").checked=false;
+    ZONES=[]; drawZones();
+    drawKinds(); applyKind(); drawAgents(); paintGaps();
+    go(2);
+    bar("saved","New agent. Start by saying what it is for.");
+    const g=$("#kindCard"); if(g) g.scrollIntoView({block:"center",behavior:"smooth"});
+  });
+
+  if(del) del.addEventListener("click", async ()=>{
+    if(!agentId){ bar("err","Nothing saved to delete yet."); return; }
+    let x=null;
+    try{ x = await api("/api/me/agents/"+agentId+"/impact"); }catch(_){}
+    const bits=[];
+    if(x){
+      if(x.setups)   bits.push(`${x.setups} setup${x.setups===1?"":"s"}`);
+      if(x.queued)   bits.push(`${x.queued} call${x.queued===1?"":"s"} still queued to dial`);
+    }
+    const keeps=[];
+    if(x && x.calls)    keeps.push(`${x.calls} call${x.calls===1?"":"s"}`);
+    if(x && x.bookings) keeps.push(`${x.bookings} booking${x.bookings===1?"":"s"}`);
+
+    const msg = `Delete "${(x&&x.name)||"this agent"}"?\n\n`
+      + (bits.length ? `This also removes ${bits.join(" and ")}.\n` : "")
+      + (keeps.length ? `${keeps.join(" and ")} stay in your dashboard as history.\n` : "")
+      + `\nThis cannot be undone.`;
+    if(!confirm(msg)) return;
+
+    const r = await fetch("/api/me/agents/"+agentId,{method:"DELETE"});
+    if(r.status===409){
+      bar("err","This agent is live. Pause it on the Deploy step, then delete it.");
+      return;
+    }
+    if(!r.ok){ bar("err","Could not delete that agent."); return; }
+    bar("saved","Agent deleted.");
+    agentId=null;
+    await refreshAgents();
+    if(AGENTS.length) openAgent(AGENTS[0].id);
+    else { const add2=$("#agentNew"); if(add2) add2.click(); }
+  });
+})();
+
 (async function boot(){
   try{
     const d=await api("/api/me/agents");
-    const a=(d.agents||[])[0];
+    AGENTS = d.agents||[];
+    const a=AGENTS[0];
     if(a){
-      agentId=a.id;
-      const b=a.business||{}, c=a.channel_cfg||{};
-      const set=(id,v)=>{ const el=$("#"+id); if(el&&v!=null&&v!=="") el.value=v; };
-      set("bName",b.name); set("bType",b.type); set("bHours",b.hours); set("bGreet",b.greeting);
-      set("bKnow",a.knowledge); set("bRules",a.rules); set("bScript",a.script);
-      if(b.open_hours){ HOURS=b.open_hours; drawHours();
-[["oOrders","orderOpts"],["oBook","bookOpts"]].forEach(([tick,panel])=>{
-  const t2=$("#"+tick), box=$("#"+panel);
-  if(t2&&box){ const sync=()=>{ box.hidden=!t2.checked; }; t2.addEventListener("change",sync); sync(); }
-}); }
-      if(b.last_booking_min!=null && $("#hLast")) $("#hLast").value=String(b.last_booking_min);
-      if(b.lead_time_min!=null && $("#hLead")) $("#hLead").value=String(b.lead_time_min);
-      if(b.seats!=null && $("#cSeats")) $("#cSeats").value=String(b.seats||"");
-      if(b.tables!=null && $("#cTables")) $("#cTables").value=String(b.tables||"");
-      if(b.slot_min!=null && $("#cSlot")) $("#cSlot").value=String(b.slot_min);
-      if($("#oBook")) $("#oBook").checked = b.take_bookings !== false;
-      if($("#oOrders")) $("#oOrders").checked = !!b.take_orders;
-      if($("#oReview")) $("#oReview").checked = !!b.review_bookings;
-      /* zones if they were saved; otherwise lift the old comma-separated areas
-         into zones with no fee yet, so nobody loses what they already typed */
-      if(Array.isArray(b.delivery_zones)) ZONES=normZones(b.delivery_zones);
-      else if(b.delivery_areas) ZONES=String(b.delivery_areas).split(",")
-             .map(s=>s.trim()).filter(Boolean).map(n=>({name:n,fee:"",subs:[]}));
-      else ZONES=[];   /* a real agent with nothing saved shows nothing, not the example */
-      drawZones();
-      set("oMin",b.min_order); set("oLinks",b.links);
-      if($("#orderOpts")) $("#orderOpts").hidden = !($("#oOrders")||{}).checked;
-      set("bXfer",a.transfer_to); set("bLang",a.lang);
-      set("num",c.number); set("host",c.host); set("user",c.user);
-      if(c.wa){ set("waId",c.wa.phone_number_id); set("waTpl",c.wa.template);
-                if($("#waLang") && c.wa.lang) $("#waLang").value=c.wa.lang; }
-      /* An agent saved when forwarding or a call link still existed is moved to
-         the trunk, which is now the only route. Nothing else about it changes. */
-      syncRoute();
-      paintReadiness(a.readiness, a.status);
-      loadSetups();
+      /* One loader, used by the boot and by switching agent, so a reload and a
+         switch can never put different things on screen. */
+      fillForm(a);
+      drawAgents();
+      [["oOrders","orderOpts"],["oBook","bookOpts"]].forEach(([tick,panel])=>{
+        const t2=$("#"+tick), box=$("#"+panel);
+        if(t2&&box){ const sync=()=>{ box.hidden=!t2.checked; }; t2.addEventListener("change",sync); sync(); }
+      });
       bar("saved","Loaded your saved agent");
+      drawAgents();
     } else {
-      bar("saved","Signed in. Changes save automatically.");
+      /* signed in, nothing saved yet: the picker leads */
+      drawKinds(); applyKind(); drawAgents();
+      bar("saved","Signed in. Start by saying what this agent is for.");
     }
   }catch(e){
     online=false;
@@ -1852,8 +2294,10 @@ async function markTested(){
       {k:"greeting",say:"Greeting"},{k:"knowledge",say:"Knowledge"},{k:"rules",say:"Rules"},
       {k:"script",say:"Outbound script"},{k:"channel",say:"Channel"},{k:"tested",say:"Tested"}]});
   }
-  /* last, either way: signed in or in preview, the gaps list reads the form in
-     front of the customer, so it is honest even when nothing was loaded */
+  /* last, either way: signed in or in preview, the picker and the gaps list
+     read the form in front of the customer, so both are honest even when
+     nothing was loaded from the server */
+  if(!$("#kindGrid").children.length){ drawKinds(); applyKind(); }
   paintGaps();
 })();
 </script>

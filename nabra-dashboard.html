@@ -168,6 +168,45 @@ html[dir="rtl"] .tag{font-family:var(--ar-body);letter-spacing:0;text-transform:
 .tag.on{border-color:var(--fg);color:var(--fg)}
 .tag.hot{border-color:rgba(47,107,255,.4);color:var(--ember);background:var(--ember-wash)}
 .tag.dim{color:var(--fg-faint)}
+.tag.warn{border-color:rgba(176,106,0,.42);color:#8A5300;background:rgba(201,134,22,.09)}
+
+/* ---- plans / paywall ------------------------------------------------
+   Used both as the gate an unpaid account meets and as the plan switcher a
+   paying one uses, so it has to read as a shop either way. */
+.paywall{padding:1.5rem 1.4rem}
+.pw-eyebrow{display:block;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ember);margin-bottom:.5rem}
+html[dir="rtl"] .pw-eyebrow{font-family:var(--ar-body);letter-spacing:0;text-transform:none;font-size:.75rem}
+.pw-h{margin:0 0 .35rem}
+.pw-p{margin:0 0 1.1rem;color:var(--fg-mute);font-size:.92rem;max-width:62ch}
+.cycsw{display:inline-flex;gap:3px;padding:3px;background:var(--paper);border-radius:9px;margin-bottom:1.1rem;flex-wrap:wrap}
+.cycsw button{display:inline-flex;align-items:center;gap:.4rem;border:0;background:transparent;color:var(--fg-mute);
+  font:inherit;font-size:.85rem;padding:.42rem .8rem;border-radius:7px;cursor:pointer}
+.cycsw button[aria-pressed="true"]{background:var(--bone-hi);color:var(--fg);box-shadow:0 1px 3px rgba(22,52,102,.1)}
+.planopts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem}
+.planopts>*{min-width:0}
+@media(max-width:820px){.planopts{grid-template-columns:minmax(0,1fr)}}
+.planopt{display:flex;flex-direction:column;gap:.45rem;text-align:start;cursor:pointer;
+  background:var(--bone-hi);border:1px solid var(--rule);border-radius:12px;padding:1rem;font:inherit;color:var(--fg);
+  transition:border-color .2s,box-shadow .2s,background .2s}
+.planopt:hover{border-color:var(--fg-faint)}
+.planopt.sel{border-color:var(--ember);background:var(--ember-wash);box-shadow:0 0 0 1px var(--ember)}
+.po-top{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;min-width:0}
+.po-n{font-size:1.02rem;font-weight:650}
+.po-p{font-family:var(--ser,inherit);font-size:1.75rem;line-height:1.05;display:flex;align-items:baseline;gap:.35rem;flex-wrap:wrap}
+.po-p small{font-size:.72rem;font-family:inherit;color:var(--fg-mute);font-weight:400}
+.po-e{font-size:.78rem;color:var(--fg-mute)}
+.po-f{font-size:.85rem;color:var(--fg-mute);line-height:1.45}
+.pw-go{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;margin-top:1.2rem}
+.pw-go .note{margin:0}
+.pw-go .note.warn{color:#8A5300}
+.pw-fine{margin-top:.7rem}
+.pc-row{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin-bottom:.5rem}
+.pc-amt{margin:.2rem 0 0;font-size:1.3rem}
+
+/* The rail an unpaid account sees: everything but Billing is visibly out of
+   reach, rather than silently broken when tapped. */
+#nav button.locked{opacity:.4;cursor:not-allowed}
+#nav button.locked:hover{background:transparent}
 
 .bar{height:4px;background:var(--paper);border-radius:2px;overflow:hidden;min-width:70px}
 .bar span{display:block;height:100%;background:var(--fg);border-radius:2px;transition:width .8s var(--ease)}
@@ -619,6 +658,35 @@ const T={
   vAttempts:"attempts left",vOneAcct:"A number can be active on one account at a time.",
   numQuote:"On request",numNote:"Numbers are provisioned on a licensed Egyptian operator. You are the subscriber of record and can port away at any time.",
   plan:"Your plan",card:"Payment method",invoices:"Invoices",
+  "pl_starter":"Starter",
+  "pl_growth":"Growth",
+  "pl_enterprise":"Enterprise",
+  "pl_starter_f":"One agent on one number. Inbound and outbound, in Masri, Arabic and English.",
+  "pl_growth_f":"Several agents and numbers, one line doing several jobs, live transfer and bookings.",
+  "pl_enterprise_f":"A cloned voice of your own, unlimited numbers, custom integrations and an SLA.",
+  "pl_popular":"Most teams",
+  "pl_current":"Current",
+  "pl_free":"{m} months free",
+  "pl_pay":"Pay and start building",
+  "pl_switch":"Switch to this plan",
+  "pl_opening":"Opening the card page…",
+  "pl_vat":"VAT {v}% is added at checkout.",
+  "pl_failed":"That did not go through. Try again in a moment.",
+  "pl_fine":"Monthly or yearly, cancel any time. You are charged in Egyptian pounds at the figure shown.",
+  "perMoY":"/month, billed yearly",
+  "chargedM":"a month",
+  "chargedY":"a year",
+  "pw_startK":"One step left",
+  "pw_startH":"Choose your plan",
+  "pw_startP":"Your account is ready. Pick a plan and the agent builder opens straight after — you teach it your business, hear it answer on your own phone, and only connect your real line when it sounds right.",
+  "pw_lapsedK":"Payment needed",
+  "pw_lapsedH":"Your subscription has lapsed",
+  "pw_lapsedP":"Your agents are paused and are not answering calls. Settle up and everything comes back exactly as you left it — nothing has been deleted.",
+  "pw_changeP":"Change what you are on. The new price applies from your next renewal.",
+  "st_comp":"On the house",
+  "st_lapsed":"Lapsed",
+  "callsU":"Calls",
+  "comp_note":"This account has full access and is not billed.",
   changePlan:"Change plan",updateCard:"Update card",renews:"Renews",
   cycM:"Billed monthly",cycY:"Billed yearly",ymFree:"2 months free",
   perMo:"/month",perYr:"/year",approxMo:"≈{p}/month",ySave:"you save {s} a year vs monthly",
@@ -767,6 +835,35 @@ const T={
   vAttempts:"محاولات متبقية",vOneAcct:"يمكن تفعيل الرقم على حساب واحد فقط في الوقت ذاته.",
   numQuote:"عند الطلب",numNote:"تُوفَّر الأرقام لدى مشغّل مصري مرخَّص. أنت المشترك المسجَّل ويمكنك نقل الرقم في أي وقت.",
   plan:"خطتك",card:"وسيلة الدفع",invoices:"الفواتير",
+  "pl_starter":"البداية",
+  "pl_growth":"النمو",
+  "pl_enterprise":"المؤسسات",
+  "pl_starter_f":"وكيل واحد على رقم واحد. مكالمات واردة وصادرة، بالمصري والعربي والإنجليزية.",
+  "pl_growth_f":"وكلاء وأرقام متعددة، وخط واحد يقوم بعدة مهام، وتحويل مباشر وحجوزات.",
+  "pl_enterprise_f":"صوت خاص بك مستنسخ، أرقام غير محدودة، وتكاملات خاصة واتفاقية مستوى خدمة.",
+  "pl_popular":"الأكثر اختياراً",
+  "pl_current":"الحالية",
+  "pl_free":"{m} شهر مجاناً",
+  "pl_pay":"ادفع وابدأ البناء",
+  "pl_switch":"انتقل إلى هذه الخطة",
+  "pl_opening":"جارٍ فتح صفحة الدفع…",
+  "pl_vat":"تُضاف ضريبة القيمة المضافة {v}% عند الدفع.",
+  "pl_failed":"لم تتم العملية. حاول بعد قليل.",
+  "pl_fine":"شهرياً أو سنوياً، والإلغاء في أي وقت. يتم التحصيل بالجنيه المصري بالمبلغ المعروض.",
+  "perMoY":"/شهر، تُحصّل سنوياً",
+  "chargedM":"شهرياً",
+  "chargedY":"سنوياً",
+  "pw_startK":"خطوة واحدة متبقية",
+  "pw_startH":"اختر خطتك",
+  "pw_startP":"حسابك جاهز. اختر خطة ويفتح باني الوكيل مباشرة — تعلّمه طبيعة عملك، وتسمعه يرد على هاتفك، ولا توصل خطك الحقيقي إلا حين يصبح مناسباً.",
+  "pw_lapsedK":"الدفع مطلوب",
+  "pw_lapsedH":"انتهى اشتراكك",
+  "pw_lapsedP":"وكلاؤك متوقفون ولا يردون على المكالمات. سدّد ويعود كل شيء كما تركته — لم يُحذف شيء.",
+  "pw_changeP":"غير الخطة التي أنت عليها. يُطبّق السعر الجديد من التجديد القادم.",
+  "st_comp":"بلا مقابل",
+  "st_lapsed":"منتهٍ",
+  "callsU":"المكالمات",
+  "comp_note":"هذا الحساب له وصول كامل ولا يُحصّل منه شيء.",
   changePlan:"تغيير الخطة",updateCard:"تحديث البطاقة",renews:"التجديد",
   cycM:"فوترة شهرية",cycY:"فوترة سنوية",ymFree:"شهران مجاناً",
   perMo:"/شهر",perYr:"/سنة",approxMo:"≈{p} شهرياً",ySave:"توفر {s} في السنة مقارنة بالشهري",
@@ -915,6 +1012,35 @@ const T={
   vAttempts:"محاولات فاضلة",vOneAcct:"الرقم بيتفعّل على حساب واحد بس في نفس الوقت.",
   numQuote:"عند الطلب",numNote:"تُوفَّر الأرقام لدى مشغّل مصري مرخَّص. أنت المشترك المسجَّل ويمكنك نقل الرقم في أي وقت.",
   plan:"خطتك",card:"وسيلة الدفع",invoices:"الفواتير",
+  "pl_starter":"البداية",
+  "pl_growth":"النمو",
+  "pl_enterprise":"المؤسسات",
+  "pl_starter_f":"وكيل واحد على رقم واحد. مكالمات داخلة وخارجة، بالمصري والعربي والإنجليزي.",
+  "pl_growth_f":"وكلاء وأرقام أكتر، وخط واحد يعمل كام حاجة، وتحويل للفريق وحجوزات.",
+  "pl_enterprise_f":"صوتك إنت منسوخ، أرقام مفتوحة، وتكاملات مخصوصة واتفاقية خدمة.",
+  "pl_popular":"الأكتر اختيار",
+  "pl_current":"الحالية",
+  "pl_free":"{m} شهر ببلاش",
+  "pl_pay":"ادفع وابدأ تبني",
+  "pl_switch":"حوّل للخطة دي",
+  "pl_opening":"بنفتح صفحة الدفع…",
+  "pl_vat":"الضريبة {v}% بتتضاف عند الدفع.",
+  "pl_failed":"ما مشيتش. جرّب تاني بعد شوية.",
+  "pl_fine":"شهري أو سنوي، وتقدر تلغي في أي وقت. التحصيل بالجنيه المصري بالمبلغ المكتوب.",
+  "perMoY":"/شهر، بتتحصل سنوي",
+  "chargedM":"في الشهر",
+  "chargedY":"في السنة",
+  "pw_startK":"فاضل خطوة",
+  "pw_startH":"اختار خطتك",
+  "pw_startP":"حسابك جاهز. اختار خطة وباني الوكيل بيفتح علطول — تعلّمه شغلك بيعمل إيه، وتسمعه بيرد على تليفونك، وماتوصّلش خطك الحقيقي إلا لما يبقى مظبوط.",
+  "pw_lapsedK":"محتاج دفع",
+  "pw_lapsedH":"الاشتراك خلص",
+  "pw_lapsedP":"وكلاءك موقوفين ومبيردوش على المكالمات. سدد وكل حاجة هترجع زي ما سيبتها — مفيش حاجة اتمسحت.",
+  "pw_changeP":"غير الخطة اللي إنت عليها. السعر الجديد بيبدأ من التجديد الجاي.",
+  "st_comp":"ببلاش",
+  "st_lapsed":"خلصان",
+  "callsU":"المكالمات",
+  "comp_note":"الحساب ده ليه وصول كامل ومابيتحسبش عليه حاجة.",
   changePlan:"غيّر الخطة",updateCard:"حدّث الكارت",renews:"التجديد",
   cycM:"فوترة شهرية",cycY:"فوترة سنوية",ymFree:"شهرين ببلاش",
   perMo:"/شهر",perYr:"/سنة",approxMo:"≈{p} في الشهر",ySave:"بتوفر {s} في السنة عن الشهري",
@@ -1084,8 +1210,13 @@ function renderNav(){
          <span>${t(v.k)}</span>${v.pill?`<span class="pill">${v.pill}</span>`:""}
        </button>`).join("");
   $$("#nav button").forEach(b=> b.addEventListener("click", ()=>{ go(b.dataset.v); closeRail(); }));
+  try{ if(BILL && BILL.paid===false) applyGate(); }catch(_){}
 }
-function go(k){ view=k; $$(".view").forEach(v=> v.classList.toggle("on", v.dataset.view===k));
+function go(k){
+  /* A locked view is not a dead click: it lands on the plans, which is the
+     only thing standing between them and that view. */
+  try{ if(gated() && !OPEN_VIEWS.has(k)) k="billing"; }catch(_){}
+  view=k; $$(".view").forEach(v=> v.classList.toggle("on", v.dataset.view===k));
   /* these two read live state, so they are re-fetched on entry rather than
      showing whatever was true when the page loaded */
   if(k==="navStart" && typeof loadSteps==="function" && typeof REAL!=="undefined" && REAL){ loadSteps().then(vStart); }
@@ -1527,69 +1658,186 @@ let FXR = null; // billing rate from /api/fx/current, if reachable
  try{
   const r = await fetch("/api/fx/current"); if(r.ok){ FXR = await r.json(); }
 }catch(_){}
+ /* Served at /app the boot payload already carries this, so the fetch is
+    only here for the standalone preview and to catch a payment that
+    completed in another tab. */
+ if(window.NABRA_BOOT) await loadBill();
+ if(typeof applyGate==="function") applyGate();
  vBilling();
 })();
 const fmt$ = v => v==null ? "—" : "$"+Math.round(v).toLocaleString();
 const fmtE = v => (FXR && v!=null) ? "E£"+(Math.ceil(v*(FXR.billingRate||FXR.liveBuffered)/5)*5).toLocaleString() : "";
 
-function vBilling(){
-  const usd    = PLANS.plans[ACCT.plan];
-  const yearly = ACCT.cycle==="annual";
-  const yTotal = usd==null ? null : usd*(12-PLANS.annualMonthsFree);
-  const save   = usd==null ? null : usd*12 - yTotal;
-  const planNm = ACCT.plan.charAt(0).toUpperCase()+ACCT.plan.slice(1);
-  const egp    = yearly ? fmtE(yTotal) : fmtE(usd);
-  const priceLine = usd==null ? "" : yearly
-    ? `<div style="display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.4rem">
-         <span class="ser" style="font-size:1.5rem">${fmt$(yTotal)}</span><span class="lbl">${t("perYr")}</span>
-         <span class="lbl">${t("approxMo").replace("{p}", fmt$(yTotal/12))}${egp?` · ${egp}`:""}</span>
-       </div>
-       <p class="note" style="margin:0 0 1rem">${t("ySave").replace("{s}", fmt$(save))}</p>`
-    : `<div style="display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem">
-         <span class="ser" style="font-size:1.5rem">${fmt$(usd)}</span><span class="lbl">${t("perMo")}${egp?` · ${egp}`:""}</span>
-       </div>`;
+/* Billing state straight from the gateway: whether this account may use the
+   product, and the real price of each plan in the currency the card is
+   charged in. Nothing here is illustrative — the old version of this view
+   showed an invented card number, three invented invoices and 3,940 invented
+   minutes to every customer, which is not a thing you show someone who is
+   about to pay you. */
+let BILL = null;
+let billCyc = null;          // the cycle being *considered*, not the one in force
+async function loadBill(){
+  try{ const r = await fetch("/api/billing"); if(r.ok) BILL = await r.json(); }catch(_){}
+  if(BILL){
+    if(BILL.plan)  ACCT.plan  = BILL.plan;
+    if(BILL.cycle) ACCT.cycle = BILL.cycle;
+    if(billCyc===null) billCyc = BILL.cycle || "monthly";
+  }
+  return BILL;
+}
 
-  $("#v-billing").innerHTML=`
-  <div class="cols">
-    <div>
-      <div class="card">
-        <h3>${t("plan")}</h3>
-        <div style="display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin-bottom:.6rem">
-          <span class="ser" style="font-size:1.9rem">${planNm}</span>
-          <span class="tag ${yearly?"on":""}">${yearly?t("cycY")+" · "+t("ymFree"):t("cycM")}</span>
-          <span class="lbl">${t("renews")} · 09.09.2026</span>
-        </div>
-        ${priceLine}
-        <div class="grid g3" style="border-radius:10px">
-          <div class="stat" style="min-height:96px"><span class="lbl">${t("minutes")}</span><span class="v" style="font-size:1.4rem">3,940</span><span class="bar" style="margin-top:.5rem"><span style="width:66%"></span></span></div>
-          <div class="stat" style="min-height:96px"><span class="lbl">${t("agentsU")}</span><span class="v" style="font-size:1.4rem">3</span><span class="bar" style="margin-top:.5rem"><span style="width:30%"></span></span></div>
-          <div class="stat" style="min-height:96px"><span class="lbl">${t("numbersU")}</span><span class="v" style="font-size:1.4rem">3</span><span class="bar" style="margin-top:.5rem"><span style="width:30%"></span></span></div>
-        </div>
-        <button class="btn ghost" style="margin-top:1rem">${t("changePlan")}</button>
-      </div>
+/* Price of one plan on one cycle, as the two figures a buyer cares about:
+   what the card is charged, and what that works out to per month. */
+function planPrice(key, cyc){
+  const p = (BILL && BILL.plans && BILL.plans[key]) || null;
+  const usd = p ? p.usd : (PLANS.plans||{})[key];
+  if(usd==null) return null;
+  const months = 12 - ((BILL && BILL.annualMonthsFree) ?? PLANS.annualMonthsFree ?? 2);
+  const yearly = cyc==="annual";
+  const charge = yearly ? (p && p.usdAnnual!=null ? p.usdAnnual : usd*months) : usd;
+  const egp    = p ? (yearly ? p.egpAnnual : p.egp) : null;
+  return {
+    usd, charge, perMonth: yearly ? charge/12 : charge,
+    save: usd*12 - (yearly ? charge : usd*12),
+    egp: egp!=null ? "E£"+Math.round(egp).toLocaleString("en-US") : fmtE(charge),
+  };
+}
 
-      <div class="card" style="margin-top:1rem">
-        <h3>${t("invoices")}</h3>
-        <div class="tw"><table>
-          <thead><tr><th>${t("invDate")}</th><th>${t("invAmt")}</th><th>${t("invState")}</th></tr></thead>
-          <tbody>
-            ${["09.08.2026","09.07.2026","09.06.2026"].map(d=>`
-              <tr><td class="num">${d}</td><td class="num">—</td><td><span class="tag on">${t("paid")}</span></td></tr>`).join("")}
-          </tbody>
-        </table></div>
-      </div>
-    </div>
+/* One plan, as a card you can buy. */
+function planOption(key, cyc, current){
+  const pr = planPrice(key, cyc);
+  const nm = t("pl_"+key) || key;
+  const sel = key===ACCT.plan;
+  return `
+  <button class="planopt${sel?" sel":""}" data-pick="${key}" aria-pressed="${sel}">
+    <span class="po-top">
+      <b class="po-n">${nm}</b>
+      ${key==="growth"?`<span class="tag hot">${t("pl_popular")}</span>`:""}
+      ${current&&sel?`<span class="tag on">${t("pl_current")}</span>`:""}
+    </span>
+    <span class="po-p">${fmt$(pr?pr.perMonth:null)}<small>${t(cyc==="annual"?"perMoY":"perMo")}</small></span>
+    ${pr&&pr.egp?`<span class="po-e">${pr.egp} ${t(cyc==="annual"?"chargedY":"chargedM")}</span>`:""}
+    <span class="po-f">${t("pl_"+key+"_f")}</span>
+  </button>`;
+}
 
-    <div class="card" style="height:fit-content">
-      <h3>${t("card")}</h3>
-      <div class="rowline" style="border-bottom:none">
-        <span class="who">••</span>
-        <span><span class="t1 mono">•••• •••• •••• 4242</span><span class="t2">${t("cardOnFile")} · ${t("exp")} 09/29</span></span>
-      </div>
-      <button class="btn ghost" style="width:100%;justify-content:center;margin-top:.8rem">${t("updateCard")}</button>
-      <p class="note">${t("noWire")}</p>
-    </div>
+function cycToggle(){
+  const months = 12 - ((BILL && BILL.annualMonthsFree) ?? 2);
+  return `
+  <div class="cycsw" role="group">
+    <button data-cyc="monthly" aria-pressed="${billCyc!=="annual"}">${t("cycM")}</button>
+    <button data-cyc="annual"  aria-pressed="${billCyc==="annual"}">${t("cycY")}
+      <span class="tag on">${t("pl_free").replace("{m}", String(12-months))}</span></button>
   </div>`;
+}
+
+/* REAL is declared further down the file, so reading it from here can land
+   in its temporal dead zone — where even `typeof` throws rather than saying
+   "undefined". One accessor, one try, and the counts degrade to zero instead
+   of taking the whole view down with them. */
+function realCount(k){ try{ return REAL ? (REAL[k]||[]).length : 0; }catch(_){ return 0; } }
+
+/* ------------------------------------------------------------ the gate
+   An account that has not paid can look at its own console but cannot build
+   in it. The server refuses the writes either way — this is only so the
+   customer is not clicking at things that will fail, and so the one thing
+   they CAN do is the obvious one.
+
+   Deliberately not hidden: they still see the shape of what they are buying,
+   which is more persuasive than an empty screen. */
+const OPEN_VIEWS = new Set(["billing"]);
+function gated(){ return BILL && BILL.paid === false; }
+function applyGate(){
+  const off = gated();
+  document.querySelectorAll("#nav button").forEach(b=>{
+    b.classList.toggle("locked", off && !OPEN_VIEWS.has(b.dataset.v));
+  });
+  /* Every other way into the builder, not just the rail: the New agent
+     button and each link to /setup. Leaving these live would send a customer
+     to a page that bounces them straight back, which reads as broken rather
+     than as unpaid. */
+  const na = document.getElementById("newAgent");
+  if(na) na.hidden = off;
+  document.querySelectorAll('a[href="/setup"], a[href^="/setup?"]').forEach(a=>{
+    if(off){ a.dataset.gated="1"; a.setAttribute("href","#"); }
+    else if(a.dataset.gated){ a.setAttribute("href","/setup"); delete a.dataset.gated; }
+  });
+  if(off && !OPEN_VIEWS.has(view)) go("billing");
+}
+
+function vBilling(){
+  const el = document.getElementById("v-billing"); if(!el) return;
+  const b     = BILL || {};
+  const paid  = b.paid !== false;                       // assume ok until told otherwise
+  const comp  = !!b.comp;
+  const cyc   = billCyc || ACCT.cycle || "monthly";
+  const used  = Number(((window.NABRA_BOOT||{}).tenant||{}).minutes_used || 0);
+
+  /* --- the plan chooser. For an unpaid account this IS the console: it is
+     the only thing they can do, so it gets the whole width and leads. --- */
+  const chooser = `
+    <div class="card paywall">
+      ${!paid?`<span class="pw-eyebrow">${t(b.state==="suspended"?"pw_lapsedK":"pw_startK")}</span>`:""}
+      <h3 class="pw-h">${t(paid?"changePlan":(b.state==="suspended"?"pw_lapsedH":"pw_startH"))}</h3>
+      <p class="pw-p">${t(paid?"pw_changeP":(b.state==="suspended"?"pw_lapsedP":"pw_startP"))}</p>
+      ${cycToggle()}
+      <div class="planopts">${["starter","growth","enterprise"].map(k=>planOption(k,cyc,paid)).join("")}</div>
+      <div class="pw-go">
+        <button class="btn" id="payBtn">${t(paid?"pl_switch":"pl_pay")}</button>
+        <span class="note" id="payNote">${t("pl_vat").replace("{v}", String(b.vatPct||14))}</span>
+      </div>
+      <p class="note pw-fine">${t("pl_fine")}</p>
+    </div>`;
+
+  /* --- what a paid account sees above the chooser --- */
+  const planNm = t("pl_"+(ACCT.plan||"growth")) || ACCT.plan;
+  const inForce = planPrice(ACCT.plan, ACCT.cycle||"monthly");
+  const state = comp
+    ? `<span class="tag on">${t("st_comp")}</span>`
+    : paid ? `<span class="tag on">${t("stActive")}</span>`
+           : `<span class="tag warn">${t(b.state==="suspended"?"st_lapsed":"stPending")}</span>`;
+  const current = `
+    <div class="card">
+      <h3>${t("plan")}</h3>
+      <div class="pc-row">
+        <span class="ser" style="font-size:1.8rem">${planNm}</span>
+        <span class="tag ${(ACCT.cycle==="annual")?"on":""}">${t(ACCT.cycle==="annual"?"cycY":"cycM")}</span>
+        ${state}
+      </div>
+      ${comp
+        ? `<p class="note">${t("comp_note")}</p>`
+        : inForce ? `<p class="pc-amt">${fmt$(inForce.charge)} <span class="lbl">${t(ACCT.cycle==="annual"?"perYr":"perMo")}${inForce.egp?" · "+inForce.egp:""}</span></p>` : ""}
+      <div class="grid g3" style="border-radius:10px;margin-top:.8rem">
+        <div class="stat" style="min-height:84px"><span class="lbl">${t("minutes")}</span><span class="v" style="font-size:1.4rem">${used.toLocaleString("en-US")}</span></div>
+        <div class="stat" style="min-height:84px"><span class="lbl">${t("agentsU")}</span><span class="v" style="font-size:1.4rem">${realCount("agents")}</span></div>
+        <div class="stat" style="min-height:84px"><span class="lbl">${t("callsU")}</span><span class="v" style="font-size:1.4rem">${realCount("calls")}</span></div>
+      </div>
+    </div>`;
+
+  el.innerHTML = paid
+    ? `${current}<div style="margin-top:1rem">${chooser}</div>`
+    : chooser;
+
+  /* ---- wiring ---- */
+  el.querySelectorAll("[data-cyc]").forEach(x=> x.addEventListener("click", ()=>{ billCyc=x.dataset.cyc; vBilling(); }));
+  el.querySelectorAll("[data-pick]").forEach(x=> x.addEventListener("click", ()=>{ ACCT.plan=x.dataset.pick; vBilling(); }));
+  const go = el.querySelector("#payBtn");
+  if(go) go.addEventListener("click", async ()=>{
+    const note = el.querySelector("#payNote");
+    go.disabled = true; go.textContent = t("pl_opening");
+    try{
+      const r = await fetch("/api/billing/checkout", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ plan: ACCT.plan, cycle: billCyc })
+      });
+      const d = await r.json().catch(()=>({}));
+      if(d.redirect){ location.href = d.redirect; return; }
+      /* No card page: say exactly why rather than failing quietly. */
+      if(note){ note.textContent = d.error || t("pl_failed"); note.classList.add("warn"); }
+      if(d.saved) ACCT.cycle = d.saved.cycle;
+    }catch(_){ if(note){ note.textContent = t("pl_failed"); note.classList.add("warn"); } }
+    go.disabled = false; go.textContent = t(paid?"pl_switch":"pl_pay");
+  });
 }
 
 
@@ -2582,12 +2830,17 @@ function vOrders(){
     await loadSteps(); await loadDest();
     vStart();
     vOverview(); vAgents(); vLeads(); vCalls(); vBookings(); vOrders(); vScripts(); vKnowledge(); vCampaigns(); vRecordings(); vRoutes(); vNumbers();
+    applyGate();   // the views above rebuild their own links to /setup
 
     /* Where to put somebody who has just signed in. Until their line is
        carrying calls there is nothing for an overview to show, so they land on
        the step they are actually on. Once they are live, the console is the
        right place and this never fires again. */
-    if(STEPS && !STEPS.live && view==="overview"){ go("navStart"); }
+    /* An unpaid account belongs on the plans, whatever step it is on —
+       and a buyer sent here by signup or by the pricing table said where
+       they wanted to go, so honour that first. */
+    if((()=>{try{return gated()}catch(_){return false}})() || /[?&]pay=1/.test(location.search)) go("billing");
+    else if(STEPS && !STEPS.live && view==="overview"){ go("navStart"); }
     else { const n=document.querySelector('#nav [data-v="navStart"]'); if(n && STEPS && STEPS.live) n.classList.add("muted"); }
   }catch(_){}
 })();
@@ -2599,7 +2852,13 @@ if(window.NABRA_BOOT){ try{
     $("#acctPlan").textContent = b.tenant.plan ? (b.tenant.plan.charAt(0).toUpperCase()+b.tenant.plan.slice(1)+" plan") : "";
     if(b.tenant.plan)  ACCT.plan  = b.tenant.plan;
     if(b.tenant.cycle) ACCT.cycle = b.tenant.cycle;
+    /* Billing arrives with the page, so the gate is in place on the first
+       paint — no flash of a console this account cannot use. */
+    if(b.billing){ BILL = Object.assign({}, b.billing); billCyc = b.tenant.cycle || "monthly"; }
+    if(b.pricing && b.pricing.plans) PLANS = b.pricing;
+    applyGate();
     vBilling();
+    if(/[?&]pay=1/.test(location.search)) go("billing");
     const av=document.querySelector(".acct .av");
     if(av && b.tenant.name) av.textContent = b.tenant.name.trim().split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
   }

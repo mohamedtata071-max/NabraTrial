@@ -37,6 +37,15 @@ const CFG = {
   PAYMOB_INTEGRATION_ID: process.env.PAYMOB_INTEGRATION_ID || "",
   PAYMOB_IFRAME_ID: process.env.PAYMOB_IFRAME_ID || "",
   PAYMOB_HMAC: process.env.PAYMOB_HMAC || "",
+  /* Accounts that use NABRA without paying — the owner's own, plus anyone
+     comped deliberately. Comma-separated emails, matched case-insensitively
+     when the account is created. Any account can also be comped later from
+     the admin panel, so this list is a convenience, not the only way in. */
+  FREE_ACCESS_EMAILS: process.env.FREE_ACCESS_EMAILS || "mohamedtata071@gmail.com",
+  /* How long a session lasts when the customer ticks "keep me signed in".
+     Without the tick the cookie dies with the browser, which is what a
+     shared or office machine needs. */
+  SESSION_DAYS_REMEMBER: Number(process.env.SESSION_DAYS_REMEMBER || 30),
   /* Vapi — verify inbound webhooks with this shared token (set the same
      value as a header credential on the Server URL in the Vapi dashboard). */
   VAPI_WEBHOOK_TOKEN: process.env.VAPI_WEBHOOK_TOKEN || "",
@@ -96,6 +105,38 @@ const CFG = {
   DIR: __dirname,
   SESSION_DAYS: 30,
 };
+
+/* Emails that get NABRA on the house, normalised once so every later
+   comparison is a cheap Set lookup rather than a string split. */
+const COMP_EMAILS = new Set(
+  String(CFG.FREE_ACCESS_EMAILS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean));
+
+/* ------------------------------------------------------------ billing truth
+   One function decides whether an account may use the product. Everything
+   else — the page gates, the API gate, the console, the admin panel — asks
+   this, so there is exactly one place where "may they" is answered and no
+   route can drift into letting an unpaid account through by accident.
+
+     comp      → on the house, full access, never billed, never nagged
+     active    → paid and in good standing
+     pending   → signed up, has not paid yet
+     suspended → was paying, is not now
+
+   `paid` is deliberately false for pending. That is the paywall. */
+function billing(t) {
+  if (!t) return { paid: false, state: "none", comp: false, payable: false };
+  const comp = !!t.comp;
+  const state = comp ? "comp" : t.status;
+  return {
+    paid: comp || t.status === "active",
+    state, comp,
+    plan: t.plan, cycle: t.cycle,
+    /* Can they actually pay right now? Only if cards are switched on. With
+       payments off there is nothing to click, and the console says so
+       instead of showing a button that cannot work. */
+    payable: !comp && t.status !== "active" && cfg("PAYMENTS_MODE") === "paymob",
+  };
+}
 
 if (CFG.SECRET === "dev-only-change-me") console.warn("⚠  SESSION_SECRET is the dev default — set a real one before going live.");
 if (!CFG.DATABASE_URL) console.warn("⚠  DATABASE_URL not set — the gateway will not start without Postgres (Neon works).");
@@ -324,6 +365,20 @@ async function migrate() {
      the booking subscription silently did not work for any real customer.
      A default covers every insert path, including signup. */
   await q(`ALTER TABLE tenants ALTER COLUMN cal_token SET DEFAULT encode(gen_random_bytes(16),'hex')`);
+  /* Billing state. `comp` means this account is on the house: it behaves
+     exactly like a paid one but is never charged and never asked to pay.
+     It is kept separate from `status` on purpose — a comped account is not
+     a pending one that someone forgot to invoice, and it should survive any
+     future change to how paying accounts are activated. */
+  await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS comp BOOLEAN NOT NULL DEFAULT false`);
+  await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS comp_note TEXT`);
+  await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS activated_at TIMESTAMPTZ`);
+  /* The owner's own account, and anyone else on the comp list, gets access
+     without paying. Run on every boot so adding an email to the list is
+     enough — no manual database work. */
+  for (const e of COMP_EMAILS)
+    await q(`UPDATE tenants SET comp=true, comp_note=COALESCE(comp_note,'on the house')
+              WHERE lower(email)=$1 AND comp=false`, [e]);
   await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT false`);
   await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS verify_sent_at TIMESTAMPTZ`);
   /* which flow took the call, so per-setup numbers are possible later */
@@ -534,10 +589,18 @@ function verify(token) {
     return p;
   } catch { return null; }
 }
-function setSession(res, tenant) {
-  const token = sign({ id: tenant.id, role: tenant.role, exp: Date.now() + CFG.SESSION_DAYS * 864e5 });
+/* `remember` is the customer's answer to "keep me signed in".
+   Ticked   → a dated cookie that survives closing the browser.
+   Unticked → no Max-Age at all, so the cookie is a session cookie and dies
+              with the browser. The signed payload gets a matching short
+              expiry too, so clearing the cookie is not the only thing
+              standing between a borrowed laptop and the account. */
+function setSession(res, tenant, remember = true) {
+  const days = remember ? Number(cfg("SESSION_DAYS_REMEMBER")) || CFG.SESSION_DAYS : 1;
+  const token = sign({ id: tenant.id, role: tenant.role, exp: Date.now() + days * 864e5 });
+  const age = remember ? `; Max-Age=${days * 86400}` : "";
   res.setHeader("Set-Cookie",
-    `nabra_s=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${CFG.SESSION_DAYS * 86400}${process.env.NODE_ENV === "production" ? "; Secure" : ""}`);
+    `nabra_s=${token}; Path=/; HttpOnly; SameSite=Lax${age}${process.env.NODE_ENV === "production" ? "; Secure" : ""}`);
 }
 function readSession(req) {
   const m = /(?:^|;\s*)nabra_s=([^;]+)/.exec(req.headers.cookie || "");
@@ -602,13 +665,53 @@ function serveWithBoot(res, file, boot) {
 async function currentTenant(req) {
   const s = readSession(req);
   if (!s) return null;
-  const { rows } = await q(`SELECT id,name,email,role,plan,cycle,status,lang,vapi_assistant_ids,minutes_used,created_at,email_verified,cal_token FROM tenants WHERE id=$1`, [s.id]);
+  const { rows } = await q(`SELECT id,name,email,role,plan,cycle,status,lang,vapi_assistant_ids,minutes_used,created_at,email_verified,cal_token,comp,comp_note,activated_at FROM tenants WHERE id=$1`, [s.id]);
   const t = rows[0];
   if (!t) return null;
   t._impersonated = !!s.imp;
   t._adminId = s.adm || null;
   return t;
 }
+
+/* ============================================================
+   THE PAYWALL
+   ------------------------------------------------------------
+   NABRA is a paid product, so building anything on an account
+   that has not paid is refused here rather than in each route.
+   The rule is default-deny by method: reading your own account
+   is always allowed (an unpaid customer should still see their
+   own empty console and the plans), but anything that CREATES
+   or CHANGES something needs a live subscription.
+
+   Doing it as one gate in front of /api/me means a new route
+   added later is protected the moment it is written. The old
+   approach — a status check copied into each handler — leaks
+   the first time someone forgets, and a forgotten check is a
+   free account.
+   ============================================================ */
+
+/* The only writes an unpaid account may make: the ones that help it become
+   a paid account, or confirm who it is. */
+const BILLING_EXEMPT = new Set(["/resend-verification", "/lang"]);
+
+app.use("/api/me", async (req, res, next) => {
+  if (req.method === "GET" || req.method === "HEAD") return next();
+  if (BILLING_EXEMPT.has(req.path)) return next();
+  const t = await currentTenant(req).catch(() => null);
+  if (!t) return res.status(401).json({ error: "no session" });
+  /* Staff helping a customer are not stopped by the customer's bill. The
+     console still shows that customer's real billing state, so this does
+     not hide anything — it just lets support fix a configuration. */
+  if (t._impersonated || t.role === "admin") return next();
+  const b = billing(t);
+  if (b.paid) return next();
+  res.status(402).json({
+    error: b.state === "suspended"
+      ? "This account is paused. Settle the subscription to carry on."
+      : "Choose a plan to start building your agent.",
+    billing: b, paywall: true,
+  });
+});
 
 /* ------------------------------------------------------------ public site */
 const siteUrl = req => (cfg("SITE_URL") || `https://${req.headers.host || "localhost"}`).replace(/\/$/, "");
@@ -788,26 +891,27 @@ async function tenantFromSocial({ provider, sub, email, name, co }) {
 
   const plan = ["starter", "growth", "enterprise"].includes(co && co.plan) ? co.plan : "growth";
   const cycle = ["monthly", "annual"].includes(co && co.cycle) ? co.cycle : "monthly";
-  const status = cfg("PAYMENTS_MODE") === "paymob" ? "pending" : "active";
+  /* Signing in with Google creates a real, unpaid account — the same as any
+     other signup. Only the comp list starts active. */
+  const comp = COMP_EMAILS.has(email);
   const ins = await q(
     /* Google has already verified this address, so asking the customer to
        confirm it again would be friction for nothing. */
-    `INSERT INTO tenants(name,email,role,plan,cycle,status,consent,oauth_provider,oauth_sub,email_verified)
-     VALUES($1,$2,'customer',$3,$4,$5,$6,$7,$8,true) RETURNING *`,
-    [String(name || email.split("@")[0]).slice(0, 120), email, plan, cycle, status,
-     (co && co.consent) || null, provider, sub]);
+    `INSERT INTO tenants(name,email,role,plan,cycle,status,consent,oauth_provider,oauth_sub,email_verified,comp,comp_note,activated_at)
+     VALUES($1,$2,'customer',$3,$4,$5,$6,$7,$8,true,$9,$10,$11) RETURNING *`,
+    [String(name || email.split("@")[0]).slice(0, 120), email, plan, cycle, comp ? "active" : "pending",
+     (co && co.consent) || null, provider, sub,
+     comp, comp ? "on the house" : null, comp ? new Date() : null]);
   return { tenant: ins.rows[0], created: true };
 }
 
 async function finishSocial(res, info) {
   const { tenant, created } = await tenantFromSocial(info);
-  if (tenant.status === "suspended") return oauthFail(res, "suspended account");
   clearState(res);
   setSession(res, tenant);
   await track(tenant.id, created ? "signup" : "login", { via: info.provider });
   if (tenant.role === "admin") return res.redirect("/admin");
-  const { rows } = await q(`SELECT 1 FROM agents WHERE tenant_id=$1 LIMIT 1`, [tenant.id]);
-  res.redirect(rows.length ? "/app" : "/setup");
+  res.redirect(await homeFor(tenant));
 }
 
 /* ---------------------------------------------------------- Google */
@@ -877,25 +981,37 @@ app.post("/api/auth/signup", async (req, res) => {
     if (!["starter", "growth", "enterprise"].includes(co.plan)) co.plan = "growth";
     if (!["monthly", "annual"].includes(co.cycle)) co.cycle = "monthly";
     if (co.consent === undefined) co.consent = null;
-    /* Only Paymob mode collects money, so only Paymob mode should leave an
-       account pending. Any other value is test mode and activates directly —
-       otherwise a stray value like "test" strands every signup in pending. */
-    const status = cfg("PAYMENTS_MODE") === "paymob" ? "pending" : "active";
+    /* A plan sent straight from the signup form, for buyers who chose there
+       rather than arriving from the pricing table. */
+    if (["starter", "growth", "enterprise"].includes(req.body.plan)) co.plan = req.body.plan;
+    if (["monthly", "annual"].includes(req.body.cycle)) co.cycle = req.body.cycle;
+    /* Every new account starts unpaid. The one exception is the comp list —
+       the owner's own account and anyone deliberately given NABRA free.
+       Note what this does NOT do any more: it no longer activates accounts
+       just because card payments happen to be switched off. A real product
+       does not hand out full access because its till is unplugged. */
+    const comp = COMP_EMAILS.has(email);
+    const status = comp ? "active" : "pending";
     let row;
     try {
       row = (await q(
-        `INSERT INTO tenants(name,email,pass_hash,plan,cycle,status,consent) VALUES($1,$2,$3,$4,$5,$6,$7)
-         RETURNING id,name,email,role,plan,status`,
-        [name, email, hashPw(password), co.plan, co.cycle, status, co.consent])).rows[0];
+        `INSERT INTO tenants(name,email,pass_hash,plan,cycle,status,consent,comp,comp_note,activated_at)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         RETURNING id,name,email,role,plan,cycle,status,comp`,
+        [name, email, hashPw(password), co.plan, co.cycle, status, co.consent,
+         comp, comp ? "on the house" : null, comp ? new Date() : null])).rows[0];
     } catch (e) {
       if (String(e.message).includes("duplicate")) return res.status(409).json({ error: "That email already has an account — log in instead." });
       throw e;
     }
     await q(`INSERT INTO events(tenant_id,kind,detail) VALUES($1,'signup',$2)`, [row.id, JSON.stringify(co)]);
-    setSession(res, row);
+    setSession(res, row, req.body.remember !== false);
     /* Sent, not awaited: a slow mail provider should not make signup feel
        broken. If it fails they can resend from inside the app. */
     sendVerification(req, row);
+
+    /* A comped account skips the till entirely and lands in the builder. */
+    if (comp) return res.json({ redirect: "/setup" });
 
     if (cfg("PAYMENTS_MODE") === "paymob") {
       /* Hand the buyer to Paymob's hosted card page; the webhook below
@@ -905,9 +1021,10 @@ app.post("/api/auth/signup", async (req, res) => {
       /* If Paymob is misconfigured don't strand the buyer — keep them pending and tell you. */
       await q(`INSERT INTO events(tenant_id,kind,detail) VALUES($1,'paymob_error',NULL)`, [row.id]);
     }
-    /* A brand new customer has no agent yet, so send them to build one
-       rather than to an empty console. */
-    res.json({ redirect: "/setup" });
+    /* Unpaid, so the console — which opens on the plans. Not the marketing
+       site: being bounced out to the brochure after signing up is the thing
+       that made buying feel impossible. */
+    res.json({ redirect: "/app?pay=1" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Something went wrong on our side. Try again." }); }
 });
 
@@ -945,22 +1062,31 @@ app.post("/api/auth/login", async (req, res) => {
     noteAttempt(key);
     return res.status(401).json({ error: "Email or password is not right." });
   }
-  if (t.status === "suspended") return res.status(403).json({ error: "This account is suspended. Contact support." });
-  setSession(res, t);
-  if (t.role === "admin") { setSession(res, t); return res.json({ redirect: "/admin" }); }
-  /* Customers who have not built an agent go straight to setup. */
-  const { rows: ag } = await q(`SELECT 1 FROM agents WHERE tenant_id=$1 LIMIT 1`, [t.id]);
-  res.json({ redirect: ag.length ? "/app" : "/setup" });
+  /* A lapsed account can still sign in. It lands on its own billing page,
+     where it can settle up — locking it out at the door would mean the only
+     way back in is email to support. */
+  setSession(res, t, req.body.remember !== false);
+  if (t.role === "admin") return res.json({ redirect: "/admin" });
+  res.json({ redirect: await homeFor(t) });
 });
+
+/* Where a customer belongs the moment they sign in. Signing in should never
+   land anyone back on the marketing site — they are already a customer, and
+   the brochure is not where their work is. */
+async function homeFor(t) {
+  if (!billing(t).paid) return "/app?pay=1";               // plans first
+  const { rows } = await q(`SELECT 1 FROM agents WHERE tenant_id=$1 LIMIT 1`, [t.id]);
+  return rows.length ? "/app" : "/setup";                  // build one, or run the ones you have
+}
 
 /* ------------------------------------------------------------ the customer console */
 app.get("/app", async (req, res) => {
   const t = await currentTenant(req);
   if (!t) return res.redirect("/login");
   if (t.role === "admin" && !t._impersonated) return res.redirect("/admin");
-  if (t.status === "suspended") return res.redirect("/login");
   serveWithBoot(res, FILES.dash, {
     tenant: { id: t.id, name: t.name, email: t.email, plan: t.plan, cycle: t.cycle, status: t.status },
+    billing: billing(t), pricing: { plans: PLAN_USD, annualMonthsFree: ANNUAL_MONTHS_FREE, vatPct: 14 },
     lang: t.lang, impersonated: t._impersonated,
   });
 });
@@ -970,10 +1096,13 @@ app.get("/app", async (req, res) => {
 app.get("/setup", async (req, res) => {
   const t = await currentTenant(req);
   if (!t) return res.redirect("/login");
-  if (t.status === "suspended") return res.redirect("/login");
+  /* The builder is the product. An account that has not paid is sent to the
+     console, which opens on the plans — not to the marketing site, which
+     would read as being thrown out of their own account. */
+  if (!billing(t).paid && !t._impersonated && t.role !== "admin") return res.redirect("/app?pay=1");
   serveWithBoot(res, FILES.setup, {
     tenant: { id: t.id, name: t.name, email: t.email, plan: t.plan, cycle: t.cycle, status: t.status },
-    lang: t.lang, impersonated: t._impersonated,
+    billing: billing(t), lang: t.lang, impersonated: t._impersonated,
   });
 });
 
@@ -1225,10 +1354,36 @@ app.post("/api/me/agents/:id/pause", async (req, res) => {
   res.json({ agent: { ...rows[0], readiness: readiness(rows[0]) } });
 });
 
+/* What deleting this agent would take with it, so the confirm can say so
+   rather than asking someone to agree to something unspecified. Calls,
+   bookings, orders and leads survive the delete and keep their history; the
+   setups and anything still queued to dial do not. */
+app.get("/api/me/agents/:id/impact", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const a = await ownedAgent(t.id, req.params.id);
+  if (!a) return res.status(404).json({ error: "That agent does not exist on your account." });
+  const c = (await q(
+    `SELECT (SELECT count(*)::int FROM setups         WHERE agent_id=$1) AS setups,
+            (SELECT count(*)::int FROM calls          WHERE agent_id=$1) AS calls,
+            (SELECT count(*)::int FROM bookings       WHERE agent_id=$1) AS bookings,
+            (SELECT count(*)::int FROM outbound_queue WHERE agent_id=$1 AND status IN ('waiting','calling')) AS queued`,
+    [a.id])).rows[0];
+  res.json({ name: a.name, live: a.status === "live", ...c });
+});
+
 app.delete("/api/me/agents/:id", async (req, res) => {
   const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
-  const { rowCount } = await q(`DELETE FROM agents WHERE id=$1 AND tenant_id=$2`, [req.params.id, t.id]);
-  if (!rowCount) return res.status(404).json({ error: "That agent does not exist on your account." });
+  const a = await ownedAgent(t.id, req.params.id);
+  if (!a) return res.status(404).json({ error: "That agent does not exist on your account." });
+  /* A live agent is answering a real phone line. Deleting it from under a
+     caller mid-conversation is not something to do on one click, so it has to
+     be paused first — which is one button and makes the intent explicit. */
+  if (a.status === "live" && String(req.query.force || "") !== "1")
+    return res.status(409).json({
+      error: "This agent is live. Pause it first, then delete it.", live: true });
+  await q(`DELETE FROM agents WHERE id=$1 AND tenant_id=$2`, [a.id, t.id]);
+  await q(`INSERT INTO events(tenant_id,kind,detail) VALUES($1,'agent_deleted',$2)`,
+    [t.id, JSON.stringify({ agent: a.id, name: a.name })]);
   res.json({ ok: true });
 });
 
@@ -1871,7 +2026,8 @@ app.get("/api/admin/stats", async (req, res) => {
 });
 app.get("/api/admin/tenants", async (req, res) => {
   const a = await requireAdmin(req, res); if (!a) return;
-  const { rows } = await q(`SELECT id,name,email,plan,cycle,status,lang,vapi_assistant_ids,minutes_used,created_at
+  const { rows } = await q(`SELECT id,name,email,plan,cycle,status,lang,vapi_assistant_ids,minutes_used,created_at,
+                                   comp,comp_note,activated_at,email_verified
                             FROM tenants WHERE role='customer' ORDER BY created_at DESC`);
   res.json({ tenants: rows });
 });
@@ -1879,10 +2035,38 @@ app.post("/api/admin/tenants/:id/status", async (req, res) => {
   const a = await requireAdmin(req, res); if (!a) return;
   const { status } = req.body || {};
   if (!["active", "suspended", "pending"].includes(status)) return res.status(400).json({ error: "bad status" });
-  await q(`UPDATE tenants SET status=$1 WHERE id=$2 AND role='customer'`, [status, req.params.id]);
+  await q(`UPDATE tenants SET status=$1,
+                  activated_at = CASE WHEN $1='active' THEN COALESCE(activated_at, now()) ELSE activated_at END
+            WHERE id=$2 AND role='customer'`, [status, req.params.id]);
+  /* Suspending has to actually stop the service, or a lapsed account keeps
+     answering calls on your Vapi bill. Paused, not deleted: paying up and
+     pressing deploy brings everything back exactly as it was. */
+  if (status === "suspended")
+    await q(`UPDATE agents SET status='paused' WHERE tenant_id=$1 AND status='live'`, [req.params.id]);
   await q(`INSERT INTO events(tenant_id,kind,detail) VALUES($1,'status_change',$2)`, [req.params.id, JSON.stringify({ by: a.email, status })]);
   res.json({ ok: true });
 });
+/* Give an account NABRA on the house, or take that away again. Separate
+   from status on purpose: comping is a commercial decision you make, not a
+   payment state the till reports. */
+app.post("/api/admin/tenants/:id/comp", async (req, res) => {
+  const a = await requireAdmin(req, res); if (!a) return;
+  const on = req.body.comp !== false;
+  const note = String(req.body.note || (on ? "on the house" : "")).slice(0, 200);
+  /* Taking the comp away puts them back at the till. Leaving them 'active'
+     would mean an account you stopped comping keeps full access for free,
+     which is the hole the comp flag exists to avoid. A real payment flips
+     them back to active through the webhook. */
+  await q(`UPDATE tenants SET comp=$1, comp_note=$2,
+                  status = CASE WHEN $1 THEN 'active'
+                                WHEN status='active' THEN 'pending' ELSE status END,
+                  activated_at = CASE WHEN $1 THEN COALESCE(activated_at, now()) ELSE activated_at END
+            WHERE id=$3 AND role='customer'`, [on, note || null, req.params.id]);
+  await q(`INSERT INTO events(tenant_id,kind,detail) VALUES($1,'comp_change',$2)`,
+    [req.params.id, JSON.stringify({ by: a.email, comp: on, note })]);
+  res.json({ ok: true });
+});
+
 /* Push the cost guards onto a Vapi assistant. Silent no-op without an API key,
    so nothing breaks if you haven't set one yet — but then the caps are NOT in
    force and a stuck call bills until the caller's carrier drops it. */
@@ -2576,6 +2760,63 @@ function planUSD(plan, cycle) {
 app.get("/api/pricing", (req, res) => {
   res.json({ plans: PLAN_USD, annualMonthsFree: ANNUAL_MONTHS_FREE, vatPct: 14 });
 });
+
+/* ============================================================
+   BILLING
+   ------------------------------------------------------------
+   What this account owes, and the one button that fixes it.
+   Prices come back as the single figure the customer will be
+   charged. How that figure is reached from the USD list is not
+   in the response — that is a commercial matter, not something
+   a buyer needs, and anything in a response is public.
+   ============================================================ */
+app.get("/api/billing", async (req, res) => {
+  const t = await currentTenant(req);
+  if (!t) return res.status(401).json({ error: "no session" });
+  const b = billing(t);
+  /* Each plan with its real monthly and yearly price in the currency the
+     card will actually be charged in. If FX is unreachable the USD figure
+     still goes out, so the plans never render blank. */
+  const plans = {};
+  for (const k of Object.keys(PLAN_USD)) {
+    const row = { usd: PLAN_USD[k], usdAnnual: planUSD(k, "annual") };
+    try {
+      row.egp = Math.round((await fxConvertUSD(PLAN_USD[k])).egp);
+      row.egpAnnual = Math.round((await fxConvertUSD(planUSD(k, "annual"))).egp);
+    } catch { /* leave the EGP figures off rather than guess at them */ }
+    plans[k] = row;
+  }
+  res.json({ ...b, plans, annualMonthsFree: ANNUAL_MONTHS_FREE, vatPct: 14,
+             verified: !!t.email_verified });
+});
+
+/* Start a payment. Returns the hosted card page to send the buyer to. */
+app.post("/api/billing/checkout", async (req, res) => {
+  const t = await currentTenant(req);
+  if (!t) return res.status(401).json({ error: "no session" });
+  const b = billing(t);
+  if (b.comp) return res.status(400).json({ error: "This account does not get billed." });
+  const co = {
+    plan: ["starter", "growth", "enterprise"].includes(req.body.plan) ? req.body.plan : t.plan,
+    cycle: ["monthly", "annual"].includes(req.body.cycle) ? req.body.cycle : t.cycle,
+  };
+  /* Remember what they picked even if the card page fails to open, so the
+     choice is not lost and support can see what they were trying to buy. */
+  await q(`UPDATE tenants SET plan=$1, cycle=$2 WHERE id=$3`, [co.plan, co.cycle, t.id]);
+  if (cfg("PAYMENTS_MODE") !== "paymob")
+    return res.status(503).json({
+      error: "Card payments are not switched on yet. Your plan is saved — we will email you the moment you can pay.",
+      saved: co });
+  try {
+    const url = await paymobCheckoutUrl(t, co);
+    await q(`INSERT INTO events(tenant_id,kind,detail) VALUES($1,'checkout_started',$2)`, [t.id, JSON.stringify(co)]);
+    res.json({ redirect: url });
+  } catch (e) {
+    console.error("paymob:", e.message);
+    await q(`INSERT INTO events(tenant_id,kind,detail) VALUES($1,'paymob_error',NULL)`, [t.id]);
+    res.status(502).json({ error: "The card page would not open. Try again in a moment." });
+  }
+});
 app.post("/api/pay/webhook", async (req, res) => {
   /* Paymob transaction-processed callback. Verify their HMAC, then activate. */
   try {
@@ -2591,7 +2832,7 @@ app.post("/api/pay/webhook", async (req, res) => {
     if (obj.success === true && obj.order && obj.order.id) {
       const { rows } = await q(`SELECT id FROM tenants WHERE consent->>'paymob_order' = $1`, [String(obj.order.id)]);
       if (rows.length) {
-        await q(`UPDATE tenants SET status='active' WHERE id=$1`, [rows[0].id]);
+        await q(`UPDATE tenants SET status='active', activated_at=COALESCE(activated_at,now()) WHERE id=$1`, [rows[0].id]);
         await q(`INSERT INTO events(tenant_id,kind,detail) VALUES($1,'payment_success',$2)`,
           [rows[0].id, JSON.stringify({ order: obj.order.id, amount_cents: obj.amount_cents })]);
       }
@@ -2679,12 +2920,31 @@ function socialBlock(isUp, tok) {
 
 function authPage(kind, co, tok) {
   const isUp = kind === "signup";
-  /* Someone who arrived here without choosing a plan should not discover later
-   that one was picked for them. Name it, and offer the way back. */
-const planLine = isUp && co
-  ? `<p class="plan">Plan: <b>${esc(co.plan)}</b> · billed ${esc(co.cycle)}, invoiced in EGP` +
-    `${tok ? "" : ` &nbsp;<a href="/#plans" class="chg">Change</a>`}</p>`
-  : "";
+  /* The plans, on the signup page itself. They used to be one line of text
+     with a "Change" link back to /#plans, which threw a buyer out of signup
+     and onto the marketing site to make the single decision signup exists
+     for. Now they choose here, and never leave. */
+  const picked = (co && co.plan) || "growth";
+  const cycle  = (co && co.cycle) || "monthly";
+  const months = 12 - ANNUAL_MONTHS_FREE;
+  const BLURB = {
+    starter:    "One agent, one number",
+    growth:     "Several agents, numbers and setups",
+    enterprise: "Your own cloned voice, unlimited numbers",
+  };
+  const planPick = !isUp ? "" : `
+<div class="picker">
+  <div class="cyc" role="group" aria-label="Billing period">
+    <button type="button" data-cyc="monthly" aria-pressed="${cycle !== "annual"}">Monthly</button>
+    <button type="button" data-cyc="annual" aria-pressed="${cycle === "annual"}">Yearly <i>${12 - months} months free</i></button>
+  </div>
+  ${["starter", "growth", "enterprise"].map(k => `
+  <button type="button" class="pk${k === picked ? " on" : ""}" data-plan="${k}" aria-pressed="${k === picked}">
+    <span class="pk-l"><b>${k[0].toUpperCase() + k.slice(1)}</b><em>${BLURB[k]}</em></span>
+    <span class="pk-p" data-m="${PLAN_USD[k]}" data-y="${PLAN_USD[k] * months}">$${PLAN_USD[k]}<small>/mo</small></span>
+  </button>`).join("")}
+  <p class="fine">Card required · cancel any time · charged in EGP</p>
+</div>`;
   return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${isUp ? "Create your account" : "Log in"} — NABRA</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Chivo+Mono:wght@400&display=swap" rel="stylesheet">
@@ -2711,24 +2971,67 @@ input:focus{outline:none;border-color:var(--fg)}
 button{width:100%;margin-top:1.3rem;padding:.7rem;border:none;border-radius:999px;background:var(--fg);color:#fff;font:inherit;font-weight:500;cursor:pointer}
 .err{color:var(--ember);font-size:.8rem;margin-top:.8rem;display:none}
 .plan .chg{color:var(--fg);text-decoration:underline;font-weight:500}
+.card{max-width:430px}
+.picker{margin:0 0 .4rem}
+.cyc{display:inline-flex;gap:3px;padding:3px;background:var(--bone);border-radius:9px;margin-bottom:.7rem;flex-wrap:wrap}
+/* The page-wide button rule is a full-width pill with a big top margin:
+   right for the submit button, wrong for every control in the picker. */
+.cyc button{display:inline-flex;align-items:center;gap:.35rem;border:0;background:transparent;color:var(--mute);
+  font:inherit;font-size:.8rem;padding:.35rem .7rem;border-radius:7px;cursor:pointer;width:auto;margin:0}
+.cyc button[aria-pressed="true"]{background:#fff;color:var(--fg);box-shadow:0 1px 3px rgba(22,52,102,.1)}
+.cyc i{font-style:normal;font-size:.62rem;color:var(--ember)}
+.pk{display:flex;align-items:center;justify-content:space-between;gap:.8rem;width:100%;margin:0 0 .4rem !important;padding:.7rem .85rem;
+  border:1px solid var(--rule);border-radius:11px;background:#fff;color:var(--fg);font:inherit;text-align:start;cursor:pointer}
+.pk:hover{border-color:var(--mute)}
+.pk.on{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember);background:rgba(47,107,255,.05)}
+.pk-l{display:flex;flex-direction:column;gap:.1rem;min-width:0}
+.pk-l b{font-size:.95rem;font-weight:600}
+.pk-l em{font-style:normal;font-size:.76rem;color:var(--mute)}
+.pk-p{font-size:1.15rem;font-weight:650;white-space:nowrap}
+.pk-p small{font-size:.66rem;font-weight:400;color:var(--mute)}
+.fine{font-size:.72rem;color:var(--mute);margin:.5rem 0 0}
+/* Likewise the label rule, which is small-caps mono for field names. This
+   is a sentence the customer reads, not a field name. */
+.rem{display:flex;align-items:center;gap:.5rem;margin:1.1rem 0 0;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:.84rem;letter-spacing:0;text-transform:none;color:var(--mute)}
+.rem input{width:15px;height:15px;flex:none;margin:0;accent-color:var(--ember)}
 .alt{font-size:.8rem;color:var(--mute);margin-top:1.2rem;text-align:center}.alt a{color:var(--fg)}
 </style></head><body><div class="card">
 <div class="brand">نبرة NABRA <i></i></div>
 <h1>${isUp ? "Create your account" : "Welcome back"}</h1>
-${planLine}
+${planPick}
 ${socialBlock(isUp, tok)}
 ${isUp ? `<label>Business name</label><input id="n" autocomplete="organization">` : ""}
 <label>Email</label><input id="e" type="email" autocomplete="email">
 <label>Password</label><input id="p" type="password" autocomplete="${isUp ? "new-password" : "current-password"}" minlength="8">
+<label class="rem"><input type="checkbox" id="rem" checked> Keep me signed in</label>
 <button id="go">${isUp ? "Create account →" : "Log in →"}</button>
 <p class="err" id="err"></p>
-<p class="alt">${isUp ? `Already with us? <a href="/login">Log in</a>` : `New here? <a href="/signup">Create an account</a> &nbsp;·&nbsp; <a href="/">See the plans</a>`}</p>
+<p class="alt">${isUp ? `Already with us? <a href="/login">Log in</a>` : `New here? <a href="/signup">Create an account</a>`}</p>
 </div><script>
+var PICK=${JSON.stringify(picked)}, CYC=${JSON.stringify(cycle)};
+${isUp ? `
+/* The picker. Prices are swapped rather than re-fetched, so the figures can
+   never disagree with the ones the page was served with. */
+var MONTHS=${months};
+function paint(){
+  document.querySelectorAll("[data-plan]").forEach(function(b){
+    var on=b.dataset.plan===PICK;
+    b.classList.toggle("on",on); b.setAttribute("aria-pressed",String(on));
+    var p=b.querySelector(".pk-p"), y=CYC==="annual";
+    p.innerHTML = "$"+Math.round((y?+p.dataset.y/12:+p.dataset.m))+"<small>/mo"+(y?", billed yearly":"")+"</small>";
+  });
+  document.querySelectorAll("[data-cyc]").forEach(function(b){ b.setAttribute("aria-pressed",String(b.dataset.cyc===CYC)); });
+}
+document.querySelectorAll("[data-plan]").forEach(function(b){ b.addEventListener("click",function(){ PICK=b.dataset.plan; paint(); }); });
+document.querySelectorAll("[data-cyc]").forEach(function(b){ b.addEventListener("click",function(){ CYC=b.dataset.cyc; paint(); }); });
+paint();` : ""}
 document.getElementById("go").addEventListener("click", async ()=>{
   const err=document.getElementById("err"); err.style.display="none";
+  const rem=document.getElementById("rem").checked;
   const body=${isUp
-    ? `{name:document.getElementById("n").value,email:document.getElementById("e").value,password:document.getElementById("p").value,t:${JSON.stringify(tok || "")}}`
-    : `{email:document.getElementById("e").value,password:document.getElementById("p").value}`};
+    ? `{name:document.getElementById("n").value,email:document.getElementById("e").value,password:document.getElementById("p").value,t:${JSON.stringify(tok || "")},plan:PICK,cycle:CYC,remember:rem}`
+    : `{email:document.getElementById("e").value,password:document.getElementById("p").value,remember:rem}`};
   const r=await fetch("/api/auth/${isUp ? "signup" : "login"}",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const j=await r.json().catch(()=>({}));
   if(r.ok && j.redirect){ location.href=j.redirect; }
