@@ -142,8 +142,13 @@ html[dir="rtl"] .live-chip{font-family:var(--ar-body);letter-spacing:0;text-tran
 .card h3{font-size:.92rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem}
 .card h3 .more{margin-inline-start:auto;font-size:.75rem;color:var(--fg-mute);font-weight:400}
 
-.cols{display:grid;grid-template-columns:1.4fr 1fr;gap:1rem;margin-top:1rem}
-@media(max-width:980px){.cols{grid-template-columns:1fr}}
+/* Same minmax(0,…) rule as the calendar grid, and for the same reason: a plain
+   1fr track keeps an automatic minimum the size of whatever is inside it, so a
+   wide child (the month grid) stretched the column past the screen instead of
+   being made to fit. The children get min-width:0 so they can actually shrink. */
+.cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:1rem;margin-top:1rem}
+.cols>*{min-width:0}
+@media(max-width:980px){.cols{grid-template-columns:minmax(0,1fr)}}
 
 table{width:100%;border-collapse:collapse;font-size:.85rem}
 th{font-family:var(--mono);font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;color:var(--fg-faint);
@@ -249,6 +254,72 @@ html[dir="rtl"] .fld label{font-family:var(--ar-body);letter-spacing:0;text-tran
 
 .note{font-size:.76rem;color:var(--fg-faint);line-height:1.65;border-top:1px solid var(--rule-soft);padding-top:.9rem;margin-top:1rem}
 
+/* ---- Start here ---- */
+.hero-card{background:linear-gradient(135deg,var(--ink) 0%,#1B3D77 58%,#24508F 100%);color:#EEF3FA;border:0}
+.hero-card h2,.hero-card p{color:#EEF3FA}
+/* the action sits ON the navy card, so it has to be the bright one — the
+   default ember button is a navy fill, which disappears into it */
+.hero-card .btn-ember{background:#FFFFFF;border-color:#FFFFFF;color:var(--ink);font-weight:600}
+.hero-card .btn-ember:hover{background:#DCE6F7;border-color:#DCE6F7;color:var(--ink)}
+.hc-top{display:flex;gap:1.6rem;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.hc-greet{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(238,243,250,.66);margin-bottom:.5rem}
+html[dir="rtl"] .hc-greet{font-family:inherit;letter-spacing:0;text-transform:none;font-size:.78rem}
+.hc-h{font-size:clamp(1.3rem,3.2vw,1.85rem);font-weight:600;line-height:1.2;margin-bottom:.45rem}
+.hc-p{font-size:.92rem;color:rgba(238,243,250,.78);max-width:46ch;line-height:1.6}
+.hc-ring{
+  --p:0;flex:none;width:92px;height:92px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(#7FA8FF calc(var(--p)*1%),rgba(238,243,250,.16) 0);
+}
+.hc-ring::before{content:"";position:absolute;width:72px;height:72px;border-radius:50%;background:#15305C}
+.hc-pct{position:relative;font-size:1.22rem;font-weight:600;color:#EEF3FA}
+.hc-pct small{font-size:.7rem;opacity:.7;margin-inline-start:1px}
+.hc-cta{margin-top:1.3rem}
+@media(max-width:620px){.hc-ring{width:72px;height:72px}.hc-ring::before{width:56px;height:56px}.hc-pct{font-size:1rem}}
+
+.steps-card{margin-top:1rem}
+.steplist{list-style:none;margin-top:.9rem}
+.step{display:grid;grid-template-columns:auto 1fr auto;gap:.95rem;align-items:center;
+  padding:.95rem .2rem;border-top:1px solid var(--rule-soft)}
+.step:first-child{border-top:0}
+.step .sm{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none;
+  font-family:var(--mono);font-size:.72rem;border:1px solid var(--rule);color:var(--fg-faint);background:var(--bone-hi)}
+.step.done .sm{background:var(--ok,#1B7A4A);border-color:var(--ok,#1B7A4A);color:#fff}
+.step.now  .sm{background:var(--ember-mid);border-color:var(--ember-mid);color:#fff}
+.step.wait .sm{border-color:var(--ember-mid);color:var(--ember-mid)}
+.step .sb b{display:block;font-size:.94rem;font-weight:600}
+.step .sb small{display:block;font-size:.84rem;color:var(--fg-mute);line-height:1.5;margin-top:.1rem}
+.step.later .sb b,.step.later .sb small{opacity:.55}
+.step .swait{display:inline-block;margin-top:.3rem;font-style:normal;font-family:var(--mono);
+  font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ember)}
+.step .sgo{padding:.4rem .9rem;font-size:.8rem;white-space:nowrap}
+.step .sdone{font-size:.78rem;color:var(--ok,#1B7A4A)}
+@media(max-width:560px){
+  .step{grid-template-columns:auto 1fr;gap:.75rem}
+  .step .sgo,.step .sdone{grid-column:2;justify-self:start;margin-top:.5rem}
+}
+
+.recplay{width:100%;height:38px;margin-bottom:1rem;border-radius:8px}
+
+/* ---- Where leads go ---- */
+.destgrid{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+@media(min-width:760px){.destgrid{grid-template-columns:repeat(2,1fr)}}
+.dest{background:var(--bone-hi);padding:1.15rem 1.2rem;display:flex;flex-direction:column;gap:.45rem}
+.dest-h{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.dest-h b{font-size:.98rem;font-weight:600}
+.dest-dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--fg-faint)}
+.dest.on .dest-dot{background:var(--ok,#1B7A4A);box-shadow:0 0 0 3px rgba(27,122,74,.16)}
+.dest-b{font-size:.87rem;color:var(--fg-mute);line-height:1.55}
+.dest-meta{font-size:.82rem;color:var(--fg);line-height:1.5}
+.dest-meta.off{color:var(--fg-faint)}
+.dest-carries{margin-top:auto;padding-top:.6rem;font-family:var(--mono);font-size:.56rem;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--fg-faint)}
+html[dir="rtl"] .dest-carries{font-family:inherit;letter-spacing:0;text-transform:none;font-size:.74rem}
+.dest-url{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.1rem}
+.dest-url code{font-family:var(--mono);font-size:.7rem;background:var(--paper);padding:.35rem .5rem;
+  border-radius:4px;word-break:break-all;flex:1;min-width:0;color:var(--fg)}
+.dest-url .btn{padding:.34rem .75rem;font-size:.76rem;white-space:nowrap}
+
 .scrim{position:fixed;inset:0;background:rgba(22,52,102,.35);z-index:70;opacity:0;pointer-events:none;transition:opacity .35s}
 .scrim.open{opacity:1;pointer-events:auto}
 @media(min-width:901px){.scrim{display:none}}
@@ -315,9 +386,14 @@ body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#16
 *,*::before,*::after{-webkit-text-fill-color:currentColor}
 
 /* calendar */
-.cal-top{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem}
+.cal-top{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;min-width:0}
+.cal-top>*{min-width:0}
 .cal-top b{font-size:1rem}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+/* minmax(0,1fr), not 1fr: a 1fr track keeps an automatic minimum the size of
+   its content, so on a narrow phone the seven columns refused to shrink and
+   pushed the whole month grid 80px past the screen. */
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;min-width:0}
+@media(max-width:430px){.cal-grid{gap:3px}.cal-d{font-size:.76rem;border-radius:6px}}
 .cal-d{position:relative;aspect-ratio:1;border:1px solid var(--rule-soft);border-radius:8px;background:#fff;
   cursor:pointer;font-family:var(--body);font-size:.82rem;color:var(--fg);display:grid;place-items:center;padding:0}
 .cal-d.out{color:var(--fg-faint);background:transparent;border-color:transparent}
@@ -427,6 +503,7 @@ body{background:#EEF2F9 !important;background-color:#EEF2F9 !important;color:#16
       </div>
     </header>
 
+    <section class="view" data-view="navStart" id="v-start"></section>
     <section class="view on" data-view="overview" id="v-overview"></section>
     <section class="view" data-view="calls" id="v-calls"></section>
     <section class="view" data-view="agents" id="v-agents"></section>
@@ -453,7 +530,29 @@ const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>Array.from((r||document
 /* ---------------- i18n ---------------- */
 const T={
  en:{
-  overview:"Overview",calls:"Calls",agents:"Agents",campaigns:"Campaigns",leads:"Leads",bookings:"Bookings",orders:"Orders",numbers:"Numbers",billing:"Billing",
+  navStart:"Start here",overview:"Overview",calls:"Calls",agents:"Agents",campaigns:"Campaigns",leads:"Leads",bookings:"Bookings",orders:"Orders",numbers:"Numbers",billing:"Billing",
+  "sh.greetAm":"Good morning","sh.greetPm":"Good afternoon","sh.greetEve":"Good evening",
+  "sh.liveH":"Your agent is live.","sh.liveP":"Everything below is done. This page stays here if you ever add another agent.",
+  "sh.todoH":"Let's get your agent answering.","sh.todoP":"{d} of {t} steps done. The next one takes a couple of minutes.",
+  "sh.what":"What to do","sh.start":"Start","sh.open":"Open","sh.done":"Done","sh.queued":"In our queue now",
+  "st.agentT":"Create your agent","st.agentB":"Name it, and tell it what your business does.",
+  "st.teachT":"Teach it your business","st.teachB":"Your prices, your menu, and the rules it must not cross.",
+  "st.testT":"Hear it answer","st.testB":"Call it from the browser before anyone else does.",
+  "st.numberT":"Add your phone number","st.numberB":"The number your customers already dial.",
+  "st.deployT":"Deploy it","st.deployB":"Locks your settings in and queues the line.",
+  "st.connectT":"We connect your line","st.connectB":"Our side. You will get an email when it is carrying calls.",
+  "st.firstT":"Take your first call","st.firstB":"Everything after this fills itself in.",
+  "wg.intro":"Everywhere a finished call can end up, and whether it is switched on for you. Nothing here is a promise: each line reads your own settings.",
+  "wg.on":"On","wg.off":"Not set up","wg.copy":"Copy","wg.copied":"Calendar link copied.",
+  "wg.foot":"A booking taken when you are closed is still recorded, marked as a request rather than confirmed. You will find those under Bookings.",
+  "wg.onFor":"On for",
+  "d.dashT":"Your dashboard","d.dashB":"Every call, lead, booking and order lands here. Nothing to switch on.","d.dashC":"Calls, leads, bookings, orders",
+  "d.calT":"Your calendar","d.calB":"Bookings appear in Google, Apple or Outlook through a feed you subscribe to once.","d.calC":"Bookings","d.calOff":"Appears once an agent takes bookings.",
+  "d.waT":"WhatsApp confirmations","d.waB":"Sent from your own WhatsApp Business number the moment a booking is taken.","d.waC":"Bookings","d.waOff":"Add your WhatsApp Business number in setup and bookings go out automatically.",
+  "d.emT":"Email","d.emB":"Confirmations and account email from NABRA's sending address.","d.emC":"Account, confirmations","d.emOff":"Not switched on for the platform yet. Bookings still land in your dashboard.",
+  "d.xfT":"A person on your team","d.xfB":"The agent hands the call over, with what it already learned.","d.xfC":"Live calls","d.xfOff":"Add a number in setup and the agent can hand a call over when it has to.",
+  "d.orT":"Orders","d.orB":"Delivery and collection orders, with the address and the fee the agent quoted.","d.orC":"Orders","d.orOff":"Switch orders on in setup if you take delivery or collection.",
+  "d.calls":"{n} calls recorded so far",
   gOps:"Operations",gBuild:"Build",gAcct:"Account",new:"New agent",
   live:"live calls",
   s1:"Calls handled",s2:"Booked",s3:"Qualified leads",s4:"Minutes used",
@@ -579,7 +678,29 @@ const T={
   cardOnFile:"Card on file",exp:"Expires"
  },
  ar:{
-  overview:"نظرة عامة",calls:"المكالمات",agents:"الوكلاء",campaigns:"الحملات",leads:"العملاء",bookings:"الحجوزات",orders:"الطلبات",numbers:"الأرقام",billing:"الفوترة",
+  navStart:"ابدأ من هنا",overview:"نظرة عامة",calls:"المكالمات",agents:"الوكلاء",campaigns:"الحملات",leads:"العملاء",bookings:"الحجوزات",orders:"الطلبات",numbers:"الأرقام",billing:"الفوترة",
+  "sh.greetAm":"صباح الخير","sh.greetPm":"مساء الخير","sh.greetEve":"مساء الخير",
+  "sh.liveH":"وكيلك يعمل الآن.","sh.liveP":"كل ما بالأسفل مكتمل. تبقى هذه الصفحة هنا إن أضفت وكيلاً آخر.",
+  "sh.todoH":"لنجعل وكيلك يرد على المكالمات.","sh.todoP":"أنجزت {d} من {t} خطوات. التالية تستغرق دقيقتين.",
+  "sh.what":"ما الذي عليك فعله","sh.start":"ابدأ","sh.open":"افتح","sh.done":"تم","sh.queued":"في قائمتنا الآن",
+  "st.agentT":"أنشئ وكيلك","st.agentB":"سمِّه، وأخبره بما يفعله نشاطك.",
+  "st.teachT":"علّمه نشاطك","st.teachB":"أسعارك وقائمتك والقواعد التي لا يتجاوزها.",
+  "st.testT":"استمع إليه وهو يرد","st.testB":"كلّمه من المتصفح قبل أي شخص آخر.",
+  "st.numberT":"أضف رقم هاتفك","st.numberB":"الرقم الذي يتصل به عملاؤك بالفعل.",
+  "st.deployT":"شغّله","st.deployB":"يثبّت إعداداتك ويضع الخط في قائمة التوصيل.",
+  "st.connectT":"نوصّل خطك","st.connectB":"هذا دورنا. سيصلك بريد عندما يبدأ الخط في حمل المكالمات.",
+  "st.firstT":"استقبل أول مكالمة","st.firstB":"كل ما بعد ذلك يملأ نفسه.",
+  "wg.intro":"كل مكان يمكن أن تنتهي إليه المكالمة، وهل هو مفعّل لديك. لا شيء هنا وعد: كل سطر يقرأ إعداداتك أنت.",
+  "wg.on":"مفعّل","wg.off":"غير مُعد","wg.copy":"نسخ","wg.copied":"تم نسخ رابط التقويم.",
+  "wg.foot":"الحجز الذي يُطلب وأنت مغلق يُسجَّل أيضاً، بوصفه طلباً لا حجزاً مؤكداً. تجده في الحجوزات.",
+  "wg.onFor":"مفعّل لـ",
+  "d.dashT":"لوحتك","d.dashB":"كل مكالمة وفرصة وحجز وطلب يصل هنا. لا شيء لتفعيله.","d.dashC":"مكالمات، فرص، حجوزات، طلبات",
+  "d.calT":"تقويمك","d.calB":"تظهر الحجوزات في جوجل أو آبل أو أوتلوك عبر تغذية تشترك بها مرة واحدة.","d.calC":"الحجوزات","d.calOff":"يظهر بمجرد أن يستقبل وكيل حجوزات.",
+  "d.waT":"تأكيدات واتساب","d.waB":"تُرسل من رقم واتساب بيزنس الخاص بك لحظة استلام الحجز.","d.waC":"الحجوزات","d.waOff":"أضف رقم واتساب بيزنس في الإعداد وتُرسل الحجوزات تلقائياً.",
+  "d.emT":"البريد","d.emB":"التأكيدات وبريد الحساب من عنوان نبرة.","d.emC":"الحساب، التأكيدات","d.emOff":"غير مفعّل على المنصة بعد. الحجوزات تصل لوحتك على أي حال.",
+  "d.xfT":"شخص من فريقك","d.xfB":"يحوّل الوكيل المكالمة ومعها ما عرفه بالفعل.","d.xfC":"المكالمات المباشرة","d.xfOff":"أضف رقماً في الإعداد ليتمكن الوكيل من التحويل عند الحاجة.",
+  "d.orT":"الطلبات","d.orB":"طلبات التوصيل والاستلام، مع العنوان والرسوم التي ذكرها الوكيل.","d.orC":"الطلبات","d.orOff":"فعّل الطلبات في الإعداد إن كنت تقوم بالتوصيل أو الاستلام.",
+  "d.calls":"{n} مكالمة مسجّلة حتى الآن",
   gOps:"التشغيل",gBuild:"الإعداد",gAcct:"الحساب",new:"وكيل جديد",
   live:"مكالمات جارية",
   s1:"مكالمات تمت",s2:"مواعيد محجوزة",s3:"عملاء مؤهلون",s4:"دقائق مستخدمة",
@@ -705,7 +826,29 @@ const T={
   cardOnFile:"بطاقة محفوظة",exp:"تنتهي"
  },
  eg:{
-  overview:"نظرة عامة",calls:"المكالمات",agents:"الوكلاء",campaigns:"الحملات",leads:"العملاء",bookings:"الحجوزات",orders:"الطلبات",numbers:"الأرقام",billing:"الفوترة",
+  navStart:"ابدأ من هنا",overview:"نظرة عامة",calls:"المكالمات",agents:"الوكلاء",campaigns:"الحملات",leads:"العملاء",bookings:"الحجوزات",orders:"الطلبات",numbers:"الأرقام",billing:"الفوترة",
+  "sh.greetAm":"صباح الخير","sh.greetPm":"مساء الخير","sh.greetEve":"مساء الخير",
+  "sh.liveH":"وكيلك شغّال دلوقتي.","sh.liveP":"كل ما بالأسفل مكتمل. تبقى هذه الصفحة هنا إن أضفت وكيلاً آخر.",
+  "sh.todoH":"خلّي وكيلك يرد على المكالمات.","sh.todoP":"خلّصت {d} من {t} خطوات. اللي بعدها دقيقتين.",
+  "sh.what":"اللي لازم تعمله","sh.start":"ابدأ","sh.open":"افتح","sh.done":"تم","sh.queued":"في قائمتنا الآن",
+  "st.agentT":"اعمل وكيلك","st.agentB":"سمِّه، وأخبره بما يفعله نشاطك.",
+  "st.teachT":"علّمه شغلك","st.teachB":"أسعارك وقائمتك والقواعد التي لا يتجاوزها.",
+  "st.testT":"استمع إليه وهو يرد","st.testB":"كلّمه من المتصفح قبل أي شخص آخر.",
+  "st.numberT":"أضف رقم هاتفك","st.numberB":"الرقم الذي يتصل به عملاؤك بالفعل.",
+  "st.deployT":"شغّله","st.deployB":"يثبّت إعداداتك ويضع الخط في قائمة التوصيل.",
+  "st.connectT":"نوصّل خطك","st.connectB":"هذا دورنا. سيصلك بريد عندما يبدأ الخط في حمل المكالمات.",
+  "st.firstT":"استقبل أول مكالمة","st.firstB":"كل ما بعد ذلك يملأ نفسه.",
+  "wg.intro":"كل مكان يمكن أن تنتهي إليه المكالمة، وهل هو مفعّل لديك. لا شيء هنا وعد: كل سطر يقرأ إعداداتك أنت.",
+  "wg.on":"مفعّل","wg.off":"غير مُعد","wg.copy":"نسخ","wg.copied":"تم نسخ رابط التقويم.",
+  "wg.foot":"الحجز الذي يُطلب وأنت مغلق يُسجَّل أيضاً، بوصفه طلباً لا حجزاً مؤكداً. تجده في الحجوزات.",
+  "wg.onFor":"مفعّل لـ",
+  "d.dashT":"لوحتك","d.dashB":"كل مكالمة وفرصة وحجز وطلب يصل هنا. لا شيء لتفعيله.","d.dashC":"مكالمات، فرص، حجوزات، طلبات",
+  "d.calT":"تقويمك","d.calB":"تظهر الحجوزات في جوجل أو آبل أو أوتلوك عبر تغذية تشترك بها مرة واحدة.","d.calC":"الحجوزات","d.calOff":"يظهر بمجرد أن يستقبل وكيل حجوزات.",
+  "d.waT":"تأكيدات واتساب","d.waB":"تُرسل من رقم واتساب بيزنس الخاص بك لحظة استلام الحجز.","d.waC":"الحجوزات","d.waOff":"أضف رقم واتساب بيزنس في الإعداد وتُرسل الحجوزات تلقائياً.",
+  "d.emT":"البريد","d.emB":"التأكيدات وبريد الحساب من عنوان نبرة.","d.emC":"الحساب، التأكيدات","d.emOff":"غير مفعّل على المنصة بعد. الحجوزات تصل لوحتك على أي حال.",
+  "d.xfT":"شخص من فريقك","d.xfB":"يحوّل الوكيل المكالمة ومعها ما عرفه بالفعل.","d.xfC":"المكالمات المباشرة","d.xfOff":"أضف رقماً في الإعداد ليتمكن الوكيل من التحويل عند الحاجة.",
+  "d.orT":"الطلبات","d.orB":"طلبات التوصيل والاستلام، مع العنوان والرسوم التي ذكرها الوكيل.","d.orC":"الطلبات","d.orOff":"فعّل الطلبات في الإعداد إن كنت تقوم بالتوصيل أو الاستلام.",
+  "d.calls":"{n} مكالمة مسجّلة حتى الآن",
   gOps:"التشغيل",gBuild:"الإعداد",gAcct:"الحساب",new:"وكيل جديد",
   live:"مكالمات شغالة",
   s1:"مكالمات اتعملت",s2:"مواعيد اتحجزت",s3:"عملاء مؤهلين",s4:"دقايق اتستخدمت",
@@ -915,9 +1058,9 @@ const NUMSHOP=[
 /* ---------------- nav ---------------- */
 const VIEWS=[
  {g:"gOps"},
+ {k:"navStart",i:'<path d="M12 2 4 7v6c0 4.4 3.4 8.5 8 9 4.6-.5 8-4.6 8-9V7z"/><polyline points="9 12 11 14 15 10"/>'},
  {k:"overview",i:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'},
  {k:"calls",i:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1A19.5 19.5 0 0 1 4.7 12 19.8 19.8 0 0 1 1.6 3.4 2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.7 2z"/>',pill:null},
- {k:"recordings",i:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>'},
  {k:"orders",i:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'},
  {k:"bookings",i:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'},
  {k:"leads",i:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/>'},
@@ -943,6 +1086,10 @@ function renderNav(){
   $$("#nav button").forEach(b=> b.addEventListener("click", ()=>{ go(b.dataset.v); closeRail(); }));
 }
 function go(k){ view=k; $$(".view").forEach(v=> v.classList.toggle("on", v.dataset.view===k));
+  /* these two read live state, so they are re-fetched on entry rather than
+     showing whatever was true when the page loaded */
+  if(k==="navStart" && typeof loadSteps==="function" && typeof REAL!=="undefined" && REAL){ loadSteps().then(vStart); }
+  if(k==="routes"   && typeof loadDest==="function"  && typeof REAL!=="undefined" && REAL){ loadDest().then(vRoutes); }
   $("#viewTitle").textContent=t(k); renderNav(); }
 
 /* ---------------- helpers ---------------- */
@@ -1820,6 +1967,159 @@ const empty=(h,p,btn)=>`<div class="empty"><h4>${t(h)}</h4><p>${t(p)}</p>${btn?`
 const _vOverview=vOverview, _vAgents=vAgents, _vLeads=vLeads;
 
 /* ============================================================
+   START HERE
+   ------------------------------------------------------------
+   The first thing a customer sees after signing in, until they
+   are live. Landing straight in the console showed somebody
+   with no agent a grid of zeros and left them to work out what
+   to do with it.
+
+   Every row's state comes from the server, which is the only
+   place that can see the agent, the provisioning queue and the
+   call history at once. Two steps are deliberately not clickable
+   — connecting the line is our job, and the first call is the
+   customer's customers' — so nobody is sent somewhere they
+   cannot act.
+   ============================================================ */
+let STEPS = null;
+
+/* titles and blurbs come from the dictionaries, like everything else here */
+const stepCopy = k => [t("st."+k+"T"), t("st."+k+"B")];
+
+async function loadSteps(){
+  try{
+    const r = await fetch("/api/me/next-steps",{headers:{accept:"application/json"}});
+    STEPS = r.ok ? await r.json() : null;
+  }catch(_){ STEPS=null; }
+}
+
+function vStart(){
+  const box=$("#v-start"); if(!box) return;
+  if(!STEPS){ box.innerHTML = `<div class="empty"><h4>Could not load your progress</h4>
+    <p>Reload the page and it should come back.</p></div>`; return; }
+
+  const d=STEPS;
+  /* the next thing THEY can do, which is not always the next undone step */
+  const nextIdx = d.steps.findIndex(s=>!s.done && !s.waiting && s.go);
+  const name = (window.NABRA_BOOT && window.NABRA_BOOT.tenant && window.NABRA_BOOT.tenant.name) || "";
+  const hour = new Date().getHours();
+  const greet = t(hour<12 ? "sh.greetAm" : hour<18 ? "sh.greetPm" : "sh.greetEve");
+
+  box.innerHTML = `
+  <div class="card hero-card">
+    <div class="hc-top">
+      <div>
+        <p class="hc-greet">${greet}${name?`, ${esc(name.split(" ")[0])}`:""}</p>
+        <h2 class="hc-h">${d.live ? t("sh.liveH") : t("sh.todoH")}</h2>
+        <p class="hc-p">${d.live ? t("sh.liveP")
+          : t("sh.todoP").replace("{d}",d.done).replace("{t}",d.total)}</p>
+      </div>
+      <div class="hc-ring" style="--p:${d.pct}">
+        <span class="hc-pct">${d.pct}<small>%</small></span>
+      </div>
+    </div>
+    ${nextIdx>=0 && d.steps[nextIdx].go ? `
+      <a class="btn btn-ember hc-cta" href="${d.steps[nextIdx].go}">
+        ${esc(stepCopy(d.steps[nextIdx].k)[0])} →</a>` : ``}
+  </div>
+
+  <div class="card steps-card">
+    <h3>${t("sh.what")}</h3>
+    <ol class="steplist">
+      ${d.steps.map((s,i)=>{
+        const [title,blurb] = stepCopy(s.k);
+        /* "waiting" outranks "now": connecting the line is our job, so showing it
+           as the customer's next action would be telling them to do something
+           they cannot do. */
+        const state = s.done ? "done" : (s.waiting ? "wait" : (i===nextIdx ? "now" : "later"));
+        const mark = s.done ? "✓" : (state==="wait" ? "…" : String(i+1));
+        return `<li class="step ${state}">
+          <span class="sm">${mark}</span>
+          <span class="sb">
+            <b>${esc(title)}</b>
+            <small>${esc(blurb)}</small>
+            ${state==="wait" ? `<em class="swait">${t("sh.queued")}</em>` : ``}
+          </span>
+          ${s.go && !s.done ? `<a class="btn ghost sgo" href="${s.go}">${i===nextIdx?t("sh.start"):t("sh.open")}</a>`
+            : s.done ? `<span class="sdone">${t("sh.done")}</span>` : `<span class="slater"></span>`}
+        </li>`;
+      }).join("")}
+    </ol>
+  </div>`;
+}
+
+/* ============================================================
+   WHERE LEADS GO
+   ------------------------------------------------------------
+   Was a "coming soon" panel. Everything it should have listed
+   already existed somewhere in the product — it just had no
+   screen. Each row reports what is actually switched on for
+   this account, including how many messages really went out,
+   so "WhatsApp confirmations" either names the agents that
+   have it or says plainly that none do.
+   ============================================================ */
+let DEST = null;
+
+/* key → the dictionary prefix its three strings live under */
+const DEST_KEY = { dashboard:"dash", calendar:"cal", whatsapp:"wa", email:"em", transfer:"xf", orders:"or" };
+const destCopy = k => { const x=DEST_KEY[k]; return x ? [t("d."+x+"T"), t("d."+x+"B"), t("d."+x+"C")] : [k,"",""]; };
+
+async function loadDest(){
+  try{
+    const r = await fetch("/api/me/destinations",{headers:{accept:"application/json"}});
+    DEST = r.ok ? await r.json() : null;
+  }catch(_){ DEST=null; }
+}
+
+function vRoutesReal(){
+  const box=$("#v-routes"); if(!box) return;
+  if(!DEST){ box.innerHTML=`<div class="empty"><h4>Could not load this</h4><p>Reload the page and it should come back.</p></div>`; return; }
+  if(!DEST.agents){ box.innerHTML = empty("fr1h","fr1p","fr1cta"); return; }
+
+  box.innerHTML = `
+  <p class="note" style="border:0;padding:0;margin:0 0 1.2rem;font-size:.9rem;color:var(--fg-mute)">
+    ${t("wg.intro")}
+  </p>
+  <div class="destgrid">
+    ${DEST.destinations.map(x=>{
+      const [title,blurb,carries] = destCopy(x.key);
+      const on = x.on;
+      const extra =
+        x.key==="calendar" && on && x.url
+          ? `<div class="dest-url"><code id="calUrl">${esc(x.url)}</code>
+               <button class="btn ghost" data-copycal>${t("wg.copy")}</button></div>`
+        : x.key==="whatsapp" && on
+          ? `<p class="dest-meta">${t("wg.onFor")} ${x.agents.map(esc).join(", ")}${
+              x.delivered && (x.delivered.sent||x.delivered.failed)
+                ? ` · ${x.delivered.sent} sent${x.delivered.failed?`, ${x.delivered.failed} failed`:""}` : ""}</p>`
+        : (x.key==="transfer"||x.key==="orders") && on
+          ? `<p class="dest-meta">${t("wg.onFor")} ${x.agents.map(esc).join(", ")}</p>`
+        : x.key==="dashboard"
+          ? `<p class="dest-meta">${esc(t("d.calls").replace("{n}", Number(x.calls)||0))}</p>` : ``;
+      const off = DEST_KEY[x.key] ? t("d."+DEST_KEY[x.key]+"Off") : "";
+      return `<div class="dest ${on?"on":"off"}">
+        <div class="dest-h">
+          <span class="dest-dot"></span>
+          <b>${esc(title)}</b>
+          <span class="tag ${on?"ok":"dim"}">${on?t("wg.on"):t("wg.off")}</span>
+        </div>
+        <p class="dest-b">${esc(blurb)}</p>
+        ${on ? extra : `<p class="dest-meta off">${esc(off)}</p>`}
+        <span class="dest-carries">${esc(carries)}</span>
+      </div>`;
+    }).join("")}
+  </div>
+  <p class="note">${t("wg.foot")}</p>`;
+
+  const cp=$("[data-copycal]");
+  if(cp) cp.addEventListener("click",async()=>{
+    const u=$("#calUrl"); if(!u) return;
+    try{ await navigator.clipboard.writeText(u.textContent); toast(t("wg.copied")); }
+    catch(_){ toast("Select the link and copy it."); }
+  });
+}
+
+/* ============================================================
    OUTBOUND — THE CUSTOMER'S VIEW OF IT
    ------------------------------------------------------------
    One agent's call list: who is waiting, who was reached, and
@@ -2112,6 +2412,7 @@ vCalls=function(){
       <h3>${esc(c.from_number)||"—"}</h3>
       <p class="note" style="margin-bottom:.8rem">${esc(new Date(c.at).toLocaleString())} · ${Math.ceil((c.duration_s||0)/60)} min · ${esc(c.outcome)}</p>
       ${c.summary?`<p style="margin-bottom:1rem">${esc(c.summary)}</p>`:""}
+      ${c.recording_url?`<audio class="recplay" controls preload="none" src="${esc(c.recording_url)}"></audio>`:""}
       <pre style="white-space:pre-wrap;font-family:inherit;font-size:.88rem;line-height:1.6;color:var(--fg-mute)">${esc(c.transcript)||t("noTranscript")}</pre>`
       : `<p class="note">${t("pickCall")}</p>`}</div>
   </div>` : empty("noCallsH","noCallsP");
@@ -2123,8 +2424,16 @@ vCalls=function(){
 vScripts=function(){ if(!REAL){ _vScripts(); return; } $("#v-scripts").innerHTML=empty("inSetupH","inSetupP","inSetupB"); };
 vKnowledge=function(){ if(!REAL){ _vKnowledge(); return; } $("#v-knowledge").innerHTML=empty("inSetupH","inSetupP","inSetupB"); };
 vCampaigns=function(){ if(!REAL){ _vCampaigns(); return; } vCampaignsReal(); };
-vRecordings=function(){ if(!REAL){ _vRecordings(); return; } $("#v-recordings").innerHTML=empty("soonH","soonP"); };
-vRoutes=function(){ if(!REAL){ _vRoutes(); return; } $("#v-routes").innerHTML=empty("soonH","soonP"); };
+/* Recordings had a nav item and a "coming soon" page. A recording belongs to
+   the call it came from, next to that call's transcript, not in a list of its
+   own — so it now plays inside Calls and this tab is gone from the rail. */
+vRecordings=function(){ if(!REAL){ _vRecordings(); return; }
+  $("#v-recordings").innerHTML = `<div class="empty"><h4>Recordings live with their calls</h4>
+    <p>Open any call and its recording plays above the transcript, when the call was recorded.</p>
+    <button class="btn" data-goto="calls">Go to calls</button></div>`;
+  const g=$('#v-recordings [data-goto]'); if(g) g.addEventListener("click",()=>go("calls"));
+};
+vRoutes=function(){ if(!REAL){ _vRoutes(); return; } vRoutesReal(); };
 vNumbers=function(){ if(!REAL){ _vNumbers(); return; } $("#v-numbers").innerHTML=empty("inSetupH","inSetupP","inSetupB"); };
 
 
@@ -2270,7 +2579,16 @@ function vOrders(){
     if(pill){ if(REAL.calls.length) pill.textContent=REAL.calls.length; else pill.remove(); }
     const lc=$("#liveCount"); if(lc) lc.textContent = REAL.calls.length ? (0+" "+t("live")) : "";
     const chip=document.querySelector(".live-chip"); if(chip && !REAL.calls.length) chip.hidden=true;
+    await loadSteps(); await loadDest();
+    vStart();
     vOverview(); vAgents(); vLeads(); vCalls(); vBookings(); vOrders(); vScripts(); vKnowledge(); vCampaigns(); vRecordings(); vRoutes(); vNumbers();
+
+    /* Where to put somebody who has just signed in. Until their line is
+       carrying calls there is nothing for an overview to show, so they land on
+       the step they are actually on. Once they are live, the console is the
+       right place and this never fires again. */
+    if(STEPS && !STEPS.live && view==="overview"){ go("navStart"); }
+    else { const n=document.querySelector('#nav [data-v="navStart"]'); if(n && STEPS && STEPS.live) n.classList.add("muted"); }
   }catch(_){}
 })();
 

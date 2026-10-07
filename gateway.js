@@ -318,6 +318,12 @@ async function migrate() {
   /* A private token per tenant for the read-only calendar feed, so a customer
      can subscribe from Google, Apple or Outlook without any OAuth dance. */
   await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS cal_token TEXT`);
+  /* A DEFAULT, not just the backfill below. The backfill runs once at boot, so
+     every tenant who signed up AFTER boot was left with a null token — their
+     calendar feed resolved to /cal/null.ics and matched no tenant, which meant
+     the booking subscription silently did not work for any real customer.
+     A default covers every insert path, including signup. */
+  await q(`ALTER TABLE tenants ALTER COLUMN cal_token SET DEFAULT encode(gen_random_bytes(16),'hex')`);
   await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT false`);
   await q(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS verify_sent_at TIMESTAMPTZ`);
   /* which flow took the call, so per-setup numbers are possible later */
@@ -978,10 +984,113 @@ app.get("/api/me", async (req, res) => {
   if (!t) return res.status(401).json({ error: "no session" });
   res.json({ tenant: t });
 });
+
+/* ============================================================
+   WHERE LEADS GO
+   ------------------------------------------------------------
+   Every place a finished call can end up, and whether that
+   place is actually switched on for THIS account. Each entry
+   reports real state — a saved setting, a real delivery count —
+   rather than a promise, so a customer can see at a glance
+   where a booking taken at 2am will actually land.
+   ============================================================ */
+app.get("/api/me/destinations", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+
+  const { rows: agents } = await q(
+    `SELECT id, name, transfer_to, channel_cfg, business, direction, status FROM agents WHERE tenant_id=$1 ORDER BY id`,
+    [t.id]);
+
+  /* what has actually been delivered, not what was configured */
+  const { rows: notif } = await q(
+    `SELECT channel, status, count(*)::int n FROM notifications WHERE tenant_id=$1 GROUP BY channel, status`, [t.id]);
+  const tally = ch => {
+    const f = s => (notif.find(x => x.channel === ch && x.status === s) || {}).n || 0;
+    return { sent: f("sent"), failed: f("failed"), skipped: f("skipped") };
+  };
+
+  const counts = (await q(
+    `SELECT (SELECT count(*)::int FROM leads    WHERE tenant_id=$1) AS leads,
+            (SELECT count(*)::int FROM bookings WHERE tenant_id=$1) AS bookings,
+            (SELECT count(*)::int FROM orders   WHERE tenant_id=$1) AS orders,
+            (SELECT count(*)::int FROM calls    WHERE tenant_id=$1) AS calls`, [t.id])).rows[0];
+
+  const waAgents = agents.filter(a => {
+    const w = (a.channel_cfg || {}).wa || {};
+    return !!(w.phone_number_id && w.template);
+  });
+  const xferAgents = agents.filter(a => String(a.transfer_to || "").trim());
+  const bookAgents = agents.filter(a => (a.business || {}).take_bookings !== false);
+  const orderAgents = agents.filter(a => (a.business || {}).take_orders);
+
+  const dest = [
+    { key: "dashboard", on: true, kind: "always",
+      count: counts.leads + counts.bookings + counts.orders, calls: counts.calls },
+
+    { key: "calendar", on: counts.bookings > 0 || bookAgents.length > 0, kind: "feed",
+      url: t.cal_token ? `${siteUrl(req)}/cal/${t.cal_token}.ics` : null, count: counts.bookings },
+
+    { key: "whatsapp", on: waAgents.length > 0, kind: "perAgent",
+      agents: waAgents.map(a => a.name), delivered: tally("whatsapp") },
+
+    { key: "email", on: emailOn(), kind: "platform" },
+
+    { key: "transfer", on: xferAgents.length > 0, kind: "perAgent",
+      agents: xferAgents.map(a => a.name) },
+
+    { key: "orders", on: orderAgents.length > 0, kind: "perAgent",
+      agents: orderAgents.map(a => a.name), count: counts.orders },
+  ];
+
+  res.json({ destinations: dest, agents: agents.length });
+});
+
+/* ---- what this account still has to do, decided server-side ----
+   The console and the setup screen were each working this out on their own,
+   which is how two screens start disagreeing about whether an account is
+   ready. One answer, computed where the data is. */
+app.get("/api/me/next-steps", async (req, res) => {
+  const t = await currentTenant(req); if (!t) return res.status(401).json({ error: "no session" });
+  const { rows: agents } = await q(`SELECT * FROM agents WHERE tenant_id=$1 ORDER BY id`, [t.id]);
+  const a = agents[0] || null;
+  const r = a ? readiness(a) : null;
+  const miss = k => !!(r && r.outstanding.some(o => o.k === k));
+
+  const calls = (await q(`SELECT count(*)::int n FROM calls WHERE tenant_id=$1`, [t.id])).rows[0].n;
+  const prov  = (await q(
+    `SELECT status FROM provisioning WHERE tenant_id=$1 ORDER BY id DESC LIMIT 1`, [t.id])).rows[0] || null;
+
+  const steps = [
+    { k: "agent",   done: !!a,                                  go: "/setup" },
+    { k: "teach",   done: !!a && !miss("knowledge") && !miss("rules") && !miss("greeting"), go: "/setup" },
+    { k: "test",    done: !!(a && a.tested_at),                 go: "/setup" },
+    { k: "number",  done: !!(a && a.channel_cfg && String(a.channel_cfg.number || "").trim()), go: "/setup" },
+    { k: "deploy",  done: !!(a && a.status === "live"),         go: "/setup" },
+    { k: "connect", done: !!(prov && prov.status === "done"),   go: null,
+      waiting: !!(prov && prov.status !== "done") },
+    { k: "first",   done: calls > 0,                            go: null },
+  ];
+  const done = steps.filter(s => s.done).length;
+  res.json({
+    steps, done, total: steps.length,
+    pct: Math.round(done / steps.length * 100),
+    live: !!(a && a.status === "live"),
+    plan: t.plan, agentId: a ? a.id : null,
+  });
+});
+
 app.get("/api/me/calls", async (req, res) => {
   const t = await currentTenant(req);
   if (!t) return res.status(401).json({ error: "no session" });
-  const { rows } = await q(`SELECT * FROM calls WHERE tenant_id=$1 ORDER BY at DESC LIMIT 100`, [t.id]);
+  /* SELECT * dragged the whole webhook payload — tens of kilobytes per call —
+     into the browser for a table that shows five columns. Name the columns, and
+     lift the recording link out of the payload rather than shipping all of it. */
+  const { rows } = await q(
+    `SELECT id, tenant_id, agent_id, setup_id, vapi_call_id, assistant_id, direction,
+            from_number, duration_s, outcome, summary, transcript, at,
+            COALESCE(payload->>'recordingUrl', payload->'artifact'->>'recordingUrl',
+                     payload->'artifact'->>'stereoRecordingUrl') AS recording_url
+       FROM calls WHERE tenant_id=$1 ORDER BY at DESC LIMIT 100`, [t.id]);
   res.json({ calls: rows });
 });
 
@@ -1607,7 +1716,8 @@ app.get("/api/me/bookings", async (req, res) => {
        FROM bookings b LEFT JOIN agents a ON a.id = b.agent_id
       WHERE b.tenant_id=$1 AND b.starts_at BETWEEN $2 AND $3
       ORDER BY b.starts_at`, [t.id, from.toISOString(), to.toISOString()]);
-  res.json({ bookings: rows, calendarUrl: `${siteUrl(req)}/cal/${t.cal_token}.ics` });
+  res.json({ bookings: rows,
+             calendarUrl: t.cal_token ? `${siteUrl(req)}/cal/${t.cal_token}.ics` : null });
 });
 
 app.post("/api/me/bookings", async (req, res) => {
